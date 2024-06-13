@@ -1,4 +1,4 @@
-module Config.Optparse (parseConfigFromOptions) where
+module Config.Optparse (parseConfigFromOptions, parserInfo) where
 
 import Barbies (TraversableB (btraverse))
 import Config.Types
@@ -11,15 +11,17 @@ import Options.Applicative
 import Relude
 
 parseConfigFromOptions :: IO (PartialConfig (Compose Maybe S.First))
-parseConfigFromOptions =
-  execParser
-    $ info
-      (helper <*> parser)
-      ( fullDesc
-          <> progDesc "gitlab-helper"
-          <> header "gitlab-helper - a collection of utilities for dealing with a load of projects in Gitlab"
-          <> footer "For the commands that are not read-only, use \"-x\" to make them actually do stuff"
-      )
+parseConfigFromOptions = execParser parserInfo
+
+parserInfo :: ParserInfo (PartialConfig (Compose Maybe S.First))
+parserInfo =
+  info
+    (helper <*> parser)
+    ( fullDesc
+        <> progDesc "gitlab-helper"
+        <> header "gitlab-helper - a collection of utilities for dealing with a load of projects in Gitlab"
+        <> footer "For the commands that are not read-only, use \"-x\" to make them actually do stuff"
+    )
 
 parser :: Parser (PartialConfig (Compose Maybe S.First))
 parser =
