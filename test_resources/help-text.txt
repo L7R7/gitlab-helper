@@ -2,7 +2,7 @@ gitlab-helper - a collection of utilities for dealing with a load of projects in
 Gitlab
 
 Usage: gitlab-helper [--group-id ID] [--base-url URL] [--api-token TOKEN] 
-                     [--exclude-projects ID1,ID2,ID3] [COMMAND]
+                     [--exclude-projects ID1,ID2,ID3] COMMAND
 
   gitlab-helper
 

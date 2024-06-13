@@ -1,6 +1,6 @@
 module Config.Optparse (parseConfigFromOptions, parserInfo) where
 
-import Barbies (TraversableB (btraverse))
+import Barbies (bsequence, bzipWith)
 import Config.Types
 import Data.List.Split
 import qualified Data.Semigroup as S (First (..))
@@ -23,16 +23,29 @@ parserInfo =
         <> footer "For the commands that are not read-only, use \"-x\" to make them actually do stuff"
     )
 
+newtype ParserModifier a = ParserModifier (Parser a -> Parser (Compose Maybe S.First a))
+
 parser :: Parser (PartialConfig (Compose Maybe S.First))
-parser =
-  btraverse (fmap Compose . optional . fmap S.First)
-    $ PartialConfig
-      (option (Id <$> auto) (long "group-id" <> help "set the ID of the group to look at" <> metavar "ID"))
-      (option (BaseUrl <$> eitherReader f) (long "base-url" <> help "Base URL of the Gitlab instance (e.g. `https://gitlab.com/`)" <> metavar "URL"))
-      (option (ApiToken <$> str) (long "api-token" <> help "API Token to use for authorizing requests against the Gitlab API. `api` scope is required." <> metavar "TOKEN"))
-      (option (fmap Id <$> eitherReader g) (long "exclude-projects" <> help "set the list of projects to exclude as a comma-separated list of IDs" <> metavar "ID1,ID2,ID3"))
-      commandParser
+parser = bsequence $ bzipWith (\(ParserModifier x) -> Compose . x) partialFunctions partialParsers
   where
+    partialParsers :: PartialConfig Parser
+    partialParsers =
+      PartialConfig
+        (option (Id <$> auto) (long "group-id" <> help "set the ID of the group to look at" <> metavar "ID"))
+        (option (BaseUrl <$> eitherReader f) (long "base-url" <> help "Base URL of the Gitlab instance (e.g. `https://gitlab.com/`)" <> metavar "URL"))
+        (option (ApiToken <$> str) (long "api-token" <> help "API Token to use for authorizing requests against the Gitlab API. `api` scope is required." <> metavar "TOKEN"))
+        (option (fmap Id <$> eitherReader g) (long "exclude-projects" <> help "set the list of projects to exclude as a comma-separated list of IDs" <> metavar "ID1,ID2,ID3"))
+        commandParser
+    partialFunctions :: PartialConfig ParserModifier
+    partialFunctions =
+      PartialConfig
+        (ParserModifier optionalParser)
+        (ParserModifier optionalParser)
+        (ParserModifier optionalParser)
+        (ParserModifier optionalParser)
+        (ParserModifier $ fmap (Compose . Just . S.First))
+    optionalParser :: Parser a -> Parser (Compose Maybe S.First a)
+    optionalParser = fmap Compose . optional . fmap S.First
     f :: String -> Either String URI
     f s = maybeToRight ("\"" <> s <> "\" is not a valid absolute URI") (parseAbsoluteURI s)
     g :: String -> Either String [Int]
@@ -55,11 +68,11 @@ commandParser =
         command "show-merge-requests" (info (pure ShowMergeRequests) (progDesc "show projects with and without enabled merge requests, list merge requests")),
         command "count-deployments" (info (CountSuccessfulDeployments <$> argument (Year <$> auto) (metavar "YEAR")) (progDesc "count the number of successful deployments per project (a successful push pipeline on the master branch is counted as a deployment)")),
         command "set-merge-method-to-fast-forward" (info (SetMergeMethodToFastForward <$> executionParser) (progDesc "Set the merge method for all projects to \"Fast Forward\"")),
-        command "update-merge-requests" (info mergeRequestUpdatActionParser (progDesc "Update all MRs from a given user that match a given condition with a given command"))
+        command "update-merge-requests" (info mergeRequestUpdateCommandParser (progDesc "Update all MRs from a given user that match a given condition with a given command"))
       ]
 
-mergeRequestUpdatActionParser :: Parser Command
-mergeRequestUpdatActionParser =
+mergeRequestUpdateCommandParser :: Parser Command
+mergeRequestUpdateCommandParser =
   UpdateMergeRequests
     <$> mergeRequestUpdateActionParser
     <*> optional
