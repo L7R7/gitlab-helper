@@ -75,7 +75,7 @@ import Relude
 import qualified Text.Show
 
 newtype ProjectId = ProjectId {getProjectId :: Int}
-  deriving newtype (Show)
+  deriving newtype (Eq, Ord, Show)
   deriving (FromJSON) via (Autodocodec ProjectId)
 
 instance HasCodec ProjectId where

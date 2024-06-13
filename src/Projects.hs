@@ -96,8 +96,15 @@ countDeploymentsIn2022 gId =
     Counter
       gId
       (\gi -> "Listing the number of successful deployments in 2022 for all projects in Group " <> show gi)
-      (const False)
+      (\p -> projectId p `elem` excludes)
       (\pi -> (fmap (Sum . length)) <$> getSuccessfulPushPipelinesIn2022 pi undefined)
+  where
+    excludes =
+      ProjectId
+        <$> [94, 198, 509, 554, 572, 583, 587, 648, 663, 738]
+          ++ [1071, 1141, 1703, 1720, 1726, 1757, 1759, 1765, 1766, 1767, 1770, 1771, 1871]
+          ++ [2011, 2040, 2041, 2145, 2151, 2155, 2191, 2260, 2261, 2328, 2507, 2756, 2828, 2843, 2871, 2941]
+          ++ [3015, 3053]
 
 enableSourceBranchDeletionAfterMerge :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => Execution -> GroupId -> Sem r ()
 enableSourceBranchDeletionAfterMerge execution gId =
@@ -178,7 +185,7 @@ runProcessor (Counter groupId title skipIf action) = do
     Right projects -> do
       res <- traverse (countSingle skipIf action) projects
       write ""
-      write $ "done. in total: " <> (show $ getSum $ fold res)
+      write $ "done. in total: " <> (show $ getSum $ fold res) <> " deployments"
 
 process :: (Member Writer r) => (Project -> Bool) -> (ProjectId -> Sem r (Either UpdateError ())) -> Project -> Sem r Result
 process skipIf action project = do
@@ -203,8 +210,8 @@ countSingle skipIf action project = count >>= \(output, result) -> write (title 
           res <- action (projectId project)
           case res of
             Left err -> pure $ (formatWith [red] ("something went wrong: ") <> show err, mempty)
-            Right s -> pure $ (show (getSum s), s)
-    title = formatWith [bold] (show (name project) <> "(" <> show (projectId project) <> "): ")
+            Right s -> pure $ (show ((getSum s)) <> " deployments", s)
+    title = formatWith [bold] (show (name project) <> ": ") -- "(" <> show (projectId project) <> "): ")
 
 data Result = AlreadySet | Set | Error deriving stock (Bounded, Enum, Eq, Ord, Show)
 
