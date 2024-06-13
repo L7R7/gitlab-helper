@@ -46,6 +46,8 @@ There are a couple of interesting details to this option:
 
 ## Running
 
+If you don't have a working Haskell toolchain on your machine yet, I recommend using [https://www.haskell.org/ghcup/](https://www.haskell.org/ghcup/) to install a recent version of `stack` (which solves similar problems like `sbt` does for Scala, or Maven for Java).
+
 To build the executable and make it available on your path:
 
 ```shell script
