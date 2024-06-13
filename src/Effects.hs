@@ -129,17 +129,29 @@ instance Show Project where
 instance HasCodec Project where
   codec =
     object "Project" $
-      Project <$> requiredField' "id" .= projectId
-        <*> requiredField' "name" .= name
-        <*> requiredField' "merge_requests_enabled" .= mergeRequestsEnabled
-        <*> requiredField' "merge_method" .= mergeMethod
-        <*> optionalField' "default_branch" .= defaultBranch
-        <*> requiredField' "remove_source_branch_after_merge" .= removeSourceBranchAfterMerge
-        <*> requiredField' "only_allow_merge_if_pipeline_succeeds" .= onlyAllowMergeIfPipelineSucceeds
-        <*> requiredField' "only_allow_merge_if_all_discussions_are_resolved" .= onlyAllowMergeIfAllDiscussionsAreResolved
-        <*> requiredField' "auto_cancel_pending_pipelines" .= autoCancelPendingPipelines
-        <*> requiredField' "path_with_namespace" .= pathWithNamespace
-        <*> requiredField' "ssh_url_to_repo" .= sshUrlToRepo
+      Project
+        <$> requiredField' "id"
+        .= projectId
+        <*> requiredField' "name"
+        .= name
+        <*> requiredField' "merge_requests_enabled"
+        .= mergeRequestsEnabled
+        <*> requiredField' "merge_method"
+        .= mergeMethod
+        <*> optionalField' "default_branch"
+        .= defaultBranch
+        <*> requiredField' "remove_source_branch_after_merge"
+        .= removeSourceBranchAfterMerge
+        <*> requiredField' "only_allow_merge_if_pipeline_succeeds"
+        .= onlyAllowMergeIfPipelineSucceeds
+        <*> requiredField' "only_allow_merge_if_all_discussions_are_resolved"
+        .= onlyAllowMergeIfAllDiscussionsAreResolved
+        <*> requiredField' "auto_cancel_pending_pipelines"
+        .= autoCancelPendingPipelines
+        <*> requiredField' "path_with_namespace"
+        .= pathWithNamespace
+        <*> requiredField' "ssh_url_to_repo"
+        .= sshUrlToRepo
 
 instance HasCodec URI where
   codec = bimapCodec (maybeToRight "can't parse URI" . parseURI) show stringCodec
@@ -170,11 +182,17 @@ data MergeRequest = MergeRequest
 instance HasCodec MergeRequest where
   codec =
     object "MergeRequest" $
-      MergeRequest <$> requiredField' "id" .= mergeRequestId
-        <*> requiredField' "work_in_progress" .= wip
-        <*> requiredField' "has_conflicts" .= conflicts
-        <*> requiredField' "created_at" .= createdAt
-        <*> requiredField' "web_url" .= webUrl
+      MergeRequest
+        <$> requiredField' "id"
+        .= mergeRequestId
+        <*> requiredField' "work_in_progress"
+        .= wip
+        <*> requiredField' "has_conflicts"
+        .= conflicts
+        <*> requiredField' "created_at"
+        .= createdAt
+        <*> requiredField' "web_url"
+        .= webUrl
 
 newtype MergeRequestId = MergeRequestId {getMergeRequestId :: Int}
   deriving newtype (Show)
@@ -197,11 +215,17 @@ data Branch = Branch
 instance HasCodec Branch where
   codec =
     object "Branch" $
-      Branch <$> requiredField' "name" .= branchName
-        <*> requiredField' "merged" .= branchMerged
-        <*> requiredField' "protected" .= branchProtected
-        <*> requiredField' "default" .= branchDefault
-        <*> requiredField' "web_url" .= branchWebUrl
+      Branch
+        <$> requiredField' "name"
+        .= branchName
+        <*> requiredField' "merged"
+        .= branchMerged
+        <*> requiredField' "protected"
+        .= branchProtected
+        <*> requiredField' "default"
+        .= branchDefault
+        <*> requiredField' "web_url"
+        .= branchWebUrl
         <*> (committedDate <$> (requiredField' "commit" .= (Commit . branchCommittedDate)))
 
 newtype Commit = Commit {committedDate :: UTCTime}
@@ -223,12 +247,19 @@ data Schedule = Schedule
 instance HasCodec Schedule where
   codec =
     object "Schedule" $
-      Schedule <$> requiredField' "id" .= scheduleId
-        <*> requiredField' "description" .= scheduleDescription
-        <*> requiredField' "cron" .= scheduleCron
-        <*> requiredField' "cron_timezone" .= scheduleCronTimezone
-        <*> requiredField' "next_run_at" .= scheduleNextRunAt
-        <*> requiredField' "active" .= scheduleActive
+      Schedule
+        <$> requiredField' "id"
+        .= scheduleId
+        <*> requiredField' "description"
+        .= scheduleDescription
+        <*> requiredField' "cron"
+        .= scheduleCron
+        <*> requiredField' "cron_timezone"
+        .= scheduleCronTimezone
+        <*> requiredField' "next_run_at"
+        .= scheduleNextRunAt
+        <*> requiredField' "active"
+        .= scheduleActive
         <*> (ownerName <$> (requiredField' "owner" .= (Owner . scheduleOwner)))
 
 newtype Owner = Owner {ownerName :: Text}
@@ -326,13 +357,21 @@ data Pipeline = Pipeline
 instance HasCodec Pipeline where
   codec =
     object "Pipeline" $
-      Pipeline <$> requiredField' "id" .= pipelineId
-        <*> requiredField' "sha" .= pipelineSha
-        <*> requiredField' "duration" .= pipelineDuration
-        <*> requiredField' "queued_duration" .= pipelineQueuedDuration
-        <*> requiredField' "created_at" .= pipelineCreatedAt
-        <*> requiredField' "web_url" .= pipelineWebUrl
-        <*> requiredField' "source" .= pipelineSource
+      Pipeline
+        <$> requiredField' "id"
+        .= pipelineId
+        <*> requiredField' "sha"
+        .= pipelineSha
+        <*> requiredField' "duration"
+        .= pipelineDuration
+        <*> requiredField' "queued_duration"
+        .= pipelineQueuedDuration
+        <*> requiredField' "created_at"
+        .= pipelineCreatedAt
+        <*> requiredField' "web_url"
+        .= pipelineWebUrl
+        <*> requiredField' "source"
+        .= pipelineSource
 
 data Source = SourcePush | SourceWeb | SourceTrigger | SourceSchedule | SourceApi | SourceExternal | SourcePipeline | SourceChat | SourceWebide | SourceMergeRequestEvent | SourceExternalPullRequestEvent | SourceParentPipeline | SourceOndemandDastScan | SourceOndemandDastValidation
   deriving stock (Bounded, Enum, Eq, Show)
@@ -366,8 +405,11 @@ data CompactPipeline = CompactPipeline
 instance HasCodec CompactPipeline where
   codec =
     object "CompactPipeline" $
-      CompactPipeline <$> requiredField' "id" .= compactPipelineId
-        <*> requiredField' "sha" .= compactPipelineSha
+      CompactPipeline
+        <$> requiredField' "id"
+        .= compactPipelineId
+        <*> requiredField' "sha"
+        .= compactPipelineSha
 
 data PipelinesApi m a where
   GetPipeline :: ProjectId -> PipelineId -> PipelinesApi m (Either UpdateError Pipeline)
