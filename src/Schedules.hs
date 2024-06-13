@@ -25,7 +25,7 @@ showSchedulesForGroup :: (Member ProjectsApi r, Member SchedulesApi r, Member Wr
 showSchedulesForGroup gId = do
   write "=================================================="
   write $ "Listing the projects' schedules for Group " <> show gId
-  getProjects gId >>= \case
+  getProjectsForGroup gId >>= \case
     Left err -> write $ show err
     Right projects -> do
       results <- traverse getSchedulesForProject (sortOn name projects)

@@ -26,7 +26,7 @@ import Relude
 
 showMergeRequests :: (Member ProjectsApi r, Member MergeRequestApi r, Member Timer r, Member Writer r) => GroupId -> Sem r ()
 showMergeRequests gId = do
-  getProjects gId >>= \case
+  getProjectsForGroup gId >>= \case
     Left err -> write $ show err
     Right projects -> do
       let (mrEnabled, mrDisabled) = partition mergeRequestsEnabled projects

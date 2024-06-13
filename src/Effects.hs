@@ -20,8 +20,12 @@ module Effects
     GroupsApi (..),
     getAllGroups,
     Group (..),
+    UsersApi (..),
+    getAllUsers,
+    User (..),
     ProjectsApi (..),
-    getProjects,
+    getProjectsForGroup,
+    getProjectsForUser,
     getProject,
     hasCi,
     MergeRequestApi (..),
@@ -284,6 +288,26 @@ data Timer m a where
 
 makeSem ''Timer
 
+newtype UserId = UserId Int
+  deriving newtype (Show)
+  deriving (FromJSON) via (Autodocodec UserId)
+
+instance HasCodec UserId where
+  codec = dimapCodec UserId (\(UserId i) -> i) codec
+
+newtype User = User
+  { userId :: UserId
+  }
+  deriving (FromJSON) via (Autodocodec User)
+
+instance HasCodec User where
+  codec = object "User" $ User <$> requiredField' "id" .= userId
+
+data UsersApi m a where
+  GetAllUsers :: UsersApi m (Either UpdateError [User])
+
+makeSem ''UsersApi
+
 newtype Group = Group
   { groupId :: GroupId
   }
@@ -298,7 +322,8 @@ data GroupsApi m a where
 makeSem ''GroupsApi
 
 data ProjectsApi m a where
-  GetProjects :: GroupId -> ProjectsApi m (Either UpdateError [Project])
+  GetProjectsForGroup :: GroupId -> ProjectsApi m (Either UpdateError [Project])
+  GetProjectsForUser :: UserId -> ProjectsApi m (Either UpdateError [Project])
   GetProject :: ProjectId -> ProjectsApi m (Either UpdateError Project)
   HasCi :: ProjectId -> Ref -> ProjectsApi m (Either UpdateError Bool)
 

@@ -12,7 +12,7 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Interpreters (groupsApiToIO, projectsApiToIO, mergeRequestApiToIO, branchesApiToIO, pipelinesApiToIO, schedulesApiToIO, runM) where
+module Interpreters (usersApiToIO, groupsApiToIO, projectsApiToIO, mergeRequestApiToIO, branchesApiToIO, pipelinesApiToIO, schedulesApiToIO, runM) where
 
 import Burrito
 import Config.Types (ApiToken (..), BaseUrl (..))
@@ -31,6 +31,12 @@ import Network.URI (URI)
 import Polysemy
 import Relude
 
+usersApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> InterpreterFor UsersApi r
+usersApiToIO baseUrl apiToken = interpret $ \case
+  GetAllUsers -> do
+    let template = [uriTemplate|/api/v4/users|]
+    embed $ fetchDataPaginated apiToken baseUrl template []
+
 groupsApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> InterpreterFor GroupsApi r
 groupsApiToIO baseUrl apiToken = interpret $ \case
   GetAllGroups -> do
@@ -39,9 +45,12 @@ groupsApiToIO baseUrl apiToken = interpret $ \case
 
 projectsApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> InterpreterFor ProjectsApi r
 projectsApiToIO baseUrl apiToken = interpret $ \case
-  GetProjects groupId -> do
+  GetProjectsForGroup groupId -> do
     let template = [uriTemplate|/api/v4/groups/{groupId}/projects?include_subgroups=true&archived=false&with_shared=false|]
     embed $ fetchDataPaginated apiToken baseUrl template [("groupId", (stringValue . show) groupId)]
+  GetProjectsForUser userId -> do
+    let template = [uriTemplate|/api/v4/users/{userId}/projects?archived=false|]
+    embed $ fetchDataPaginated apiToken baseUrl template [("userId", (stringValue . show) userId)]
   GetProject project -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}|]
     embed $ fetchData baseUrl apiToken template [("projectId", (stringValue . show) project)]

@@ -9,7 +9,7 @@
 {-# LANGUAGE TupleSections #-}
 
 module Projects
-  ( showProjectsForAllGroups,
+  ( listAllProjectsMeta,
     showProjectsForGroup,
     enableSourceBranchDeletionAfterMerge,
     enableSuccessfulPipelineForMergeRequirement,
@@ -29,21 +29,26 @@ import qualified Effects as G
 import Polysemy
 import Relude hiding (pi)
 
-showProjectsForAllGroups :: (Member GroupsApi r, Member ProjectsApi r, Member Writer r) => Sem r ()
-showProjectsForAllGroups =
+listAllProjectsMeta :: (Member UsersApi r, Member GroupsApi r, Member ProjectsApi r, Member Writer r) => Sem r ()
+listAllProjectsMeta =
   getAllGroups >>= \case
     Left err -> write $ show err
     Right groups -> do
-      projects <- fmap join <$> (sequence <$> traverse (getProjects . G.groupId) groups)
-      case projects of
+      fmap join <$> (sequence <$> traverse (getProjectsForGroup . G.groupId) groups) >>= \case
         Left err -> write $ show err
-        Right ps -> writeMetaFormat ps
+        Right groupProjects -> do
+          getAllUsers >>= \case
+            Left err -> write $ show err
+            Right users -> do
+              fmap join <$> (sequence <$> traverse (getProjectsForUser . userId) users) >>= \case
+                Left err -> write $ show err
+                Right userProjects -> writeMetaFormat $ groupProjects <> userProjects
 
 showProjectsForGroup :: (Member ProjectsApi r, Member Writer r) => GroupId -> Sem r ()
 showProjectsForGroup gId = do
   write "=================================================="
   write $ "Listing the projects for Group " <> show gId
-  getProjects gId >>= \case
+  getProjectsForGroup gId >>= \case
     Left err -> write $ show err
     Right projects -> do
       write . toText $ tableReport (sortOn (toLower . getProjectName . name) projects)
@@ -124,7 +129,7 @@ enableAllDiscussionsResolvedForMergeRequirement execution gId =
 
 listProjectsMetaForGroup :: (Member ProjectsApi r, Member Writer r) => GroupId -> Sem r ()
 listProjectsMetaForGroup gId =
-  getProjects gId >>= \case
+  getProjectsForGroup gId >>= \case
     Left err -> write $ show err
     Right projects -> writeMetaFormat projects
 
@@ -135,7 +140,7 @@ runProcessor :: (Member ProjectsApi r, Member Writer r) => Processor r -> Sem r 
 runProcessor Processor {..} = do
   write "=================================================="
   write $ title groupId
-  getProjects groupId >>= \case
+  getProjectsForGroup groupId >>= \case
     Left err -> write $ show err
     Right projects -> do
       res <- traverse (process runIf action) projects

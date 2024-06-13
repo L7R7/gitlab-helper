@@ -32,7 +32,7 @@ showBranchesForGroup gId = do
   write "  ✔ - the branch is merged"
   write "  ✗ - the branch is stale (older than 90 days)"
   write "  ⚬ - the branch is protected"
-  getProjects gId >>= \case
+  getProjectsForGroup gId >>= \case
     Left err -> write $ show err
     Right projects -> do
       results <- traverse (getBranchesForProject >=> printResult) projects
