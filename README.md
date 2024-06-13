@@ -40,6 +40,8 @@ gitlab-helper-exe update-merge-requests --user-id <user-id> rebase --execute
 After that, continue with the next bunch of similar MRs.
 Or with some other meaningful work.
 
+If you want to see the full list of possibilities, the [help text](test_resources/help-text-mrs.txt) (`gitlab-helper-exe update-merge-requests --help`) is your friend.
+
 ## Configuration
 
 The app will look at several places for your configuration, in the following order:
