@@ -56,19 +56,14 @@ stack install
 
 Optionally, install autocompletion:
 
-If you use `zsh`:
+If you use `zsh`, put this in your `.zshrc` (see [here](https://stackoverflow.com/a/61861568/5247502)):
 
 ```shell script
-source <(gitlab-helper-exe --zsh-completion-script `which gitlab-helper-exe`)
+gitlab-helper-exe --zsh-completion-script $(which gitlab-helper-exe) > ~/.config/zsh/completions/_gitlab-helper-exe
+fpath=($HOME/.config/zsh/completions $fpath)
 ```
 
-You may have to fix `/proc/self/fd/15:compadd:27: can only be called from completion function` errors:
-
-```shell script
-autoload -Uz compinstall && compinstall
-```
-
-Or, if you use `bash`:
+If that doesn't work or if you use `bash`:
 
 ```shell script
 source <(gitlab-helper-exe --bash-completion-script `which gitlab-helper-exe`)
