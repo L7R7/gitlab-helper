@@ -24,6 +24,8 @@ module Effects
     MergeRequestApi (..),
     getOpenMergeRequests,
     enableSourceBranchDeletionAfterMrMerge,
+    setSuccessfulPipelineRequirementForMerge,
+    setResolvedDiscussionsRequirementForMerge,
     BranchesApi (..),
     getBranches,
     PipelinesApi (..),
@@ -194,6 +196,8 @@ makeSem ''ProjectsApi
 data MergeRequestApi m a where
   GetOpenMergeRequests :: ProjectId -> MergeRequestApi m (Either UpdateError [MergeRequest])
   EnableSourceBranchDeletionAfterMrMerge :: ProjectId -> MergeRequestApi m (Either UpdateError ())
+  SetSuccessfulPipelineRequirementForMerge :: ProjectId -> MergeRequestApi m (Either UpdateError ())
+  SetResolvedDiscussionsRequirementForMerge :: ProjectId -> MergeRequestApi m (Either UpdateError ())
 
 makeSem ''MergeRequestApi
 

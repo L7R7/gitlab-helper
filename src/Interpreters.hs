@@ -80,6 +80,12 @@ mergeRequestApiToIO baseUrl apiToken = interpret $ \case
   EnableSourceBranchDeletionAfterMrMerge project -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}?remove_source_branch_after_merge=true|]
     embed $ void <$> fetchData' @Project baseUrl apiToken (setRequestMethod "PUT") template [("projectId", (stringValue . show) project)]
+  SetSuccessfulPipelineRequirementForMerge project -> do
+    let template = [uriTemplate|/api/v4/projects/{projectId}?only_allow_merge_if_pipeline_succeeds=true|]
+    embed $ void <$> fetchData' @Project baseUrl apiToken (setRequestMethod "PUT") template [("projectId", (stringValue . show) project)]
+  SetResolvedDiscussionsRequirementForMerge project -> do
+    let template = [uriTemplate|/api/v4/projects/{projectId}?only_allow_merge_if_all_discussions_are_resolved=true|]
+    embed $ void <$> fetchData' @Project baseUrl apiToken (setRequestMethod "PUT") template [("projectId", (stringValue . show) project)]
 
 branchesApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> InterpreterFor BranchesApi r
 branchesApiToIO baseUrl apiToken = interpret $ \case
