@@ -5,4 +5,4 @@ packages:
 
 extra-deps: []
 
-system-ghc: true
+system-ghc: false
