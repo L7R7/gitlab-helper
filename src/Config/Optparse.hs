@@ -78,4 +78,4 @@ mergeRequestUpdatActionParser =
 
 executionParser :: Parser Execution
 executionParser =
-  (\b -> if b then Execute else DryRun) <$> switch (long "execute" <> short 'x' <> help "whether to actually change the config via the API. By default, only a dry run will be performed")
+  (\b -> if b then Execute else DryRun) <$> switch (long "execute" <> short 'x' <> help "whether to actually change the world via the API. By default, only a dry run will be performed")
