@@ -48,13 +48,17 @@ There are a couple of interesting details to this option:
 
 If you don't have a working Haskell toolchain on your machine yet, I recommend using [https://www.haskell.org/ghcup/](https://www.haskell.org/ghcup/) to install a recent version of `stack` (which solves similar problems like `sbt` does for Scala, or Maven for Java).
 
+### Install
+
 To build the executable and make it available on your path:
 
 ```shell script
 stack install
 ```
 
-Optionally, install autocompletion:
+When you do that for the first time, it will take a while.
+
+### Optional: Configure autocompletion
 
 If you use `zsh`, put this in your `.zshrc` (see [here](https://stackoverflow.com/a/61861568/5247502)):
 
@@ -68,6 +72,8 @@ If that doesn't work or if you use `bash`:
 ```shell script
 source <(gitlab-helper-exe --bash-completion-script `which gitlab-helper-exe`)
 ```
+
+### Run
 
 See what the tool can do for you:
 
