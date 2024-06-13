@@ -59,7 +59,7 @@ commandParser =
 mergeRequestUpdatActionParser :: Parser Command
 mergeRequestUpdatActionParser =
   UpdateMergeRequests
-    <$> argument (eitherReader f) (metavar "ACTION" <> help "The action to perform. Must be one of \"rebase\", \"merge\"")
+    <$> argument (eitherReader f) (metavar "ACTION" <> help "The action to perform. Must be one of \"rebase\", \"merge\", \"draft\", \"ready\"")
     <*> option (AuthorIs <$> auto) (short 'u' <> long "user-id" <> help "only MRs opened by the user with this ID are taken into account" <> metavar "ID")
     <*> optional (SearchTerm <$> strOption (short 's' <> long "search" <> help "Optional. a string that must appear in the MR description or title" <> metavar "TXT"))
     <*> executionParser
