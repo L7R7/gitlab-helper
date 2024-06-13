@@ -17,7 +17,7 @@
 #
 # resolver: ./custom-snapshot.yaml
 # resolver: https://example.com/snapshots/2018-01-01.yaml
-resolver: lts-16.31
+resolver: lts-17.2
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -46,7 +46,9 @@ extra-deps:
   - polysemy-1.4.0.0@sha256:0245a046eaf936557d4208b5a355df1a20799c9e274f91fa889ab2644ecbabae,6541
   - polysemy-plugin-0.2.5.1@sha256:61c6c0aad2852377aa5d5a8f9639a437905e3a6f0e2a99a41e96fb231dc86836,2952
 
-allow-newer: true
+  - Cabal-3.0.2.0@sha256:f45ee078a8529d1ad3993767345ac83304c7f2ff5eec02c455a1dc200ad22c67,26714
+  - hvega-0.9.1.0@sha256:4dd359480aba8ddb40f4905222fcc196618a7ff50c1b909bb0b5b8ee09e7c295,10921
+
 # Override default flag values for local packages and extra-deps
 # flags: {}
 

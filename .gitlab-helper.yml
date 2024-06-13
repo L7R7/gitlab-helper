@@ -1,0 +1,4 @@
+config:
+  baseUrl: 'https://gitlab.breuni.de'
+  groupId: 288
+

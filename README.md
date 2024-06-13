@@ -32,3 +32,6 @@ stack run
 ```
 
 The app will start only if all properties are set in one of the sources.
+
+The repository contains a config file that sets reasonable defaults, see [.gitlab-helper.yaml](.gitlab-helper.yml).
+
