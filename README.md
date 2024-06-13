@@ -6,13 +6,22 @@ Gets you info from the Gitlab API. Currently listing the branches of all project
 
 The app will look at several places for your configuration, in the following order:
 
-1. `~/.gitlab-helper.yml`
-1. `${PWD}/.gitlab-helper.yml` (the directory in which the executable is started)
+1. command-line parameters
 1. environment variables
+1. `${PWD}/.gitlab-helper.yml` (the directory in which the executable is started)
+1. `~/.gitlab-helper.yml`
 
-If more than one source defines a configuration property, the last one will be used.
+If an option is set in multiple sources, the first one wins.
 
-The configuration files look like this:
+For the available command-line options, use `--help` to get the full list of options.
+
+The available environmnent variables are:
+
+* `HB_BASE_URL`: Base URL of the Gitlab instance you're working with
+* `HB_GROUP_ID`: ID of the group you're interested in
+* `HB_API_TOKEN`: API Token to use for authorizing requests against the Gitlab API. `api` scope is required.
+
+The structure of the configuration files looks like this:
 
 ```yaml
 config:
@@ -20,12 +29,6 @@ config:
   apiToken: 'apitoken'
   groupId: 123
 ```
-
-Or the following env variables:
-
-* `HB_BASE_URL`: Base URL of the Gitlab instance you're working with
-* `HB_GROUP_ID`: ID of the group you're interested in
-* `HB_API_TOKEN`: API Token to use for authorizing requests against the Gitlab API. `api` scope is required.
 
 To build the executable and make it available on your path:
 
