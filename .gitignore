@@ -7,4 +7,5 @@ target/
 *~
 .hie/
 tags
+gitlab-helper-exe
 
