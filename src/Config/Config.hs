@@ -16,7 +16,7 @@ parseConfig :: IO (Either (NonEmpty String) Config)
 parseConfig = do
   -- todo: wenn man hier ein kluges fold macht, könnte man short-circuiten
   --       und ggf gar nicht erst versuchen eine source zu lesen wenn man sie eh nicht braucht
-  mkConfig <$> sequence [readPartialOptionsFromHomeDir, readPartialOptionsFromLocalDir, parseFromEnv, parseConfigFromOptions]
+  mkConfig <$> sequence [parseConfigFromOptions, parseFromEnv, readPartialOptionsFromLocalDir, readPartialOptionsFromHomeDir]
 
 mkConfig :: [PartialConfig (Compose Maybe S.First)] -> Either (NonEmpty String) Config
 mkConfig = mkConfig' . mconcat
