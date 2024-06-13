@@ -59,26 +59,22 @@ process project = do
 
 data Result = AlreadySet | Set | Error deriving (Bounded, Enum, Eq, Ord, Show)
 
-newtype ProjectCount = ProjectCount Int
+newtype Count a = Count Int
   deriving (Semigroup) via (Sum Int)
   deriving (Monoid) via (Sum Int)
 
-newtype SourceBranchDeletionEnabled = SourceBranchDeletionEnabled Int
-  deriving (Semigroup) via (Sum Int)
-  deriving (Monoid) via (Sum Int)
+data ProjectCount
 
-newtype SourceBranchDeletionDisabled = SourceBranchDeletionDisabled Int
-  deriving (Semigroup) via (Sum Int)
-  deriving (Monoid) via (Sum Int)
+data SourceBranchDeletionEnabled
 
-newtype HasNoDefaultBranch = HasNoDefaultBranch Int
-  deriving (Semigroup) via (Sum Int)
-  deriving (Monoid) via (Sum Int)
+data SourceBranchDeletionDisabled
 
-type Summary = (ProjectCount, SourceBranchDeletionEnabled, SourceBranchDeletionDisabled, HasNoDefaultBranch)
+data HasNoDefaultBranch
+
+type Summary = (Count ProjectCount, Count SourceBranchDeletionEnabled, Count SourceBranchDeletionDisabled, Count HasNoDefaultBranch)
 
 writeSummary :: (Member Writer r) => Summary -> Sem r ()
-writeSummary (ProjectCount numProjects, SourceBranchDeletionEnabled branchDeletionEnabled, SourceBranchDeletionDisabled branchDeletionDisabled, HasNoDefaultBranch hasNoDefaultBranch) = do
+writeSummary (Count numProjects, Count branchDeletionEnabled, Count branchDeletionDisabled, Count hasNoDefaultBranch) = do
   write ""
   write $ formatWith [bold] "=== Summary"
   write $ "Anzahl Projekte: " <> show numProjects
@@ -87,9 +83,9 @@ writeSummary (ProjectCount numProjects, SourceBranchDeletionEnabled branchDeleti
   write $ "Projekte ohne default branch: " <> show hasNoDefaultBranch
 
 summarizeSingle :: Project -> Summary
-summarizeSingle project = (ProjectCount 1, sourceBranchDeletionEnabled, sourceBranchDeletionDisabled, noDefaultBranch)
+summarizeSingle project = (Count 1, sourceBranchDeletionEnabled, sourceBranchDeletionDisabled, noDefaultBranch)
   where
-    sourceBranchDeletionEnabled = SourceBranchDeletionEnabled $ if branchDeletionEnabled then 1 else 0
-    sourceBranchDeletionDisabled = SourceBranchDeletionDisabled $ if branchDeletionEnabled then 0 else 1
+    sourceBranchDeletionEnabled = Count $ if branchDeletionEnabled then 1 else 0
+    sourceBranchDeletionDisabled = Count $ if branchDeletionEnabled then 0 else 1
     branchDeletionEnabled = or (removeSourceBranchAfterMerge project)
-    noDefaultBranch = HasNoDefaultBranch $ if isJust (defaultBranch project) then 0 else 1
+    noDefaultBranch = Count $ if isJust (defaultBranch project) then 0 else 1
