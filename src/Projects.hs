@@ -26,6 +26,7 @@ import Data.Aeson (encode)
 import qualified Data.Map as M
 import Data.Text (toLower)
 import Effects
+import Gitlab.Client (UpdateError)
 import Gitlab.Group (Group)
 import qualified Gitlab.Group as G
 import Gitlab.Lib (EnabledDisabled (..), Id (..), Name (..), Ref (..))

@@ -4,6 +4,7 @@ import Barbies (TraversableB (btraverse))
 import Config.Types
 import Data.List.Split
 import qualified Data.Semigroup as S (First (..))
+import Gitlab.Client (ApiToken (..), BaseUrl (..))
 import Gitlab.Lib (Id (..))
 import Network.URI (URI, parseAbsoluteURI)
 import Options.Applicative

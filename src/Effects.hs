@@ -47,7 +47,6 @@ module Effects
     getSuccessfulPushPipelines,
     SchedulesApi (..),
     getSchedules,
-    UpdateError (..),
     Duration (..),
     Sha (..),
     Source (..),
@@ -65,12 +64,11 @@ import Data.Scientific
 import qualified Data.Text as T hiding (partition)
 import Data.Time (UTCTime)
 import Gitlab.Branch
+import Gitlab.Client (UpdateError)
 import Gitlab.Group
 import Gitlab.Lib (Id (..), Ref (..))
 import Gitlab.MergeRequest
 import Gitlab.Project
-import Network.HTTP.Client.Conduit (HttpException)
-import Network.HTTP.Simple (JSONException)
 import Network.URI
 import Polysemy
 import Relude
@@ -108,13 +106,6 @@ newtype Owner = Owner {ownerName :: Text}
 
 instance HasCodec Owner where
   codec = object "Owner" $ Owner <$> requiredField' "name" .= ownerName
-
-data UpdateError
-  = HttpError HttpException
-  | ExceptionError SomeException
-  | ConversionError JSONException
-  | ParseUrlError Text
-  deriving stock (Show)
 
 data Writer m a where
   Write :: Text -> Writer m ()

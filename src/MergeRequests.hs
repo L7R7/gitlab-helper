@@ -20,6 +20,7 @@ import Data.List (partition)
 import qualified Data.Text as T (intercalate)
 import Data.Time hiding (getCurrentTime)
 import Effects
+import Gitlab.Client (UpdateError)
 import Gitlab.Group (Group)
 import Gitlab.Lib (Id)
 import Gitlab.MergeRequest

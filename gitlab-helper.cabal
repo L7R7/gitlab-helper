@@ -59,11 +59,10 @@ library
     , directory
     , either
     , envparse
+    , gitlab-api-http-client
     , gitlab-api-types
     , http-conduit
-    , http-link-header
     , http-types
-    , lens
     , network-uri
     , optparse-applicative
     , polysemy >=1.5.0.0

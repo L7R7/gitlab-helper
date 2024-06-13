@@ -6,8 +6,6 @@
 
 module Config.Types
   ( Config (..),
-    BaseUrl (..),
-    ApiToken (..),
     PartialConfig (..),
     Command (..),
     MergeRequestUpdateAction (..),
@@ -20,11 +18,10 @@ module Config.Types
 where
 
 import Barbies
-import Data.Aeson (FromJSON (..))
+import Gitlab.Client (ApiToken, BaseUrl)
 import Gitlab.Group (Group)
 import Gitlab.Lib (Id (..))
 import Gitlab.Project (Project)
-import Network.URI (URI)
 import Options.Applicative
 import Relude hiding (Reader)
 
@@ -52,10 +49,6 @@ instance (Alternative f) => Semigroup (PartialConfig f) where
 
 instance (Alternative f) => Monoid (PartialConfig f) where
   mempty = bpure empty
-
-newtype BaseUrl = BaseUrl URI deriving newtype (Show)
-
-newtype ApiToken = ApiToken Text deriving newtype (FromJSON, Show)
 
 data Command
   = ShowBranches

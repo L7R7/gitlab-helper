@@ -17,6 +17,7 @@ where
 
 import Colourista.Pure
 import Effects
+import Gitlab.Client (UpdateError)
 import Gitlab.Group (Group)
 import Gitlab.Lib (Id, Name (..))
 import Gitlab.Project

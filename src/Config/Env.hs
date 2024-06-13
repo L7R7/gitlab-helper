@@ -1,9 +1,10 @@
 module Config.Env (parseFromEnv) where
 
 import Barbies (TraversableB (btraverse))
-import Config.Types (ApiToken (ApiToken), BaseUrl (BaseUrl), PartialConfig (PartialConfig))
+import Config.Types (PartialConfig (PartialConfig))
 import qualified Data.Semigroup as S (First (..))
 import qualified Env as E
+import Gitlab.Client (ApiToken (ApiToken), BaseUrl (BaseUrl))
 import Gitlab.Lib (Id (..))
 import Network.URI (URI, parseAbsoluteURI)
 import Relude hiding (Reader)
