@@ -27,11 +27,24 @@ Or the following env variables:
 * `HB_GROUP_ID`: ID of the group you're interested in
 * `HB_API_TOKEN`: API Token to use for authorizing requests against the Gitlab API. `api` scope is required.
 
+To build the executable and make it available on your path:
+
 ```shell script
-stack run
+stack install
+```
+
+Install autocompletion:
+
+```shell script
+source <(gitlab-helper-exe --bash-completion-script `which gitlab-helper-exe`)
+```
+
+See what the tool can do for you:
+
+```shell script
+gitlab-helper-exe -h
 ```
 
 The app will start only if all properties are set in one of the sources.
 
 The repository contains a config file that sets reasonable defaults, see [.gitlab-helper.yaml](.gitlab-helper.yml).
-
