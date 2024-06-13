@@ -68,7 +68,7 @@ mergeRequestApiToIO baseUrl apiToken = interpret $ \case
     embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) project)]
   EnableSourceBranchDeletionAfterMrMerge project -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}?remove_source_branch_after_merge=true|]
-    embed $ void <$> fetchDataX @Project baseUrl apiToken (setRequestMethod "PUT") template [("projectId", (stringValue . show) project)]
+    embed $ void <$> fetchData' @Project baseUrl apiToken (setRequestMethod "PUT") template [("projectId", (stringValue . show) project)]
 
 branchesApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> Sem (BranchesApi ': r) a -> Sem r a
 branchesApiToIO baseUrl apiToken = interpret $ \case
@@ -92,9 +92,9 @@ schedulesApiToIO baseUrl apiToken = interpret $ \case
     embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) project)]
 
 fetchDataPaginated :: (FromJSON a) => ApiToken -> BaseUrl -> Template -> [(String, Value)] -> IO (Either UpdateError [a])
-fetchDataPaginated apiToken baseUrl template vars = do
-  try (parseRequest (show baseUrl <> "/" <> expand vars template)) >>= \case
-    (Left invalidUrl) -> pure $ Left $ HttpError invalidUrl
+fetchDataPaginated apiToken baseUrl template vars =
+  case createRequest baseUrl apiToken id template vars of
+    Left invalidUrl -> pure $ Left invalidUrl
     Right request -> fetchDataPaginated' apiToken template request []
 
 fetchDataPaginated' :: (FromJSON a) => ApiToken -> Template -> Request -> [a] -> IO (Either UpdateError [a])
@@ -107,32 +107,31 @@ fetchDataPaginated' apiToken template request acc = do
       Right as -> maybe (pure $ Right (as <> acc)) (\req -> fetchDataPaginated' apiToken template req (as <> acc)) next
   pure $ mapLeft removeApiTokenFromUpdateError $ join $ mapLeft HttpError result
 
-fetchDataX :: (FromJSON a) => BaseUrl -> ApiToken -> (Request -> Request) -> Template -> [(String, Value)] -> IO (Either UpdateError a)
-fetchDataX baseUrl apiToken reqTransformer template vars = do
-  try (parseRequest (show baseUrl <> "/" <> expand vars template)) >>= \case
-    Left invalidUrl -> pure $ Left $ HttpError invalidUrl
-    Right request -> fetchData' (reqTransformer . setTimeout . addToken apiToken $request)
+fetchData :: (FromJSON a) => BaseUrl -> ApiToken -> Template -> [(String, Value)] -> IO (Either UpdateError a)
+fetchData baseUrl apiToken = fetchData' baseUrl apiToken id
 
-bar :: BaseUrl -> ApiToken -> (Request -> Request) -> Template -> [(String, Value)] -> Either UpdateError Request
-bar baseUrl apiToken reqTransformer template vars =
+type RequestTransformer = Request -> Request
+
+fetchData' :: (FromJSON a) => BaseUrl -> ApiToken -> RequestTransformer -> Template -> [(String, Value)] -> IO (Either UpdateError a)
+fetchData' baseUrl apiToken reqTransformer template vars =
+  case createRequest baseUrl apiToken reqTransformer template vars of
+    Left invalidUrl -> pure $ Left invalidUrl
+    Right request -> do
+      result <- try (mapLeft ConversionError . getResponseBody <$> httpJSONEither request)
+      pure $ mapLeft removeApiTokenFromUpdateError $ join $ mapLeft HttpError result
+
+createRequest :: BaseUrl -> ApiToken -> RequestTransformer -> Template -> [(String, Value)] -> Either UpdateError Request
+createRequest baseUrl apiToken reqTransformer template vars =
   bimap
     ExceptionError
     (reqTransformer . setTimeout . addToken apiToken)
     (parseRequest (show baseUrl <> "/" <> expand vars template))
 
-fetchData :: (FromJSON a) => BaseUrl -> ApiToken -> Template -> [(String, Value)] -> IO (Either UpdateError a)
-fetchData baseUrl apiToken = fetchDataX baseUrl apiToken id
-
-fetchData' :: (FromJSON a) => Request -> IO (Either UpdateError a)
-fetchData' request = do
-  result <- try (mapLeft ConversionError . getResponseBody <$> httpJSONEither request)
-  pure $ mapLeft removeApiTokenFromUpdateError $ join $ mapLeft HttpError result
-
 setTimeout :: RequestTransformer
 setTimeout request = request {responseTimeout = responseTimeoutMicro 5000000}
 
 addToken :: ApiToken -> RequestTransformer
-addToken apiToken = setRequestHeader "PRIVATE-TOKEN" [encodeUtf8 (coerce apiToken :: Text)]
+addToken (ApiToken apiToken) = setRequestHeader "PRIVATE-TOKEN" [encodeUtf8 apiToken]
 
 parseNextRequest :: Response a -> Maybe Request
 parseNextRequest response = parseNextHeader response >>= rightToMaybe . requestFromURI
