@@ -9,7 +9,6 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
-{-# LANGUAGE TypeApplications #-}
 
 module Branches
   ( showBranchesForProject,
@@ -27,7 +26,7 @@ import Relude
 showBranchesForProject :: (Member ProjectsApi r, Member BranchesApi r, Member Timer r, Member Writer r) => GroupId -> Sem r ()
 showBranchesForProject gId = do
   write "=================================================="
-  write $ "Listing the projects' branches for Group" <> show gId
+  write $ "Listing the projects' branches for Group " <> show gId
   write "Only those projects that have branches other than the default branch will be printed"
   write "The icons at the start of the line indicate the following:"
   write "  ✔ - the branch is merged"

@@ -35,7 +35,7 @@ parseConfigOrDie =
         <*> (ApiToken <$> var (str <=< nonempty) "HB_API_TOKEN" (help "API Token to use for authorizing requests against the Gitlab API. `api` scope is required."))
     )
   where
-    headerText = "mr-bot. Get all open merge requests for the projects in a group"
+    headerText = "== gitlab-helper =="
 
 absoluteURIFromEnv :: Reader Error URI
 absoluteURIFromEnv s = maybeToRight (UnreadError "") (parseAbsoluteURI s)

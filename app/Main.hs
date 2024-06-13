@@ -1,12 +1,15 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module Main where
 
+import Branches (showBranchesForProject)
 import Config (Config (..), parseConfigOrDie)
 import Effects (ProjectId (..))
 import Interpreters
 import Pipelines
 import Util
+import Prelude
 
 main :: IO ()
 main =
@@ -18,7 +21,9 @@ main =
       . projectsApiToIO baseUrl apiToken
       . mergeRequestApiToIO baseUrl apiToken
       . pipelinesApiToIO baseUrl apiToken
-      $ showPipelineDurationsForProject (ProjectId 795)
+      . writeToFileToIO
+      --      $ showPipelineDurationsForProject (ProjectId 795) -- 818) -- 795)
 
---      $ showBranchesForProject groupId
+      $ showBranchesForProject groupId
+
 --      $ evaluateProjects groupId

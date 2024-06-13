@@ -6,53 +6,80 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Interpreters (projectsApiToIO, mergeRequestApiToIO, branchesApiToIO, pipelinesApiToIO, runM) where
+module Interpreters (projectsApiToIO, mergeRequestApiToIO, branchesApiToIO, pipelinesApiToIO, writeToFileToIO, runM) where
 
 import Burrito
 import Config (ApiToken (..), BaseUrl)
 import Control.Exception.Base (try)
 import Control.Lens (Lens', Prism', Traversal', filtered, lens, prism', set, _1, _2)
 import Data.Aeson.Types (FromJSON)
+import qualified Data.DateTime as DT
 import Data.Either.Combinators (mapLeft)
 import Effects
+import Graphics.Vega.VegaLite
 import Network.HTTP.Client.Conduit (HttpExceptionContent, requestFromURI, requestHeaders, responseTimeout, responseTimeoutMicro)
 import Network.HTTP.Link.Parser (parseLinkHeaderBS)
 import Network.HTTP.Link.Types (Link (..), LinkParam (Rel), href)
 import Network.HTTP.Simple
 import Network.HTTP.Types.Header (HeaderName)
 import Network.URI (URI)
+import Pipelines
 import Polysemy
 import Relude
+
+writeToFileToIO :: Member (Embed IO) r => Sem (WriteToFile ': r) a -> Sem r a
+writeToFileToIO = interpret $ \case
+  WriteResult results -> embed $ toHtmlFile "test.html" $ plotTimeline results
+
+plotTimeline :: [PipelineWithDuration] -> VegaLite
+plotTimeline entries =
+  let dates = map (toText . DT.formatDateTime "%Y-%m-%d-%H-%M" . Pipelines.createdAt) entries
+      dat =
+        dataFromColumns [Parse [("createdAt", FoUtc "%Y-%m-%d-%H-%M")]]
+          . dataColumn "createdAt" (Strings dates) -- TODO: investigate hvega DateTime datatype
+          . dataColumn "duration" (Strings (map (toText . duration) entries)) -- TODO: investigate hvega DateTime datatype
+      enc =
+        encoding
+          . position X [PName "createdAt", PmType Temporal, PTimeUnit YearMonthDateHoursMinutesSeconds, PAxis [AxTitle "Date (Days)"]]
+          . position Y [PName "duration", PmType Quantitative, PAxis [AxTitle "Pipeline duration"]]
+          . row [FName "createdAt", FmType Temporal, FTimeUnit (Utc Year)]
+   in toVegaLite
+        [ dat [],
+          mark Point [MFilled True, MTooltip TTEncoding],
+          enc [],
+          width 1600,
+          height 400
+        ]
 
 projectsApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> Sem (ProjectsApi ': r) a -> Sem r a
 projectsApiToIO baseUrl apiToken = interpret $ \case
   GetProjects groupId -> do
     let template = [uriTemplate|/api/v4/groups/{groupId}/projects?include_subgroups=true&archived=false|]
     embed $ fetchDataPaginated apiToken baseUrl template [("groupId", (stringValue . show) groupId)]
-  GetProject projectId -> do
+  GetProject project -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}|]
-    embed $ fetchData baseUrl apiToken template [("projectId", (stringValue . show) projectId)]
+    embed $ fetchData baseUrl apiToken template [("projectId", (stringValue . show) project)]
 
 mergeRequestApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> Sem (MergeRequestApi ': r) a -> Sem r a
 mergeRequestApiToIO baseUrl apiToken = interpret $ \case
-  GetOpenMergeRequests projectId -> do
+  GetOpenMergeRequests project -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}/merge_requests?state=opened|]
-    embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) projectId)]
+    embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) project)]
 
 branchesApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> Sem (BranchesApi ': r) a -> Sem r a
 branchesApiToIO baseUrl apiToken = interpret $ \case
-  GetBranches projectId -> do
+  GetBranches project -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}/repository/branches|]
-    embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) projectId)]
+    embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) project)]
 
 pipelinesApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> Sem (PipelinesApi ': r) a -> Sem r a
 pipelinesApiToIO baseUrl apiToken = interpret $ \case
-  GetPipeline projectId pipelineId -> do
+  GetPipeline project pipeline -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines/{pipelineId}|]
-    embed $ fetchData baseUrl apiToken template [("projectId", (stringValue . show) projectId), ("pipelineId", (stringValue . show) pipelineId)]
-  GetSuccessfulPipelines projectId ref -> do
+    embed $ fetchData baseUrl apiToken template [("projectId", (stringValue . show) project), ("pipelineId", (stringValue . show) pipeline)]
+  GetSuccessfulPipelines pId ref -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines?ref=master&status={status}&updated_after=2019-06-09T08:00:00Z|]
-    embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) projectId), ("ref", (stringValue . show) ref), ("status", stringValue "success")]
+    embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) pId), ("ref", (stringValue . show) ref), ("status", stringValue "success")]
 
 fetchDataPaginated :: (FromJSON a) => ApiToken -> BaseUrl -> Template -> [(String, Value)] -> IO (Either UpdateError [a])
 fetchDataPaginated apiToken baseUrl template vars = do

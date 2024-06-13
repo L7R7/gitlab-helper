@@ -10,7 +10,34 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Effects where
+module Effects
+  ( Writer (..),
+    write,
+    Timer (..),
+    getCurrentTime,
+    ProjectsApi (..),
+    getProjects,
+    getProject,
+    MergeRequestApi (..),
+    getOpenMergeRequests,
+    BranchesApi (..),
+    getBranches,
+    PipelinesApi (..),
+    getPipeline,
+    getSuccessfulPipelines,
+    UpdateError (..),
+    Branch (..),
+    Project (..),
+    MergeRequest (..),
+    Duration (..),
+    Sha (..),
+    Pipeline (..),
+    PipelineId (..),
+    Ref (..),
+    ProjectId (..),
+    CompactPipeline (..),
+  )
+where
 
 import Config
 import Data.Aeson (FromJSON (..), ToJSON (..), genericParseJSON, withObject, withText, (.:))
@@ -45,7 +72,7 @@ instance FromJSON Project where
       <*> (p .: "default_branch")
 
 instance FromJSON URI where
-  parseJSON = withText "URI" $ \v -> maybe (fail "Bad URI") pure (parseURI (T.unpack v))
+  parseJSON = withText "URI" $ \v -> maybe (fail "Bad URI") pure (parseURI (toString v))
 
 data MergeRequest = MergeRequest
   { mergeRequestId :: MergeRequestId,
@@ -119,6 +146,9 @@ makeSem ''BranchesApi
 newtype PipelineId = PipelineId Int deriving newtype (Eq, FromJSON, Num, Ord, Show)
 
 newtype Duration = Duration Int deriving newtype (FromJSON, Show)
+
+instance ToText Duration where
+  toText (Duration duration) = show duration
 
 newtype Sha = Sha T.Text deriving newtype (FromJSON, Show)
 

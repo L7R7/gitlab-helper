@@ -6,11 +6,11 @@ cabal-version: 1.12
 --
 -- hash: 8308d481a56f764cc4585bde956521388ef4e1ec16490c023421abb44a2c3b27
 
-name:           mr-bot
+name:           gitlab-helper
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/L7R7/mr-bot#readme>
-homepage:       https://github.com/L7R7/mr-bot#readme
-bug-reports:    https://github.com/L7R7/mr-bot/issues
+description:    Please see the README on GitHub at <https://github.com/L7R7/gitlab-helper#readme>
+homepage:       https://github.com/L7R7/gitlab-helper#readme
+bug-reports:    https://github.com/L7R7/gitlab-helper/issues
 author:         Leonhard Riedißer
 maintainer:     leo008180@googlemail.com
 copyright:      2020 Leonhard Riedißer
@@ -23,7 +23,7 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/L7R7/mr-bot
+  location: https://github.com/L7R7/gitlab-helper
 
 library
   exposed-modules:
@@ -34,8 +34,9 @@ library
     , Lib
     , Pipelines
     , Util
+    , Viz
   other-modules:
-      Paths_mr_bot
+      Paths_gitlab_helper
   hs-source-dirs:
       src
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -Wmissing-export-lists -fno-warn-orphans -fwrite-ide-info -hiedir=.hie -O2 -flate-specialise -fspecialise-aggressively -frefinement-level-hole-fits=3
@@ -47,14 +48,16 @@ library
     , bytestring
     , colourista
     , containers
+    , datetime
     , either
     , envparse
     , http-conduit
     , http-link-header
     , http-types
+    , hvega
     , lens
     , network-uri
-    , polysemy
+    , polysemy >= 1.4.0.0
     , polysemy-plugin
     , relude
     , text
@@ -62,27 +65,27 @@ library
   default-language: Haskell2010
   default-extensions: NoImplicitPrelude
 
-executable mr-bot-exe
+executable gitlab-helper-exe
   main-is: Main.hs
   other-modules:
-      Paths_mr_bot
+      Paths_gitlab_helper
   hs-source-dirs:
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
-    , mr-bot
+    , gitlab-helper
   default-language: Haskell2010
 
-test-suite mr-bot-test
+test-suite gitlab-helper-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      Paths_mr_bot
+      Paths_gitlab_helper
   hs-source-dirs:
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
-    , mr-bot
+    , gitlab-helper
   default-language: Haskell2010

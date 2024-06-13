@@ -1,3 +1,3 @@
-# Changelog for mr-bot
+# Changelog for gitlab-helper
 
 ## Unreleased changes

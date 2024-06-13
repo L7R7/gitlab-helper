@@ -1,27 +1,43 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell #-}
 
-module Pipelines (showPipelineDurationsForProject) where
+module Pipelines where
+
+--(showPipelineDurationsForProject, PipelineWithDuration (..))
 
 import Data.Time (UTCTime)
 import Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds)
 import Effects
 import Network.URI (URI)
 import Polysemy
+import Polysemy.Internal (send)
 import Relude hiding (id)
 import System.Posix.Types (EpochTime)
 
-showPipelineDurationsForProject :: (Member PipelinesApi r, Member ProjectsApi r, Member Writer r) => ProjectId -> Sem r ()
+data WriteToFile m a where
+  WriteResult :: [PipelineWithDuration] -> WriteToFile m ()
+
+writeResult :: Member WriteToFile r => [PipelineWithDuration] -> Sem r ()
+writeResult x = send (WriteResult x :: WriteToFile (Sem r) ())
+
+showPipelineDurationsForProject :: (Member WriteToFile r, Member PipelinesApi r, Member ProjectsApi r, Member Writer r) => ProjectId -> Sem r ()
 showPipelineDurationsForProject pId = do
+  write "starting..."
   project <- getProject pId
   case project of
     Left err -> write $ "something went wrong" <> show err
     Right (Project _ _ _ Nothing) -> write $ "Found project without default branch: " <> show pId
     Right (Project _ _ _ (Just ref)) -> do
       results <- evaluateProject pId ref
-      traverse_ (write . showPipelineWithDuration) $ sortOn (negate . id) results
+      writeResult results
+
+--      traverse_ (write . showPipelineWithDuration) $ sortOn (negate . id) results
 
 evaluateProject :: (Member PipelinesApi r, Member Writer r) => ProjectId -> Ref -> Sem r [PipelineWithDuration]
 evaluateProject pId ref = do
