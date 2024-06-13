@@ -9,9 +9,8 @@ cache:
     - .stack-work
     - target
 
-test:
-  stage: test
+build:
+  stage: build & test
   script:
     - ghc --version
-    - stack --system-ghc build
-    - stack test
+    - stack --system-ghc test
