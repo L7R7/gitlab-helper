@@ -18,7 +18,7 @@ import Util
 run :: IO ()
 run = do
   c@Config {..} <- parseConfigOrDie
-  putStrLn $ "running with config: " <> show c
+  -- putStrLn $ "running with config: " <> show c
   let program = case cmd of
         ShowBranches -> showBranchesForGroup groupId
         (EnableSourceBranchDeletionAfterMerge execution) -> enableSourceBranchDeletionAfterMerge execution groupId
