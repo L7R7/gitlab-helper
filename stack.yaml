@@ -5,7 +5,7 @@ packages:
 
 extra-deps:
   - github: L7R7/gitlab-api
-    commit: 611b33271dfa755f7b3e5411223b3e3e2cdddd2c
+    commit: cdc01c1ff03f550c250acd2cb2f2a127de8158c1
     subdirs:
       - gitlab-api-http-client
       - gitlab-api-types
