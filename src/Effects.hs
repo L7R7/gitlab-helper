@@ -59,7 +59,10 @@ import qualified Text.Show
 
 newtype ProjectId = ProjectId Int deriving newtype (FromJSON, Show)
 
-newtype ProjectName = ProjectName String deriving newtype (Eq, FromJSON, Ord, Show)
+newtype ProjectName = ProjectName {getProjectName :: Text} deriving newtype (Eq, FromJSON, Ord)
+
+instance Show ProjectName where
+  show (ProjectName name) = toString name
 
 newtype Ref = Ref T.Text deriving newtype (FromJSON, Show)
 

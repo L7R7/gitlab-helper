@@ -128,10 +128,10 @@ fetchData' request = do
   result <- try (mapLeft ConversionError . getResponseBody <$> httpJSONEither request)
   pure $ mapLeft removeApiTokenFromUpdateError $ join $ mapLeft HttpError result
 
-setTimeout :: Request -> Request
+setTimeout :: RequestTransformer
 setTimeout request = request {responseTimeout = responseTimeoutMicro 5000000}
 
-addToken :: ApiToken -> Request -> Request
+addToken :: ApiToken -> RequestTransformer
 addToken apiToken = setRequestHeader "PRIVATE-TOKEN" [encodeUtf8 (coerce apiToken :: Text)]
 
 parseNextRequest :: Response a -> Maybe Request
@@ -174,5 +174,5 @@ removeApiTokenFromJsonException :: JSONException -> JSONException
 removeApiTokenFromJsonException (JSONParseException request response parseError) = JSONParseException (removeApiTokenFromRequest request) response parseError
 removeApiTokenFromJsonException (JSONConversionException request response s) = JSONConversionException (removeApiTokenFromRequest request) response s
 
-removeApiTokenFromRequest :: Request -> Request
+removeApiTokenFromRequest :: RequestTransformer
 removeApiTokenFromRequest = set (headers . tokenHeader) "xxxxx"
