@@ -56,7 +56,7 @@ tableReport =
 data Processor r = Processor
   { groupId :: GroupId,
     title :: GroupId -> Text,
-    predicate :: Project -> Bool,
+    runIf :: Project -> Bool,
     action :: ProjectId -> Sem r (Either UpdateError ())
   }
 
@@ -115,7 +115,7 @@ runProcessor Processor {..} = do
   getProjects groupId >>= \case
     Left err -> write $ show err
     Right projects -> do
-      res <- traverse (process predicate action) projects
+      res <- traverse (process runIf action) projects
       write ""
       write "done: "
       let summary = foldl' (\m r -> M.insertWith (<>) r (Sum (1 :: Int)) m) (M.fromList $ (,mempty) <$> universe) res
