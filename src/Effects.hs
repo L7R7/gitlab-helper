@@ -62,7 +62,7 @@ newtype ProjectId = ProjectId Int deriving newtype (FromJSON, Show)
 newtype ProjectName = ProjectName {getProjectName :: Text} deriving newtype (Eq, FromJSON, Ord)
 
 instance Show ProjectName where
-  show (ProjectName name) = toString name
+  show = toString . getProjectName
 
 newtype Ref = Ref T.Text deriving newtype (FromJSON, Show)
 
