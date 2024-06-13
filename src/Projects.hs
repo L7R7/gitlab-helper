@@ -20,7 +20,7 @@ module Projects
 where
 
 import Colonnade
-import Colourista (bold, formatWith)
+import Colourista (bold, formatWith, red)
 import Config.Types
 import Data.Aeson (encode)
 import qualified Data.Map as M
@@ -81,15 +81,23 @@ data Processor r
       -- ^ if this returns True, nothing will be done
       (ProjectId -> Sem r (Either UpdateError ()))
       -- ^ action to execute
+  | Counter
+      GroupId
+      (GroupId -> Text)
+      -- ^ headline to be printed
+      (Project -> Bool)
+      -- ^ if this returns True, nothing will be done
+      (ProjectId -> Sem r (Either UpdateError (Sum Int)))
+      -- ^ action to execute
 
 countDeploymentsIn2022 :: (Member ProjectsApi r, Member PipelinesApi r, Member Writer r) => GroupId -> Sem r ()
 countDeploymentsIn2022 gId =
   runProcessor $
-    OptionSetter
+    Counter
       gId
       (\gi -> "Listing the number of successful deployments in 2022 for all projects in Group " <> show gi)
       (const False)
-      (\pi -> getSuccessfulPushPipelinesIn2022 pi undefined >>= traverse (\piplines -> write $ show (length piplines)))
+      (\pi -> (fmap (Sum . length)) <$> getSuccessfulPushPipelinesIn2022 pi undefined)
 
 enableSourceBranchDeletionAfterMerge :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => Execution -> GroupId -> Sem r ()
 enableSourceBranchDeletionAfterMerge execution gId =
@@ -161,6 +169,16 @@ runProcessor (OptionSetter groupId title skipIf action) = do
       let summary = foldl' (\m r -> M.insertWith (<>) r (Sum (1 :: Int)) m) (M.fromList $ (,mempty) <$> universe) res
       let summaryPrint = M.foldlWithKey' (\acc k (Sum c) -> (show k <> ": " <> show c) : acc) mempty summary
       traverse_ write summaryPrint
+runProcessor (Counter groupId title skipIf action) = do
+  write "=================================================="
+  write $ title groupId
+  write ""
+  getProjectsForGroup groupId >>= \case
+    Left err -> write $ show err
+    Right projects -> do
+      res <- traverse (countSingle skipIf action) projects
+      write ""
+      write $ "done. in total: " <> (show $ getSum $ fold res)
 
 process :: (Member Writer r) => (Project -> Bool) -> (ProjectId -> Sem r (Either UpdateError ())) -> Project -> Sem r Result
 process skipIf action project = do
@@ -174,6 +192,19 @@ process skipIf action project = do
       case res of
         Left err -> write ("something went wrong. " <> show err) $> Error
         Right _ -> write "done" $> Set
+
+countSingle :: (Member Writer r) => (Project -> Bool) -> (ProjectId -> Sem r (Either UpdateError (Sum Int))) -> Project -> Sem r (Sum Int)
+countSingle skipIf action project = count >>= \(output, result) -> write (title <> output) $> result
+  where
+    count =
+      if skipIf project
+        then pure ("skipped", mempty)
+        else do
+          res <- action (projectId project)
+          case res of
+            Left err -> pure $ (formatWith [red] ("something went wrong: ") <> show err, mempty)
+            Right s -> pure $ (show (getSum s), s)
+    title = formatWith [bold] (show (name project) <> "(" <> show (projectId project) <> "): ")
 
 data Result = AlreadySet | Set | Error deriving stock (Bounded, Enum, Eq, Ord, Show)
 
