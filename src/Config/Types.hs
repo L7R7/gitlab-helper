@@ -40,8 +40,7 @@ data PartialConfig f = PartialConfig
   deriving anyclass (FunctorB, TraversableB, ApplicativeB, ConstraintsB)
 
 instance (Alternative f) => Semigroup (PartialConfig f) where
-  PartialConfig groupId1 baseUrl1 apiToken1 <> PartialConfig groupId2 baseUrl2 apiToken2 =
-    PartialConfig (groupId1 <|> groupId2) (baseUrl1 <|> baseUrl2) (apiToken1 <|> apiToken2)
+  (<>) = bzipWith (<|>)
 
 instance (Alternative f) => Monoid (PartialConfig f) where
   mempty = bpure empty
