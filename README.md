@@ -1,6 +1,44 @@
 # gitlab-helper
 
-Some utilities for working with the GitLab API to make your life easier.
+Some utilities for working with GitLab to make your life easier.
+
+## Features
+
+For a full, up to date list of features [see the help text for the program here](test_resources/help-text.txt).
+
+### Working with bulks of merge requests (aka "the million dollar feature" of this tool)
+
+When using tools like Scala Steward or renovate-bot in a setting with many projects with a similar tech stack, you often end up with "the same" merge request for each project when one of the core dependencies is updated.  
+Because it's tiresome to do that ("click on _auto-merge_ for the merge request that updates Spring Boot to the latest version, then rebase all the other open merge requests, and after that move on to the next project and repeat), the gitlab-helper will assist you with that.
+
+Let's say you have a bunch of projects that use Spring Boot, and there's a new version released which causes your renovate-bot to open a Merge Request in all your projects.
+You could list all of them like that:
+
+```sh
+gitlab-helper-exe update-merge-requests --user-id <user-id> --search "Spring Boot" list
+```
+
+where `<user-id>` is the User ID of the bot user that your renovate-bot instance is using.
+`--search` allows to filter the Merge Requests with a string that appears in the MR's title or the description.
+
+If that looks good, you can merge them:
+
+```sh
+gitlab-helper-exe update-merge-requests --user-id <user-id> --search "Spring Boot" merge --execute
+```
+
+The `--execute` flag actually makes the tool merge the merge requests. If you omit it, it will do a dry run (in this case, this would only list the MRs it would merge, equivalent to using `list`).
+Merging will only be done when the Merge Request branch has a successful pipeline.
+If there is no pipeline or the pipeline failed, the MR will stay open (consult the help text of the tool if you're brave and want to merge the merge requests anyway).
+
+If there is a bunch of other MRs open on the project (maybe because there was also an update to npm), you can rebase all of them in one go:
+
+```sh
+gitlab-helper-exe update-merge-requests --user-id <user-id> rebase --execute
+```
+
+After that, continue with the next bunch of similar MRs.
+Or with some other meaningful work.
 
 ## Configuration
 
