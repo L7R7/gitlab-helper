@@ -21,10 +21,12 @@ module Effects
     ProjectsApi (..),
     getProjects,
     getProject,
+    hasCi,
     MergeRequestApi (..),
     getOpenMergeRequests,
     enableSourceBranchDeletionAfterMrMerge,
     setSuccessfulPipelineRequirementForMerge,
+    unsetSuccessfulPipelineRequirementForMerge,
     setResolvedDiscussionsRequirementForMerge,
     BranchesApi (..),
     getBranches,
@@ -190,6 +192,7 @@ makeSem ''Timer
 data ProjectsApi m a where
   GetProjects :: GroupId -> ProjectsApi m (Either UpdateError [Project])
   GetProject :: ProjectId -> ProjectsApi m (Either UpdateError Project)
+  HasCi :: ProjectId -> Ref -> ProjectsApi m (Either UpdateError Bool)
 
 makeSem ''ProjectsApi
 
@@ -197,6 +200,7 @@ data MergeRequestApi m a where
   GetOpenMergeRequests :: ProjectId -> MergeRequestApi m (Either UpdateError [MergeRequest])
   EnableSourceBranchDeletionAfterMrMerge :: ProjectId -> MergeRequestApi m (Either UpdateError ())
   SetSuccessfulPipelineRequirementForMerge :: ProjectId -> MergeRequestApi m (Either UpdateError ())
+  UnsetSuccessfulPipelineRequirementForMerge :: ProjectId -> MergeRequestApi m (Either UpdateError ())
   SetResolvedDiscussionsRequirementForMerge :: ProjectId -> MergeRequestApi m (Either UpdateError ())
 
 makeSem ''MergeRequestApi

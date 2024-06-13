@@ -5,6 +5,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE StandaloneDeriving #-}
@@ -17,7 +18,7 @@ import Burrito
 import Config.Types (ApiToken (..), BaseUrl (..))
 import Control.Exception.Base (try)
 import Control.Lens (Lens', Prism', Traversal', filtered, lens, prism', set, _1, _2)
-import Data.Aeson hiding (Value) -- .Types (FromJSON, ToJSON)
+import Data.Aeson hiding (Value)
 import qualified Data.DateTime as DT
 import Data.Either.Combinators (mapLeft)
 import Data.Time (UTCTime)
@@ -27,6 +28,7 @@ import Network.HTTP.Client.Conduit (HttpExceptionContent, requestFromURI, reques
 import Network.HTTP.Link.Parser (parseLinkHeaderBS)
 import Network.HTTP.Link.Types (Link (..), LinkParam (Rel), href)
 import Network.HTTP.Simple
+import Network.HTTP.Types (Status (statusCode))
 import Network.HTTP.Types.Header (HeaderName)
 import Network.URI (URI)
 import Pipelines hiding (id)
@@ -71,6 +73,10 @@ projectsApiToIO baseUrl apiToken = interpret $ \case
   GetProject project -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}|]
     embed $ fetchData baseUrl apiToken template [("projectId", (stringValue . show) project)]
+  HasCi project ref -> do
+    let template = [uriTemplate|/api/v4/projects/{projectId}/repository/files/.gitlab-ci.yml?ref={ref}|]
+    response <- embed $ headRequest baseUrl apiToken id template [("projectId", (stringValue . show) project), ("ref", (stringValue . (\(Ref txt) -> toString txt)) ref)]
+    pure $ (200 ==) . statusCode <$> response
 
 mergeRequestApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> InterpreterFor MergeRequestApi r
 mergeRequestApiToIO baseUrl apiToken = interpret $ \case
@@ -82,6 +88,9 @@ mergeRequestApiToIO baseUrl apiToken = interpret $ \case
     embed $ void <$> fetchData' @Project baseUrl apiToken (setRequestMethod "PUT") template [("projectId", (stringValue . show) project)]
   SetSuccessfulPipelineRequirementForMerge project -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}?only_allow_merge_if_pipeline_succeeds=true|]
+    embed $ void <$> fetchData' @Project baseUrl apiToken (setRequestMethod "PUT") template [("projectId", (stringValue . show) project)]
+  UnsetSuccessfulPipelineRequirementForMerge project -> do
+    let template = [uriTemplate|/api/v4/projects/{projectId}?only_allow_merge_if_pipeline_succeeds=false|]
     embed $ void <$> fetchData' @Project baseUrl apiToken (setRequestMethod "PUT") template [("projectId", (stringValue . show) project)]
   SetResolvedDiscussionsRequirementForMerge project -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}?only_allow_merge_if_all_discussions_are_resolved=true|]
@@ -99,7 +108,7 @@ pipelinesApiToIO baseUrl apiToken = interpret $ \case
     let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines/{pipelineId}|]
     embed $ fetchData baseUrl apiToken template [("projectId", (stringValue . show) project), ("pipelineId", (stringValue . show) pipeline)]
   GetSuccessfulPipelines pId ref -> do
-    let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines?ref=master&status={status}&updated_after=2021-01-06T00:00:00Z&source=push|]
+    let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines?ref=master&status={status}&updated_after=2021-01-06T00:00:00Z&source=push|] -- todo: use the ref argument
     embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) pId), ("ref", (stringValue . show) ref), ("status", stringValue "success")]
 
 schedulesApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> InterpreterFor SchedulesApi r
@@ -130,12 +139,17 @@ fetchData baseUrl apiToken = fetchData' baseUrl apiToken id
 type RequestTransformer = Request -> Request
 
 fetchData' :: (FromJSON a) => BaseUrl -> ApiToken -> RequestTransformer -> Template -> [(String, Value)] -> IO (Either UpdateError a)
-fetchData' baseUrl apiToken reqTransformer template vars =
-  case createRequest baseUrl apiToken reqTransformer template vars of
-    Left invalidUrl -> pure $ Left invalidUrl
-    Right request -> do
-      result <- try (mapLeft ConversionError . getResponseBody <$> httpJSONEither request)
-      pure $ mapLeft removeApiTokenFromUpdateError $ join $ mapLeft HttpError result
+fetchData' = doReq (fmap (mapLeft ConversionError . getResponseBody) . httpJSONEither)
+
+headRequest :: BaseUrl -> ApiToken -> RequestTransformer -> Template -> [(String, Value)] -> IO (Either UpdateError Status)
+headRequest baseUrl apiToken reqTransformer = doReq (fmap (Right . getResponseStatus) . httpNoBody) baseUrl apiToken (reqTransformer . setRequestMethod "HEAD")
+
+doReq :: (Request -> IO (Either UpdateError a)) -> BaseUrl -> ApiToken -> RequestTransformer -> Template -> [(String, Value)] -> IO (Either UpdateError a)
+doReq f baseUrl apiToken reqTransformer template vars = case createRequest baseUrl apiToken reqTransformer template vars of
+  Left invalidUrl -> pure $ Left invalidUrl
+  Right request -> do
+    result <- try (f request)
+    pure $ mapLeft removeApiTokenFromUpdateError $ join $ mapLeft HttpError result
 
 createRequest2 :: BaseUrl -> ApiToken -> (Http.Request -> Http.Request) -> Template -> [(String, Value)] -> Either UpdateError Http.Request
 createRequest2 (BaseUrl url) apiToken reqTransformer template vars = do

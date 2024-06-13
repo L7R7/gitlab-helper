@@ -3,6 +3,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
 module Config.Types where
@@ -50,13 +51,15 @@ newtype ApiToken = ApiToken Text deriving newtype (FromJSON, Show)
 
 data Command
   = ShowBranches
-  | EnableSourceBranchDeletionAfterMerge
+  | EnableSourceBranchDeletionAfterMerge Execution
   | ShowProjects
   | ShowSchedules
   | ShowPipelineDurations
   | ShowMergeRequests
-  | EnableAllDiscussionsMustBeResolvedForMergeRequirement
-  | EnableSuccessfulPipelineForMergeRequirement
+  | EnableAllDiscussionsMustBeResolvedForMergeRequirement Execution
+  | EnableSuccessfulPipelineForMergeRequirement Execution
+
+data Execution = DryRun | Execute
 
 commandParser :: IO Command
 commandParser =
@@ -71,10 +74,18 @@ parser =
     mconcat
       [ command "show-branches" (info (pure ShowBranches) (progDesc "show branches")),
         command "show-projects" (info (pure ShowProjects) (progDesc "show projects")),
-        command "enable-source-branch-deletion" (info (pure EnableSourceBranchDeletionAfterMerge) (progDesc "enable source branch deletion after merge for all projects")),
-        command "enable-all-discussions-must-be-resolved-for-merge-requirement" (info (pure EnableAllDiscussionsMustBeResolvedForMergeRequirement) (progDesc "enable the requirement that all discussions must be resolved for an MR to be merged for all projects")),
-        command "enable-successful-pipeline-for-merge-requirement" (info (pure EnableSuccessfulPipelineForMergeRequirement) (progDesc "enable the requirement that there must be a successful pipeline for an MR to be merged for all projects")),
+        command "enable-source-branch-deletion" (info (EnableSourceBranchDeletionAfterMerge <$> executionParser) (progDesc "enable source branch deletion after merge for all projects")),
+        command "enable-all-discussions-must-be-resolved-for-merge-requirement" (info (EnableAllDiscussionsMustBeResolvedForMergeRequirement <$> executionParser) (progDesc "enable the requirement that all discussions must be resolved for an MR to be merged for all projects")),
+        command "enable-successful-pipeline-for-merge-requirement" (info (EnableSuccessfulPipelineForMergeRequirement <$> executionParser) (progDesc "enable the requirement that there must be a successful pipeline for an MR to be merged for all projects")),
         command "show-schedules" (info (pure ShowSchedules) (progDesc "show schedules")),
         command "show-pipeline-durations" (info (pure ShowPipelineDurations) (progDesc "show pipeline durations")),
         command "show-merge-requests" (info (pure ShowMergeRequests) (progDesc "show projects with and without enabled merge requests, list merge requests"))
       ]
+
+executionParser :: Parser Execution
+executionParser =
+  ( \case
+      False -> DryRun
+      True -> Execute
+  )
+    <$> switch (long "execute" <> short 'x' <> help "whether to actually change the config via the API. By default, only a dry run will be performed")

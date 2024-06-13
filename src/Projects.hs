@@ -4,6 +4,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TupleSections #-}
 
@@ -21,7 +22,7 @@ import qualified Data.Map as M
 import Data.Text (toLower)
 import Effects
 import Polysemy
-import Relude
+import Relude hiding (pi)
 import Relude.Extra (universe)
 
 showProjectsForGroup :: (Member ProjectsApi r, Member Writer r) => GroupId -> Sem r ()
@@ -34,41 +35,62 @@ showProjectsForGroup gId = do
       traverse_ (write . show) (sortOn (toLower . getProjectName . name) projects)
       writeSummary $ foldMap summarizeSingle projects
 
-data Processor m = Processor
+data Processor r = Processor
   { groupId :: GroupId,
     title :: GroupId -> Text,
     predicate :: Project -> Bool,
-    action :: ProjectId -> m (Either UpdateError ())
+    action :: ProjectId -> Sem r (Either UpdateError ())
   }
 
-enableSourceBranchDeletionAfterMerge :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => GroupId -> Sem r ()
-enableSourceBranchDeletionAfterMerge gId =
+enableSourceBranchDeletionAfterMerge :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => Execution -> GroupId -> Sem r ()
+enableSourceBranchDeletionAfterMerge execution gId =
   runProcessor $
     Processor
       gId
       (\gi -> "Enabling automatic branch deletion after MR merge for Group " <> show gi)
       (\p -> Just True == removeSourceBranchAfterMerge p)
-      enableSourceBranchDeletionAfterMrMerge
+      ( \pi -> case execution of
+          DryRun -> Right () <$ write ("Dry Run. Pretending to set option for Project " <> show pi)
+          Execute -> enableSourceBranchDeletionAfterMrMerge pi
+      )
 
-enableSuccessfulPipelineForMergeRequirement :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => GroupId -> Sem r ()
-enableSuccessfulPipelineForMergeRequirement gId =
+enableSuccessfulPipelineForMergeRequirement :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => Execution -> GroupId -> Sem r ()
+enableSuccessfulPipelineForMergeRequirement execution gId =
   runProcessor $
     Processor
       gId
       (\gi -> "Enabling the requirement that a successful pipeline is required for a MR to be merged for Group " <> show gi)
       onlyAllowMergeIfPipelineSucceeds
-      setSuccessfulPipelineRequirementForMerge
+      (\pId -> getProject pId >>= (projectHasCi >=> configureOption execution pId))
 
-enableAllDiscussionsResolvedForMergeRequirement :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => GroupId -> Sem r ()
-enableAllDiscussionsResolvedForMergeRequirement gId =
+projectHasCi :: (Member ProjectsApi r) => Either UpdateError Project -> Sem r (Either UpdateError Bool)
+projectHasCi (Left err) = pure $ Left err
+projectHasCi (Right (Project pId _ _ (Just ref) _ _ _)) = hasCi pId ref
+projectHasCi (Right _) = pure $ Right False -- no default branch, no CI
+
+configureOption :: (Member MergeRequestApi r, Member Writer r) => Execution -> ProjectId -> Either UpdateError Bool -> Sem r (Either UpdateError ())
+configureOption _ _ (Left err) = pure $ Left err
+configureOption DryRun _ (Right False) = Right () <$ write "Dry Run. Pretending to unset option for project" >> logUnset
+configureOption Execute pId (Right False) = unsetSuccessfulPipelineRequirementForMerge pId >> logUnset
+configureOption DryRun _ (Right True) = Right () <$ write "Dry Run. Pretending to set option for project"
+configureOption Execute pId (Right True) = setSuccessfulPipelineRequirementForMerge pId
+
+logUnset :: Member Writer r => Sem r (Either UpdateError ())
+logUnset = write "Project doesn't have CI. Deactivated the option." $> Right ()
+
+enableAllDiscussionsResolvedForMergeRequirement :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => Execution -> GroupId -> Sem r ()
+enableAllDiscussionsResolvedForMergeRequirement execution gId =
   runProcessor $
     Processor
       gId
       (\gi -> "Enabling the requirement that all discussions must be resolved for a MR to be merged for Group " <> show gi)
       onlyAllowMergeIfAllDiscussionsAreResolved
-      setResolvedDiscussionsRequirementForMerge
+      ( case execution of
+          DryRun -> (\pId -> Right () <$ write ("Dry Run. Pretending to set option for Project " <> show pId))
+          Execute -> setResolvedDiscussionsRequirementForMerge
+      )
 
-runProcessor :: (Member ProjectsApi r, Member Writer r) => Processor (Sem r) -> Sem r ()
+runProcessor :: (Member ProjectsApi r, Member Writer r) => Processor r -> Sem r ()
 runProcessor Processor {..} = do
   write "=================================================="
   write $ title groupId
