@@ -1,5 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
-
 module Config.Optparse (parseConfigFromOptions) where
 
 import Barbies (TraversableB (btraverse))
@@ -65,8 +63,4 @@ mergeRequestUpdatActionParser =
 
 executionParser :: Parser Execution
 executionParser =
-  ( \case
-      False -> DryRun
-      True -> Execute
-  )
-    <$> switch (long "execute" <> short 'x' <> help "whether to actually change the config via the API. By default, only a dry run will be performed")
+  (\b -> if b then Execute else DryRun) <$> switch (long "execute" <> short 'x' <> help "whether to actually change the config via the API. By default, only a dry run will be performed")
