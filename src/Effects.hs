@@ -39,6 +39,7 @@ module Effects
     setResolvedDiscussionsRequirementForMerge,
     mergeMergeRequest,
     rebaseMergeRequest,
+    setMergeRequestTitle,
     BranchesApi (..),
     getBranches,
     PipelinesApi (..),
@@ -160,6 +161,7 @@ data MergeRequestApi m a where
   SetResolvedDiscussionsRequirementForMerge :: Id Project -> MergeRequestApi m (Either UpdateError ())
   MergeMergeRequest :: Id Project -> Id MergeRequest -> MergeRequestApi m (Either UpdateError ())
   RebaseMergeRequest :: Id Project -> Id MergeRequest -> MergeRequestApi m (Either UpdateError ())
+  SetMergeRequestTitle :: Id Project -> Id MergeRequest -> Text -> MergeRequestApi m (Either UpdateError ())
 
 makeSem ''MergeRequestApi
 

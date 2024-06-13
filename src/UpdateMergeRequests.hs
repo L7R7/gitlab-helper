@@ -14,6 +14,7 @@ module UpdateMergeRequests
 where
 
 import Config.Types
+import Data.Text (strip, stripPrefix)
 import Effects
 import Gitlab.Group
 import Gitlab.Lib (Id)
@@ -52,13 +53,29 @@ updateMergeRequests gId projectExcludes action authorIs searchTerm execute = do
       let f = case execute of
             DryRun -> performActionDry
             Execute -> performActionExecute
-      f pId (mergeRequestIid mr)
+      f pId mr
 
-    performActionExecute = case action of
-      Rebase -> rebaseMergeRequest
-      Merge -> mergeMergeRequest
+    performActionExecute pId mr = case action of
+      Rebase -> rebaseMergeRequest pId (mergeRequestIid mr)
+      Merge -> mergeMergeRequest pId (mergeRequestIid mr)
+      SetToDraft ->
+        if mergeRequestWip mr
+          then Right () <$ write "merge request is already in state \"Draft\""
+          else setMergeRequestTitle pId (mergeRequestIid mr) ("Draft: " <> mergeRequestTitle mr)
+      MarkAsReady ->
+        if mergeRequestWip mr
+          then setMergeRequestTitle pId (mergeRequestIid mr) (strip $ fromMaybe (mergeRequestTitle mr) (stripPrefix "Draft:" (mergeRequestTitle mr)))
+          else Right () <$ write "merge request is already marked as ready"
 
-    performActionDry _ _ =
+    performActionDry _ mr =
       Right () <$ case action of
         Rebase -> write "dry run. skipping rebase"
         Merge -> write "dry run. skipping merge"
+        SetToDraft ->
+          if mergeRequestWip mr
+            then write "merge request is already in state \"Draft\""
+            else write "dry run. skipping draft toggle"
+        MarkAsReady ->
+          if mergeRequestWip mr
+            then write "dry run. skipping draft toggle"
+            else write "merge request is already marked as ready"

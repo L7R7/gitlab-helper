@@ -21,8 +21,9 @@ import Effects
 import Gitlab.Client
 import Gitlab.Lib (Ref (..))
 import Gitlab.Project
+import Network.HTTP.Client.Conduit (RequestBody (..))
 import Network.HTTP.Simple
-import Network.HTTP.Types (Status (statusCode))
+import Network.HTTP.Types (Status (statusCode), hContentType)
 import Polysemy
 import Relude hiding (group)
 
@@ -102,6 +103,10 @@ mergeRequestApiToIO baseUrl apiToken = interpret $ \case
     let template = [uriTemplate|/api/v4/projects/{projectId}/merge_requests/{mergeRequestId}/rebase|]
     -- Right (fromList [("rebase_in_progress",Bool True)])
     embed $ void <$> fetchData' @Object baseUrl apiToken (setRequestMethod "PUT") template [("projectId", (stringValue . show) project), ("mergeRequestId", (stringValue . show) mrId)]
+  SetMergeRequestTitle project mrId newTitle -> do
+    let template = [uriTemplate|/api/v4/projects/{projectId}/merge_requests/{mergeRequestId}|]
+        setTitle = setRequestHeader hContentType ["application/x-www-form-urlencoded"] . setRequestBody (RequestBodyBS (encodeUtf8 $ "title=" <> newTitle))
+    embed $ void <$> fetchData' @Object baseUrl apiToken (setTitle . setRequestMethod "PUT") template [("projectId", (stringValue . show) project), ("mergeRequestId", (stringValue . show) mrId)]
 
 branchesApiToIO :: (Member (Embed IO) r) => BaseUrl -> ApiToken -> InterpreterFor BranchesApi r
 branchesApiToIO baseUrl apiToken = interpret $ \case
