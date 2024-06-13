@@ -10,7 +10,7 @@
 module Interpreters (projectsApiToIO, mergeRequestApiToIO, branchesApiToIO, pipelinesApiToIO, writeToFileToIO, runM) where
 
 import Burrito
-import Config (ApiToken (..), BaseUrl)
+import Config.Types (ApiToken (..), BaseUrl)
 import Control.Exception.Base (try)
 import Control.Lens (Lens', Prism', Traversal', filtered, lens, prism', set, _1, _2)
 import Data.Aeson.Types (FromJSON)
@@ -126,13 +126,13 @@ setTimeout :: Request -> Request
 setTimeout request = request {responseTimeout = responseTimeoutMicro 5000000}
 
 addToken :: ApiToken -> Request -> Request
-addToken apiToken = setRequestHeader "PRIVATE-TOKEN" [coerce apiToken]
+addToken apiToken = setRequestHeader "PRIVATE-TOKEN" [encodeUtf8 (coerce apiToken :: Text)]
 
 parseNextRequest :: Response a -> Maybe Request
 parseNextRequest response = parseNextHeader response >>= rightToMaybe . requestFromURI
 
 parseNextHeader :: Response a -> Maybe URI
-parseNextHeader response = href <$> find isNextLink ((parseLinkHeaderBS <$> getResponseHeader "link" response) >>= concat)
+parseNextHeader response = href <$> find isNextLink (getResponseHeader "link" response >>= concat . parseLinkHeaderBS)
 
 isNextLink :: Link -> Bool
 isNextLink (Link _ [(Rel, "next")]) = True

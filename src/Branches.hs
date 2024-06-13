@@ -16,7 +16,7 @@ module Branches
 where
 
 import Colourista.Pure
-import Config
+import Config.Types
 import qualified Data.Text as T (intercalate)
 import Data.Time hiding (getCurrentTime)
 import Effects
@@ -96,7 +96,10 @@ summary :: UTCTime -> [(Project, Either UpdateError [Branch])] -> (ProjectCount,
 summary now = foldMap (count now)
 
 showSummary :: (ProjectCount, BranchesCount, StaleBranchesCount) -> Text
-showSummary (projects, branches, stale) = formatWith [bold] $ unwords [" ▶", show . getSum $ branches, "branches in", show . getSum $ projects, "projects.", show . getSum $ stale, "of them are stale"]
+showSummary (projects, branches, stale) = formatWith [bold] $ unwords [" ▶", show . getSum $ branches, "branches in", show . getSum $ projects, "projects.", show . getSum $ stale, "of them " <> isAre stale <> " stale"]
+  where
+    isAre (Sum 1) = "is"
+    isAre _ = "are"
 
 count :: UTCTime -> (Project, Either UpdateError [Branch]) -> (ProjectCount, BranchesCount, StaleBranchesCount)
 count _ (_, Left _) = mempty

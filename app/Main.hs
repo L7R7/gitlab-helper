@@ -4,10 +4,12 @@
 module Main where
 
 import Branches (showBranchesForGroup)
-import Config (Config (..), parseConfigOrDie)
+import Config.Config (parseConfigOrDie)
+import Config.Types(Config(..))
 import Effects (ProjectId (..))
 import Interpreters
 import Pipelines
+import Projects
 import Util
 import Prelude
 import Projects

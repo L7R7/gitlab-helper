@@ -42,7 +42,7 @@ module Effects
   )
 where
 
-import Config
+import Config.Types
 import Data.Aeson (FromJSON (..), ToJSON (..), genericParseJSON, withObject, withText, (.:))
 import Data.Aeson.Casing
 import qualified Data.Text as T hiding (partition)

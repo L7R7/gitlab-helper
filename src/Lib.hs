@@ -16,7 +16,7 @@ module Lib
   )
 where
 
-import Config
+import Config.Types
 import Data.List (partition)
 import qualified Data.Text as T (intercalate)
 import Data.Time hiding (getCurrentTime)
