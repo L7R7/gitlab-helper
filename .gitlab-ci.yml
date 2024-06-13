@@ -1,8 +1,5 @@
 image: fpco/stack-build:lts-22.22
 
-variables:
-  STACK_ROOT: "${CI_PROJECT_DIR}/.stack-root"
-
 cache:
   paths:
     - .stack
