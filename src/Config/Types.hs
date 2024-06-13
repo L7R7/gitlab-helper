@@ -36,7 +36,8 @@ data PartialConfig f = PartialConfig
     pBaseUrl :: f (S.First BaseUrl),
     pApiToken :: f (S.First ApiToken)
   }
-  deriving (Generic, FunctorB, TraversableB, ApplicativeB, ConstraintsB)
+  deriving stock (Generic)
+  deriving anyclass (FunctorB, TraversableB, ApplicativeB, ConstraintsB)
 
 instance (Alternative f) => Semigroup (PartialConfig f) where
   PartialConfig groupId1 baseUrl1 apiToken1 <> PartialConfig groupId2 baseUrl2 apiToken2 =

@@ -45,12 +45,12 @@ groupsApiToIO baseUrl apiToken = interpret $ \case
 
 projectsApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> InterpreterFor ProjectsApi r
 projectsApiToIO baseUrl apiToken = interpret $ \case
-  GetProjectsForGroup groupId -> do
+  GetProjectsForGroup gId -> do
     let template = [uriTemplate|/api/v4/groups/{groupId}/projects?include_subgroups=true&archived=false&with_shared=false|]
-    embed $ fetchDataPaginated apiToken baseUrl template [("groupId", (stringValue . show) groupId)]
-  GetProjectsForUser userId -> do
+    embed $ fetchDataPaginated apiToken baseUrl template [("groupId", (stringValue . show) gId)]
+  GetProjectsForUser uId -> do
     let template = [uriTemplate|/api/v4/users/{userId}/projects?archived=false|]
-    embed $ fetchDataPaginated apiToken baseUrl template [("userId", (stringValue . show) userId)]
+    embed $ fetchDataPaginated apiToken baseUrl template [("userId", (stringValue . show) uId)]
   GetProject project -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}|]
     embed $ fetchData baseUrl apiToken template [("projectId", (stringValue . show) project)]

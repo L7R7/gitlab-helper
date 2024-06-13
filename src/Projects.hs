@@ -96,11 +96,11 @@ countDeploymentsIn2022 gId =
       gId
       (\gi -> "Listing the number of successful deployments in 2022 for all projects in Group " <> show gi)
       (\p -> projectId p `elem` excludes)
-      (\p -> do
-        res <- case (defaultBranch p) of
-          Nothing -> Right [] <$ (write $ formatWith [bold] (show (name p) <> ": ") <> formatWith [red] "has no default branch")
-          Just ref -> getSuccessfulPushPipelinesIn2022 (projectId p) ref
-        pure $ fmap (Sum . length) res
+      ( \p -> do
+          res <- case (defaultBranch p) of
+            Nothing -> Right [] <$ (write $ formatWith [bold] (show (name p) <> ": ") <> formatWith [red] "has no default branch")
+            Just ref -> getSuccessfulPushPipelinesIn2022 (projectId p) ref
+          pure $ fmap (Sum . length) res
       )
   where
     excludes =
@@ -168,10 +168,10 @@ writeMetaFormat :: (Member Writer r) => [Project] -> Sem r ()
 writeMetaFormat projects = write $ decodeUtf8 $ encode $ M.fromList $ (\p -> (pathWithNamespace p, sshUrlToRepo p)) <$> projects
 
 runProcessor :: (Member ProjectsApi r, Member Writer r) => Processor r -> Sem r ()
-runProcessor (OptionSetter groupId title skipIf action) = do
+runProcessor (OptionSetter gId title skipIf action) = do
   write "=================================================="
-  write $ title groupId
-  getProjectsForGroup groupId >>= \case
+  write $ title gId
+  getProjectsForGroup gId >>= \case
     Left err -> write $ show err
     Right projects -> do
       res <- traverse (process skipIf action) projects
@@ -180,11 +180,11 @@ runProcessor (OptionSetter groupId title skipIf action) = do
       let summary = foldl' (\m r -> M.insertWith (<>) r (Sum (1 :: Int)) m) (M.fromList $ (,mempty) <$> universe) res
       let summaryPrint = M.foldlWithKey' (\acc k (Sum c) -> (show k <> ": " <> show c) : acc) mempty summary
       traverse_ write summaryPrint
-runProcessor (Counter groupId title skipIf action) = do
+runProcessor (Counter gId title skipIf action) = do
   write "=================================================="
-  write $ title groupId
+  write $ title gId
   write ""
-  getProjectsForGroup groupId >>= \case
+  getProjectsForGroup gId >>= \case
     Left err -> write $ show err
     Right projects -> do
       res <- traverse (countSingle skipIf action) projects
