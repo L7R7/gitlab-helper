@@ -15,7 +15,7 @@
 module Interpreters (usersApiToIO, groupsApiToIO, projectsApiToIO, mergeRequestApiToIO, branchesApiToIO, pipelinesApiToIO, schedulesApiToIO, runM) where
 
 import Burrito
-import Config.Types (ApiToken (..), BaseUrl (..))
+import Config.Types (ApiToken (..), AuthorIs (..), BaseUrl (..))
 import Control.Exception.Base (try)
 import Control.Lens (Lens', Prism', Traversal', filtered, lens, prism', set, _1, _2)
 import Data.Aeson hiding (Value)
@@ -67,9 +67,14 @@ projectsApiToIO baseUrl apiToken = interpret $ \case
 
 mergeRequestApiToIO :: (Member (Embed IO) r) => BaseUrl -> ApiToken -> InterpreterFor MergeRequestApi r
 mergeRequestApiToIO baseUrl apiToken = interpret $ \case
-  GetOpenMergeRequests project -> do
-    let template = [uriTemplate|/api/v4/projects/{projectId}/merge_requests?state=opened|]
-    embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) project)]
+  GetOpenMergeRequests project maybeAuthorIs -> do
+    case maybeAuthorIs of
+      Nothing -> do
+        let template = [uriTemplate|/api/v4/projects/{projectId}/merge_requests?state=opened|]
+        embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) project)]
+      Just (AuthorIs i) -> do
+        let template = [uriTemplate|/api/v4/projects/{projectId}/merge_requests?state=opened&author_id={authorId}|]
+        embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) project), ("authorId", (stringValue . show) i)]
   EnableSourceBranchDeletionAfterMrMerge project -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}?remove_source_branch_after_merge=true|]
     embed $ void <$> fetchData' @Project baseUrl apiToken (setRequestMethod "PUT") template [("projectId", (stringValue . show) project)]
@@ -82,6 +87,13 @@ mergeRequestApiToIO baseUrl apiToken = interpret $ \case
   SetResolvedDiscussionsRequirementForMerge project -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}?only_allow_merge_if_all_discussions_are_resolved=true|]
     embed $ void <$> fetchData' @Project baseUrl apiToken (setRequestMethod "PUT") template [("projectId", (stringValue . show) project)]
+  MergeMergeRequest project mrId -> do
+    let template = [uriTemplate|/api/v4/projects/{projectId}/merge_requests/{mergeRequestId}/merge?should_remove_source_branch=true&merge_when_pipeline_succeeds=true|]
+    embed $ void <$> fetchData' @Object baseUrl apiToken (setRequestMethod "PUT") template [("projectId", (stringValue . show) project), ("mergeRequestId", (stringValue . show) mrId)]
+  RebaseMergeRequest project mrId -> do
+    let template = [uriTemplate|/api/v4/projects/{projectId}/merge_requests/{mergeRequestId}/rebase|]
+    -- Right (fromList [("rebase_in_progress",Bool True)])
+    embed $ void <$> fetchData' @Object baseUrl apiToken (setRequestMethod "PUT") template [("projectId", (stringValue . show) project), ("mergeRequestId", (stringValue . show) mrId)]
 
 branchesApiToIO :: (Member (Embed IO) r) => BaseUrl -> ApiToken -> InterpreterFor BranchesApi r
 branchesApiToIO baseUrl apiToken = interpret $ \case

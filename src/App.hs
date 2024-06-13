@@ -11,6 +11,7 @@ import MergeRequests
 import Projects
 import Relude
 import Schedules (showSchedulesForGroup)
+import UpdateMergeRequests (updateMergeRequests)
 import Util
 
 run :: IO ()
@@ -29,6 +30,7 @@ run = do
         (EnableSuccessfulPipelineForMergeRequirement execution) -> enableSuccessfulPipelineForMergeRequirement execution groupId
         CountSuccessfulDeploymentsIn2022 -> countDeploymentsIn2022 groupId
         (SetMergeMethodToFastForward execution) -> setMergeMethodToFastForward execution groupId
+        (UpdateMergeRequests cmd authorIs titleFilter descFilter execution) -> updateMergeRequests groupId cmd authorIs titleFilter descFilter execution
   runM
     . timerToIO
     . writerToIO

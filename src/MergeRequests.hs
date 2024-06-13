@@ -51,7 +51,7 @@ printProjectsWithMergeRequests projects = do
     printProjects :: (Member MergeRequestApi r, Member Timer r, Member Writer r) => [Project] -> Sem r ()
     printProjects [] = write "There are no projects with enabled merge requests"
     printProjects ps = do
-      projectsWithMergeRequests <- traverse (\project -> (project,) <$> getOpenMergeRequests (projectId project)) ps
+      projectsWithMergeRequests <- traverse (\project -> (project,) <$> getOpenMergeRequests (projectId project) Nothing) ps
       let projectsWithOpenMergeRequests = filter hasOpenMergeRequests projectsWithMergeRequests
       mapM_ printProjectsWithMergeRequests' projectsWithOpenMergeRequests
     hasOpenMergeRequests (_, res) = (not . all null) res

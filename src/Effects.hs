@@ -37,6 +37,8 @@ module Effects
     setSuccessfulPipelineRequirementForMerge,
     unsetSuccessfulPipelineRequirementForMerge,
     setResolvedDiscussionsRequirementForMerge,
+    mergeMergeRequest,
+    rebaseMergeRequest,
     BranchesApi (..),
     getBranches,
     PipelinesApi (..),
@@ -65,7 +67,7 @@ module Effects
 where
 
 import Autodocodec
-import Config.Types hiding (groupId)
+import Config.Types hiding (Merge, groupId)
 import Data.Aeson (FromJSON (..), ToJSON)
 import Data.Scientific
 import qualified Data.Text as T hiding (partition)
@@ -180,6 +182,8 @@ instance HasCodec MergeMethod where
 
 data MergeRequest = MergeRequest
   { mergeRequestId :: MergeRequestId,
+    mergeRequestTitle :: Text,
+    mergeRequestDescription :: Text,
     wip :: Bool,
     conflicts :: Bool,
     createdAt :: UTCTime,
@@ -192,8 +196,12 @@ instance HasCodec MergeRequest where
   codec =
     object "MergeRequest"
       $ MergeRequest
-      <$> requiredField' "id"
+      <$> requiredField "iid" "NOTE: IID OF THE MR, NOT ID"
       .= mergeRequestId
+      <*> requiredField' "title"
+      .= mergeRequestTitle
+      <*> requiredField' "description"
+      .= mergeRequestDescription
       <*> requiredField' "work_in_progress"
       .= wip
       <*> requiredField' "has_conflicts"
@@ -336,11 +344,13 @@ data ProjectsApi m a where
 makeSem ''ProjectsApi
 
 data MergeRequestApi m a where
-  GetOpenMergeRequests :: ProjectId -> MergeRequestApi m (Either UpdateError [MergeRequest])
+  GetOpenMergeRequests :: ProjectId -> Maybe AuthorIs -> MergeRequestApi m (Either UpdateError [MergeRequest])
   EnableSourceBranchDeletionAfterMrMerge :: ProjectId -> MergeRequestApi m (Either UpdateError ())
   SetSuccessfulPipelineRequirementForMerge :: ProjectId -> MergeRequestApi m (Either UpdateError ())
   UnsetSuccessfulPipelineRequirementForMerge :: ProjectId -> MergeRequestApi m (Either UpdateError ())
   SetResolvedDiscussionsRequirementForMerge :: ProjectId -> MergeRequestApi m (Either UpdateError ())
+  MergeMergeRequest :: ProjectId -> MergeRequestId -> MergeRequestApi m (Either UpdateError ())
+  RebaseMergeRequest :: ProjectId -> MergeRequestId -> MergeRequestApi m (Either UpdateError ())
 
 makeSem ''MergeRequestApi
 

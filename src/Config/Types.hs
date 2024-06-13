@@ -11,6 +11,10 @@ module Config.Types
     ApiToken (..),
     PartialConfig (..),
     Command (..),
+    MergeRequestUpdateAction (..),
+    AuthorIs (..),
+    MergeRequestTitleFilter (..),
+    MergeRequestDescriptionFilter (..),
     Execution (..),
     commandParser,
   )
@@ -68,8 +72,18 @@ data Command
   | EnableSuccessfulPipelineForMergeRequirement Execution
   | SetMergeMethodToFastForward Execution
   | CountSuccessfulDeploymentsIn2022
+  | UpdateMergeRequests MergeRequestUpdateAction AuthorIs (Maybe MergeRequestTitleFilter) (Maybe MergeRequestDescriptionFilter) Execution
+  deriving stock (Show)
 
-data Execution = DryRun | Execute
+data Execution = DryRun | Execute deriving stock (Eq, Show)
+
+data MergeRequestUpdateAction = Rebase | Merge deriving stock (Show)
+
+newtype AuthorIs = AuthorIs Int deriving stock (Show)
+
+newtype MergeRequestTitleFilter = TitleContains String deriving stock (Show)
+
+newtype MergeRequestDescriptionFilter = DescriptionContains String deriving stock (Show)
 
 commandParser :: IO Command
 commandParser =
@@ -96,8 +110,23 @@ parser =
         command "show-schedules" (info (pure ShowSchedules) (progDesc "show schedules")),
         command "show-merge-requests" (info (pure ShowMergeRequests) (progDesc "show projects with and without enabled merge requests, list merge requests")),
         command "count-deployments" (info (pure CountSuccessfulDeploymentsIn2022) (progDesc "count the number of successful deployments per project (a successful push pipeline on the master branch is counted as a deployment)")),
-        command "set-merge-method-to-fast-forward" (info (SetMergeMethodToFastForward <$> executionParser) (progDesc "Set the merge method for all projects to \"Fast Forward\""))
+        command "set-merge-method-to-fast-forward" (info (SetMergeMethodToFastForward <$> executionParser) (progDesc "Set the merge method for all projects to \"Fast Forward\"")),
+        command "update-merge-requests" (info mergeRequestUpdatActionParser (progDesc "Update all MRs from a given user that match a given condition with a given command"))
       ]
+
+mergeRequestUpdatActionParser :: Parser Command
+mergeRequestUpdatActionParser =
+  UpdateMergeRequests
+    <$> argument (eitherReader f) (metavar "ACTION" <> help "The action to perform. Must be one of \"rebase\", \"merge\"")
+    <*> option (AuthorIs <$> auto) (short 'u' <> long "user-id" <> help "only MRs opened by the user with this ID are taken into account" <> metavar "ID")
+    <*> optional (TitleContains <$> strOption (short 't' <> long "title-contains" <> help "Optional. a string that must appear in the MR title" <> metavar "TXT"))
+    <*> optional (DescriptionContains <$> strOption (short 'd' <> long "description-contains" <> help "Optional. a string that must appear in the MR description" <> metavar "TXT"))
+    <*> executionParser
+  where
+    f :: String -> Either String MergeRequestUpdateAction
+    f "rebase" = Right Rebase
+    f "merge" = Right Merge
+    f s = Left $ s <> " is not a valid MergeRequestUpdateAction"
 
 executionParser :: Parser Execution
 executionParser =
