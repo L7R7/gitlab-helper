@@ -40,6 +40,7 @@ module Effects
     PipelinesApi (..),
     getPipeline,
     getSuccessfulPipelines,
+    getSuccessfulPushPipelinesIn2022,
     SchedulesApi (..),
     getSchedules,
     UpdateError (..),
@@ -440,6 +441,7 @@ instance HasCodec CompactPipeline where
 data PipelinesApi m a where
   GetPipeline :: ProjectId -> PipelineId -> PipelinesApi m (Either UpdateError Pipeline)
   GetSuccessfulPipelines :: ProjectId -> Ref -> PipelinesApi m (Either UpdateError [CompactPipeline])
+  GetSuccessfulPushPipelinesIn2022 :: ProjectId -> Ref -> PipelinesApi m (Either UpdateError [CompactPipeline])
 
 makeSem ''PipelinesApi
 

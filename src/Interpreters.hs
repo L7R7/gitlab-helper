@@ -91,6 +91,9 @@ pipelinesApiToIO baseUrl apiToken = interpret $ \case
   GetSuccessfulPipelines pId ref -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines?ref=master&status={status}&updated_after=2021-01-06T00:00:00Z&source=push|] -- todo: use the ref argument
     embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) pId), ("ref", (stringValue . show) ref), ("status", stringValue "success")]
+  GetSuccessfulPushPipelinesIn2022 pId ref -> do
+    let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines?ref=master&status={status}&updated_after=2022-01-01T00:00:00Z&updated_before=2023-01-01T00:00:00Z&source=push|] -- todo: use the ref argument
+    embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) pId), ("ref", (stringValue . show) ref), ("status", stringValue "success")]
 
 schedulesApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> InterpreterFor SchedulesApi r
 schedulesApiToIO baseUrl apiToken = interpret $ \case

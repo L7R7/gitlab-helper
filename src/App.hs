@@ -27,6 +27,7 @@ run = do
         ShowMergeRequests -> showMergeRequests groupId
         (EnableAllDiscussionsMustBeResolvedForMergeRequirement execution) -> enableAllDiscussionsResolvedForMergeRequirement execution groupId
         (EnableSuccessfulPipelineForMergeRequirement execution) -> enableSuccessfulPipelineForMergeRequirement execution groupId
+        CountSuccessfulDeploymentsIn2022 -> countDeploymentsIn2022 groupId
   runM
     . timerToIO
     . writerToIO

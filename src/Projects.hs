@@ -15,6 +15,7 @@ module Projects
     enableSuccessfulPipelineForMergeRequirement,
     enableAllDiscussionsResolvedForMergeRequirement,
     listProjectsMetaForGroup,
+    countDeploymentsIn2022,
   )
 where
 
@@ -77,6 +78,15 @@ data Processor r = Processor
     runIf :: Project -> Bool,
     action :: ProjectId -> Sem r (Either UpdateError ())
   }
+
+countDeploymentsIn2022 :: (Member ProjectsApi r, Member PipelinesApi r, Member Writer r) => GroupId -> Sem r ()
+countDeploymentsIn2022 gId =
+  runProcessor $
+    Processor
+      gId
+      (\gi -> "Listing the number of successful deployments in 2022 for all projects in Group " <> show gi)
+      (const False)
+      (\pi -> getSuccessfulPushPipelinesIn2022 pi undefined >>= traverse (\piplines -> write $ show (length piplines)))
 
 enableSourceBranchDeletionAfterMerge :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => Execution -> GroupId -> Sem r ()
 enableSourceBranchDeletionAfterMerge execution gId =
