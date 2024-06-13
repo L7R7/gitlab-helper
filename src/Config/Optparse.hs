@@ -2,6 +2,7 @@
 
 module Config.Optparse (parseConfigFromOptions) where
 
+import Barbies (TraversableB (btraverse))
 import Config.Types
 import qualified Data.Semigroup as S (First (..))
 import Network.URI (URI, parseAbsoluteURI)
@@ -21,15 +22,15 @@ parseConfigFromOptions =
 
 parser :: Parser (PartialConfig (Compose Maybe S.First))
 parser =
-  PartialConfig
-    <$> optionalParser (option (GroupId <$> auto) (long "group-id" <> help "set the ID of the group to look at" <> metavar "ID"))
-    <*> optionalParser (option (BaseUrl <$> eitherReader f) (long "base-url" <> help "Base URL of the Gitlab instance (e.g. `https://gitlab.com/`)" <> metavar "URL"))
-    <*> optionalParser (option (ApiToken <$> auto) (long "api-token" <> help "API Token to use for authorizing requests against the Gitlab API. `api` scope is required." <> metavar "TOKEN"))
-    <*> (Compose . Just . S.First <$> commandParser)
+  btraverse (fmap Compose . optional . fmap S.First)
+    $ PartialConfig
+      (option (GroupId <$> auto) (long "group-id" <> help "set the ID of the group to look at" <> metavar "ID"))
+      (option (BaseUrl <$> eitherReader f) (long "base-url" <> help "Base URL of the Gitlab instance (e.g. `https://gitlab.com/`)" <> metavar "URL"))
+      (option (ApiToken <$> auto) (long "api-token" <> help "API Token to use for authorizing requests against the Gitlab API. `api` scope is required." <> metavar "TOKEN"))
+      commandParser
   where
     f :: String -> Either String URI
     f s = maybeToRight ("\"" <> s <> "\" is not a valid absolute URI") (parseAbsoluteURI s)
-    optionalParser p = Compose . fmap S.First <$> optional p
 
 commandParser :: Parser Command
 commandParser =

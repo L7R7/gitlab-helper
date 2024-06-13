@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Config.Types
   ( Config (..),
@@ -15,6 +16,7 @@ module Config.Types
     SearchTerm (..),
     Year (..),
     Execution (..),
+    partialConfigToConfig,
   )
 where
 
@@ -83,3 +85,6 @@ newtype AuthorIs = AuthorIs Int deriving stock (Show)
 newtype SearchTerm = SearchTerm String deriving stock (Show)
 
 newtype Year = Year Int deriving stock (Show)
+
+partialConfigToConfig :: PartialConfig Identity -> Config
+partialConfigToConfig (PartialConfig (Identity groupId) (Identity baseUrl) (Identity apiToken) (Identity cmd)) = Config {..}

@@ -1,5 +1,6 @@
 module Config.Config (parseConfigOrDie) where
 
+import Barbies (bsequence', bzipWith)
 import Config.Env
 import Config.File
 import Config.Optparse
@@ -21,14 +22,9 @@ mkConfig :: [PartialConfig (Compose Maybe S.First)] -> Either (NonEmpty String) 
 mkConfig = mkConfig' . mconcat
 
 mkConfig' :: PartialConfig (Compose Maybe S.First) -> Either (NonEmpty String) Config
-mkConfig' (PartialConfig gId url token c) =
-  validationToEither
-    $ Config
-    <$> fieldValueOrMissing "Group ID missing" gId
-    <*> fieldValueOrMissing "Base URL missing" url
-    <*> fieldValueOrMissing "API-Token missing" token
-    <*> fieldValueOrMissing "Command missing" c
+mkConfig' = validationToEither . fmap partialConfigToConfig . bsequence' . bzipWith fieldValueOrMissing msgs
   where
-    fieldValueOrMissing :: String -> Compose Maybe S.First a -> Validation (NonEmpty String) a
-    fieldValueOrMissing err (Compose Nothing) = Failure $ err :| []
+    msgs = PartialConfig (Const "Group ID missing") (Const "Base URL missing") (Const "API-Token missing") (Const "Command misisng")
+    fieldValueOrMissing :: Const String a -> Compose Maybe S.First a -> Validation (NonEmpty String) a
+    fieldValueOrMissing (Const err) (Compose Nothing) = Failure $ err :| []
     fieldValueOrMissing _ (Compose (Just (S.First a))) = Success a
