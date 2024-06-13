@@ -230,7 +230,7 @@ data Source = SourcePush | SourceWeb | SourceTrigger | SourceSchedule | SourceAp
   deriving (FromJSON) via (Autodocodec Source)
 
 instance HasCodec Source where
-  codec = bimapCodec (maybeToRight "can't parse source" . inverseMap sourceToApiRep) show textCodec
+  codec = bimapCodec (maybeToRight "can't parse source" . inverseMap sourceToApiRep) sourceToApiRep textCodec
 
 sourceToApiRep :: Source -> Text
 sourceToApiRep SourcePush = "push"
