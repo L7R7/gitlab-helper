@@ -49,7 +49,6 @@ module Effects
     getSchedules,
     UpdateError (..),
     Branch (..),
-    MergeRequest (..),
     Duration (..),
     Sha (..),
     Source (..),
@@ -68,46 +67,13 @@ import qualified Data.Text as T hiding (partition)
 import Data.Time (UTCTime)
 import Gitlab.Group
 import Gitlab.Lib (Id (..), Ref (..))
+import Gitlab.MergeRequest
 import Gitlab.Project
 import Network.HTTP.Client.Conduit (HttpException)
 import Network.HTTP.Simple (JSONException)
 import Network.URI
 import Polysemy
 import Relude
-
-data MergeRequest = MergeRequest
-  { mergeRequestId :: Id MergeRequest,
-    mergeRequestProjectId :: Id Project,
-    mergeRequestTitle :: Text,
-    mergeRequestDescription :: Text,
-    mergeRequestWip :: Bool,
-    mergeRequestConflicts :: Bool,
-    mergeRequestCreatedAt :: UTCTime,
-    mergeRequestWebUrl :: URI
-  }
-  deriving stock (Show)
-  deriving (FromJSON) via (Autodocodec MergeRequest)
-
-instance HasCodec MergeRequest where
-  codec =
-    object "MergeRequest"
-      $ MergeRequest
-      <$> requiredField "iid" "NOTE: IID OF THE MR, NOT ID"
-      .= mergeRequestId
-      <*> requiredField' "project_id"
-      .= mergeRequestProjectId
-      <*> requiredField' "title"
-      .= mergeRequestTitle
-      <*> requiredField' "description"
-      .= mergeRequestDescription
-      <*> requiredField' "work_in_progress"
-      .= mergeRequestWip
-      <*> requiredField' "has_conflicts"
-      .= mergeRequestConflicts
-      <*> requiredField' "created_at"
-      .= mergeRequestCreatedAt
-      <*> requiredField' "web_url"
-      .= mergeRequestWebUrl
 
 data Branch = Branch
   { branchName :: T.Text,

@@ -22,6 +22,7 @@ import Data.Time hiding (getCurrentTime)
 import Effects
 import Gitlab.Group (Group)
 import Gitlab.Lib (Id)
+import Gitlab.MergeRequest
 import Gitlab.Project
 import Polysemy
 import Relude
@@ -75,7 +76,7 @@ prettyPrintMergeRequest :: UTCTime -> MergeRequest -> Text
 prettyPrintMergeRequest now MergeRequest {..} =
   (if mergeRequestWip then " ⚬ " else "   ")
     <> "#"
-    <> show mergeRequestId
+    <> show mergeRequestIid
     <> ":"
     <> (if mergeRequestConflicts then " has conflicts," else "")
     <> " opened "

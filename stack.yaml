@@ -5,7 +5,7 @@ packages:
 
 extra-deps:
   - github: L7R7/gitlab-api
-    commit: 2f1bf33c4f4497dcd1ec433738e376a7348a8091
+    commit: fbd028dcedda8a6ea19cdbd62db3a64c9d167287
     subdirs:
       - gitlab-api-types
   - validity-network-uri-0.0.0.1@sha256:ecb0b4e62b6a4620e1049340371441667a5ccbe5d76b225f74ac6767357da29a,926

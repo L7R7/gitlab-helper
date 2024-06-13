@@ -17,6 +17,7 @@ import Config.Types
 import Effects
 import Gitlab.Group
 import Gitlab.Lib (Id)
+import Gitlab.MergeRequest
 import Polysemy
 import Relude
 
@@ -41,11 +42,11 @@ updateMergeRequests gId action authorIs searchTerm execute = do
         Right _ -> pure ()
   where
     performAction pId mr = do
-      write $ "processing MR #" <> show (mergeRequestId mr) <> " in Project #" <> show (mergeRequestProjectId mr) <> ": " <> mergeRequestTitle mr
+      write $ "processing MR #" <> show (mergeRequestIid mr) <> " in Project #" <> show (mergeRequestProjectId mr) <> ": " <> mergeRequestTitle mr
       let f = case execute of
             DryRun -> performActionDry
             Execute -> performActionExecute
-      f pId (mergeRequestId mr)
+      f pId (mergeRequestIid mr)
 
     performActionExecute = case action of
       Rebase -> rebaseMergeRequest
