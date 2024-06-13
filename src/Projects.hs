@@ -71,21 +71,55 @@ data SourceBranchDeletionDisabled
 
 data HasNoDefaultBranch
 
-type Summary = (Count ProjectCount, Count SourceBranchDeletionEnabled, Count SourceBranchDeletionDisabled, Count HasNoDefaultBranch)
+data SuccessfulPipelineForMergeEnabled
+
+data SuccessfulPipelineForMergeDisabled
+
+data AllDiscussionsResolvedForMergeEnabled
+
+data AllDiscussionsResolvedForMergeDisabled
+
+type Summary =
+  ( Count ProjectCount,
+    (Count SourceBranchDeletionEnabled, Count SourceBranchDeletionDisabled),
+    Count HasNoDefaultBranch,
+    (Count SuccessfulPipelineForMergeEnabled, Count SuccessfulPipelineForMergeDisabled),
+    (Count AllDiscussionsResolvedForMergeEnabled, Count AllDiscussionsResolvedForMergeDisabled)
+  )
 
 writeSummary :: (Member Writer r) => Summary -> Sem r ()
-writeSummary (Count numProjects, Count branchDeletionEnabled, Count branchDeletionDisabled, Count hasNoDefaultBranch) = do
-  write ""
-  write $ formatWith [bold] "=== Summary"
-  write $ "Anzahl Projekte: " <> show numProjects
-  write $ "Projekte die 'remove_source_branch_after_merge' aktiviert haben: " <> show branchDeletionEnabled
-  write $ "Projekte die 'remove_source_branch_after_merge' NICHT aktiviert haben: " <> show branchDeletionDisabled
-  write $ "Projekte ohne default branch: " <> show hasNoDefaultBranch
+writeSummary
+  ( Count numProjects,
+    (Count branchDeletionEnabled, Count branchDeletionDisabled),
+    Count hasNoDefaultBranch,
+    (Count successfulPipelineForMergeEnabled, Count successfulPipelineForMergeDisabled),
+    (Count allDiscussionsResolvedForMergeEnabled, Count allDiscussionsResolvedForMergeDisabled)
+    ) = do
+    write ""
+    write $ formatWith [bold] "=== Summary"
+    write $ "Anzahl Projekte: " <> show numProjects
+    write $ "Projekte die 'remove_source_branch_after_merge' aktiviert haben: " <> show branchDeletionEnabled
+    write $ "Projekte die 'remove_source_branch_after_merge' NICHT aktiviert haben: " <> show branchDeletionDisabled
+    write $ "Projekte die 'only_allow_merge_if_pipeline_succeeds' aktiviert haben: " <> show successfulPipelineForMergeEnabled
+    write $ "Projekte die 'only_allow_merge_if_pipeline_succeeds' NICHT aktiviert haben: " <> show successfulPipelineForMergeDisabled
+    write $ "Projekte die 'only_allow_merge_if_all_discussions_are_resolved' aktiviert haben: " <> show allDiscussionsResolvedForMergeEnabled
+    write $ "Projekte die 'only_allow_merge_if_all_discussions_are_resolved' NICHT aktiviert haben: " <> show allDiscussionsResolvedForMergeDisabled
+    write $ "Projekte ohne default branch: " <> show hasNoDefaultBranch
 
 summarizeSingle :: Project -> Summary
-summarizeSingle project = (Count 1, sourceBranchDeletionEnabled, sourceBranchDeletionDisabled, noDefaultBranch)
+summarizeSingle project =
+  ( Count 1,
+    (sourceBranchDeletionEnabled, sourceBranchDeletionDisabled),
+    noDefaultBranch,
+    (successfulPipelineForMergeEnabled, successfulPipelineForMergeDisabled),
+    (allDiscussionsResolvedForMergeEnabled, allDiscussionsResolvedForMergeDisabled)
+  )
   where
     sourceBranchDeletionEnabled = Count $ if branchDeletionEnabled then 1 else 0
     sourceBranchDeletionDisabled = Count $ if branchDeletionEnabled then 0 else 1
     branchDeletionEnabled = or (removeSourceBranchAfterMerge project)
     noDefaultBranch = Count $ if isJust (defaultBranch project) then 0 else 1
+    successfulPipelineForMergeEnabled = Count $ if onlyAllowMergeIfPipelineSucceeds project then 1 else 0
+    successfulPipelineForMergeDisabled = Count $ if onlyAllowMergeIfPipelineSucceeds project then 0 else 1
+    allDiscussionsResolvedForMergeEnabled = Count $ if onlyAllowMergeIfAllDiscussionsAreResolved project then 1 else 0
+    allDiscussionsResolvedForMergeDisabled = Count $ if onlyAllowMergeIfAllDiscussionsAreResolved project then 0 else 1
