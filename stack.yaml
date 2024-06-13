@@ -17,7 +17,7 @@
 #
 # resolver: ./custom-snapshot.yaml
 # resolver: https://example.com/snapshots/2018-01-01.yaml
-resolver: lts-19.0
+resolver: lts-19.24
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -40,12 +40,8 @@ packages:
 #   commit: e7b331f14bcffb8367cd58fbfc8b40ec7642100a
 #
 extra-deps:
-  - aeson-1.5.6.0@sha256:5003bb6fd260d2e2d5a51dee2bf5c8e8f29e4e0e0288fef805c22dcc80ecab06,6788
+  - autodocodec-0.2.0.0@sha256:435fde13e95ba55dd3b2e4195b00a49d4ddb6e4ce64a15c5868c40317fc33e21,1652
   - colourista-0.1.0.1@sha256:98353ee0e2f5d97d2148513f084c1cd37dfda03e48aa9dd7a017c9d9c0ba710e,3307
-  - github: srid/autodocodec # TODO: 2022-03-25 lriedisser: switch back to mainline version as soon as GHC 9.x support has landed
-    commit: 42b42a7407f33c6c74fa4e8c84906aebfed28daf
-    subdirs:
-      - autodocodec
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
