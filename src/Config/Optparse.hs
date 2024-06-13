@@ -41,7 +41,8 @@ commandParser :: Parser Command
 commandParser =
   hsubparser
     $ mconcat
-      [ command "show-branches" (info (pure ShowBranches) (progDesc "show branches")),
+      [ command "version" (info (pure Version) (progDesc "print program version")),
+        command "show-branches" (info (pure ShowBranches) (progDesc "show branches")),
         command "show-projects" (info (pure ShowProjects) (progDesc "show projects")),
         command "list-all-projects-meta" (info (pure ListAllProjectsMeta) (progDesc "list all the projects for all groups that are visible for the provided API token in (almost) meta compatible JSON format")),
         command "list-projects-meta" (info (pure ListProjectsMeta) (progDesc "list the projects for the given group in (almost) meta compatible JSON format")),

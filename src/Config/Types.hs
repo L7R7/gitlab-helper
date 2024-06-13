@@ -51,7 +51,8 @@ instance (Alternative f) => Monoid (PartialConfig f) where
   mempty = bpure empty
 
 data Command
-  = ShowBranches
+  = Version
+  | ShowBranches
   | EnableSourceBranchDeletionAfterMerge Execution
   | ShowProjects
   | ListAllProjectsMeta

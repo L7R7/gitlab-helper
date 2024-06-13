@@ -59,6 +59,7 @@ library
     , directory
     , either
     , envparse
+    , githash
     , gitlab-api-http-client
     , gitlab-api-types
     , http-conduit

@@ -60,6 +60,7 @@ library:
     - directory
     - either
     - envparse
+    - githash
     - http-conduit
     - http-types
     - gitlab-api-http-client

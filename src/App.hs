@@ -1,4 +1,6 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module App (run) where
@@ -6,6 +8,8 @@ module App (run) where
 import Branches (showBranchesForGroup)
 import Config.Config (parseConfigOrDie)
 import Config.Types
+import Effects (write)
+import GitHash
 import Interpreters
 import MergeRequests
 import qualified Polysemy.Reader as R
@@ -18,8 +22,10 @@ import Util
 run :: IO ()
 run = do
   c@Config {..} <- parseConfigOrDie
+  let gitCommit = "Version: " <> fromString (giHash $$tGitInfoCwd)
   -- putStrLn $ "running with config: " <> show c
   let program = case cmd of
+        Version -> write gitCommit
         ShowBranches -> showBranchesForGroup groupId
         (EnableSourceBranchDeletionAfterMerge execution) -> enableSourceBranchDeletionAfterMerge execution groupId
         ShowProjects -> showProjectsForGroup groupId
