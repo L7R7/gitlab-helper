@@ -68,7 +68,6 @@ library
     , optparse-applicative
     , polysemy == 1.5.0.0
     , polysemy-plugin == 0.3.0.0
-    , polysemy-http == 0.4.0.2
     , relude
     , text
     , time

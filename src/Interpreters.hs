@@ -33,15 +33,13 @@ import Network.HTTP.Types.Header (HeaderName)
 import Network.URI (URI)
 import Pipelines hiding (id)
 import Polysemy
-import qualified Polysemy.Http as Http
-import Polysemy.Http.Request (getUrl)
 import Relude
 
 writeToFileToIO :: Member (Embed IO) r => InterpreterFor WriteToFile r
 writeToFileToIO = interpret $ \case
   WriteResult results ->
-    -- embed $ toHtmlFile "test.html" $ plotTimeline results
-    embed $ putStrLn @IO $ decodeUtf8 $ encode ((\(PipelineWithDuration _ _ du _ ut _ _) -> Entry ut du) <$> results)
+    -- embed $ putStrLn @IO $ decodeUtf8 $ encode ((\(PipelineWithDuration _ _ du _ ut _ _) -> Entry ut du) <$> results)
+    embed $ toHtmlFile "test.html" $ plotTimeline results
 
 data Entry = Entry {created :: UTCTime, dur :: Duration} deriving (Generic, ToJSON)
 
@@ -150,16 +148,6 @@ doReq f baseUrl apiToken reqTransformer template vars = case createRequest baseU
   Right request -> do
     result <- try (f request)
     pure $ mapLeft removeApiTokenFromUpdateError $ join $ mapLeft HttpError result
-
-createRequest2 :: BaseUrl -> ApiToken -> (Http.Request -> Http.Request) -> Template -> [(String, Value)] -> Either UpdateError Http.Request
-createRequest2 (BaseUrl url) apiToken reqTransformer template vars = do
-  -- todo query
-  request <- mapLeft ParseUrlError $ getUrl (show url)
-  -- pure $ Http.Request Http.Get host maybePort tls path [] mempty [] ""
-  pure request
-
-requestFromUrl :: URI -> Either UpdateError Http.Request
-requestFromUrl = undefined
 
 createRequest :: BaseUrl -> ApiToken -> RequestTransformer -> Template -> [(String, Value)] -> Either UpdateError Request
 createRequest baseUrl apiToken reqTransformer template vars =
