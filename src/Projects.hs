@@ -1,6 +1,7 @@
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
@@ -119,37 +120,38 @@ newtype Count a = Count Int
   deriving (Semigroup) via (Sum Int)
   deriving (Monoid) via (Sum Int)
 
+newtype EnabledDisabledCount a = EnabledDisabledCount (Count a, Count a)
+  deriving newtype (Semigroup)
+  deriving newtype (Monoid)
+
+mkEnabledDisabledCount :: Bool -> EnabledDisabledCount a
+mkEnabledDisabledCount b = if b then EnabledDisabledCount (Count 1, Count 0) else EnabledDisabledCount (Count 0, Count 1)
+
 data ProjectCount
 
-data SourceBranchDeletionEnabled
-
-data SourceBranchDeletionDisabled
+data SourceBranchDeletion
 
 data HasNoDefaultBranch
 
-data SuccessfulPipelineForMergeEnabled
+data SuccessfulPipelineForMerge
 
-data SuccessfulPipelineForMergeDisabled
-
-data AllDiscussionsResolvedForMergeEnabled
-
-data AllDiscussionsResolvedForMergeDisabled
+data AllDiscussionsResolvedForMerge
 
 type Summary =
   ( Count ProjectCount,
-    (Count SourceBranchDeletionEnabled, Count SourceBranchDeletionDisabled),
+    EnabledDisabledCount SourceBranchDeletion,
     Count HasNoDefaultBranch,
-    (Count SuccessfulPipelineForMergeEnabled, Count SuccessfulPipelineForMergeDisabled),
-    (Count AllDiscussionsResolvedForMergeEnabled, Count AllDiscussionsResolvedForMergeDisabled)
+    EnabledDisabledCount SuccessfulPipelineForMerge,
+    EnabledDisabledCount AllDiscussionsResolvedForMerge
   )
 
 writeSummary :: (Member Writer r) => Summary -> Sem r ()
 writeSummary
   ( Count numProjects,
-    (Count branchDeletionEnabled, Count branchDeletionDisabled),
+    EnabledDisabledCount (Count branchDeletionEnabled, Count branchDeletionDisabled),
     Count hasNoDefaultBranch,
-    (Count successfulPipelineForMergeEnabled, Count successfulPipelineForMergeDisabled),
-    (Count allDiscussionsResolvedForMergeEnabled, Count allDiscussionsResolvedForMergeDisabled)
+    EnabledDisabledCount (Count successfulPipelineForMergeEnabled, Count successfulPipelineForMergeDisabled),
+    EnabledDisabledCount (Count allDiscussionsResolvedForMergeEnabled, Count allDiscussionsResolvedForMergeDisabled)
     ) = do
     write ""
     write $ formatWith [bold] "=== Summary"
@@ -165,17 +167,14 @@ writeSummary
 summarizeSingle :: Project -> Summary
 summarizeSingle project =
   ( Count 1,
-    (sourceBranchDeletionEnabled, sourceBranchDeletionDisabled),
+    sourceBranchDeletionEnabledDisabled,
     noDefaultBranch,
-    (successfulPipelineForMergeEnabled, successfulPipelineForMergeDisabled),
-    (allDiscussionsResolvedForMergeEnabled, allDiscussionsResolvedForMergeDisabled)
+    successfulPipelineForMergeEnabledDisabled,
+    allDiscussionsResolvedForMergeEnabledDisabled
   )
   where
-    sourceBranchDeletionEnabled = Count $ if branchDeletionEnabled then 1 else 0
-    sourceBranchDeletionDisabled = Count $ if branchDeletionEnabled then 0 else 1
+    sourceBranchDeletionEnabledDisabled = mkEnabledDisabledCount branchDeletionEnabled
     branchDeletionEnabled = or (removeSourceBranchAfterMerge project)
     noDefaultBranch = Count $ if isJust (defaultBranch project) then 0 else 1
-    successfulPipelineForMergeEnabled = Count $ if onlyAllowMergeIfPipelineSucceeds project then 1 else 0
-    successfulPipelineForMergeDisabled = Count $ if onlyAllowMergeIfPipelineSucceeds project then 0 else 1
-    allDiscussionsResolvedForMergeEnabled = Count $ if onlyAllowMergeIfAllDiscussionsAreResolved project then 1 else 0
-    allDiscussionsResolvedForMergeDisabled = Count $ if onlyAllowMergeIfAllDiscussionsAreResolved project then 0 else 1
+    successfulPipelineForMergeEnabledDisabled = mkEnabledDisabledCount $ onlyAllowMergeIfPipelineSucceeds project
+    allDiscussionsResolvedForMergeEnabledDisabled = mkEnabledDisabledCount $ onlyAllowMergeIfAllDiscussionsAreResolved project
