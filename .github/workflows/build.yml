@@ -4,13 +4,13 @@ on: push
 
 jobs:
   ormolu:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: haskell-actions/run-ormolu@v15
   hlint:
     name: hlint
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -27,7 +27,7 @@ jobs:
 
   build:
     name: Build
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     needs:
       - ormolu
       # - hlint
@@ -65,7 +65,7 @@ jobs:
 
   markdown:
     name: Markdown lint
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
