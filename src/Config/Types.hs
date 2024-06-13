@@ -29,7 +29,7 @@ data Config = Config
     baseUrl :: BaseUrl,
     apiToken :: ApiToken
   }
-  deriving (Show)
+  deriving stock (Show)
 
 data PartialConfig f = PartialConfig
   { pGroupId :: f (S.First GroupId),

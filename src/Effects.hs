@@ -181,7 +181,7 @@ data MergeRequest = MergeRequest
     createdAt :: UTCTime,
     webUrl :: URI
   }
-  deriving (Show)
+  deriving stock (Show)
   deriving (FromJSON) via (Autodocodec MergeRequest)
 
 instance HasCodec MergeRequest where
@@ -214,7 +214,7 @@ data Branch = Branch
     branchWebUrl :: URI,
     branchCommittedDate :: UTCTime
   }
-  deriving (Show)
+  deriving stock (Show)
   deriving (FromJSON) via (Autodocodec Branch)
 
 instance HasCodec Branch where
@@ -277,7 +277,7 @@ data UpdateError
   | ExceptionError SomeException
   | ConversionError JSONException
   | ParseUrlError Text
-  deriving (Show)
+  deriving stock (Show)
 
 data Writer m a where
   Write :: Text -> Writer m ()
@@ -377,7 +377,7 @@ data Pipeline = Pipeline
     pipelineWebUrl :: URI,
     pipelineSource :: Source
   }
-  deriving (Show)
+  deriving stock (Show)
   deriving (FromJSON) via (Autodocodec Pipeline)
 
 instance HasCodec Pipeline where

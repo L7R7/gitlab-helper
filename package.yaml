@@ -1,14 +1,14 @@
-name:                gitlab-helper
-version:             0.1.0.0
-github:              "L7R7/gitlab-helper"
-license:             BSD3
-author:              "Leonhard Riedißer"
-maintainer:          "leo008180@googlemail.com"
-copyright:           "2020 Leonhard Riedißer"
+name: gitlab-helper
+version: 0.1.0.0
+github: "L7R7/gitlab-helper"
+license: BSD3
+author: "Leonhard Riedißer"
+maintainer: "leo008180@googlemail.com"
+copyright: "2020 Leonhard Riedißer"
 
 extra-source-files:
-- README.md
-- ChangeLog.md
+  - README.md
+  - ChangeLog.md
 
 # Metadata used when publishing your package
 # synopsis:            Short description of your package
@@ -17,32 +17,80 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/L7R7/gitlab-helper#readme>
+description: Please see the README on GitHub at <https://github.com/L7R7/gitlab-helper#readme>
 
 dependencies:
-- base >= 4.7 && < 5
+  - base >= 4.7 && < 5
+  - relude
+
+default-extensions:
+  - NoImplicitPrelude
+
+ghc-options:
+  - -fwrite-ide-info
+  - -hiedir=.hie
+  - -Wall
+  - -Wcompat
+  - -Widentities
+  - -Wincomplete-uni-patterns
+  - -Wincomplete-record-updates
+  - -Wredundant-constraints
+  - -fhide-source-paths
+  - -Wpartial-fields
+  - -Wmissing-deriving-strategies
+  - -Wunused-packages
 
 library:
   source-dirs: src
+  ghc-options:
+    - -fno-warn-orphans
+    - -O2
+    - -flate-specialise
+    - -fspecialise-aggressively
+    - -fplugin=Polysemy.Plugin
+    - -Wmissing-export-lists
+  dependencies:
+    - aeson
+    - autodocodec
+    - barbies
+    - burrito >= 2.0.1.0
+    - colonnade
+    - colourista
+    - containers
+    - directory
+    - either
+    - envparse
+    - http-conduit
+    - http-link-header
+    - http-types
+    - lens
+    - network-uri
+    - optparse-applicative
+    - polysemy >= 1.5.0.0
+    - polysemy-plugin >= 0.3.0.0
+    - scientific
+    - text
+    - time
+    - yaml
 
 executables:
   gitlab-helper-exe:
-    main:                Main.hs
-    source-dirs:         app
+    main: Main.hs
+    source-dirs: app
     ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
     dependencies:
-    - gitlab-helper
+      - gitlab-helper
 
 tests:
   gitlab-helper-test:
-    main:                Spec.hs
-    source-dirs:         test
+    main: Spec.hs
+    source-dirs: test
     ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
     dependencies:
-    - gitlab-helper
+      - gitlab-helper
