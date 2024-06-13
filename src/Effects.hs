@@ -160,6 +160,7 @@ data UpdateError
   = HttpError HttpException
   | ExceptionError SomeException
   | ConversionError JSONException
+  | ParseUrlError Text
   deriving (Show)
 
 data Writer m a where

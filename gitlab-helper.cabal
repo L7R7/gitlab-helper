@@ -27,14 +27,15 @@ source-repository head
 
 library
   exposed-modules:
-      Branches
+    App
+    , Branches
     , Config.Config
     , Config.Env
     , Config.File
     , Config.Types
     , Effects
     , Interpreters
-    , Lib
+    , MergeRequests
     , Pipelines
     , Projects
     , Schedules
@@ -49,6 +50,7 @@ library
       base >=4.7 && <5
     , aeson
     , aeson-casing
+    , barbies
     , burrito
     , bytestring
     , colourista
@@ -60,11 +62,13 @@ library
     , http-conduit
     , http-link-header
     , http-types
-    , hvega
+    , hvega <= 0.9.1.0
     , lens
     , network-uri
-    , polysemy >= 1.4.0.0
-    , polysemy-plugin
+    , optparse-applicative
+    , polysemy == 1.5.0.0
+    , polysemy-plugin == 0.3.0.0
+    , polysemy-http == 0.4.0.2
     , relude
     , text
     , time

@@ -1,5 +1,7 @@
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE StandaloneDeriving #-}
 
 module Config.File (readPartialOptionsFromHomeDir, readPartialOptionsFromLocalDir) where
 
@@ -10,7 +12,7 @@ import Network.URI (parseURI)
 import Relude
 import System.Directory (doesFileExist, getCurrentDirectory, getHomeDirectory)
 
-instance FromJSON PartialConfig where
+instance FromJSON (PartialConfig Maybe) where
   parseJSON = withObject "PartialConfig" $ \o ->
     o .: "config" >>= \c -> do
       pGroupId <- c .:? "groupId"

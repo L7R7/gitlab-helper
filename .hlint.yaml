@@ -15,14 +15,6 @@
 - ignore:
     name: Use Foldable.forM_
 - hint:
-    lhs: "pure ()"
-    note: "Use 'pass'"
-    rhs: pass
-- hint:
-    lhs: "return ()"
-    note: "Use 'pass'"
-    rhs: pass
-- hint:
     lhs: "(: [])"
     note: "Use `one`"
     rhs: one

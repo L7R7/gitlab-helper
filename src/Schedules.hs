@@ -37,14 +37,13 @@ getSchedulesForProject p = (p,) <$> getSchedules (projectId p)
 
 printResults :: Member Writer r => (Project, Either UpdateError [Schedule]) -> Sem r ()
 printResults (project, Left err) = do
-  write $ "=== " <> show (name project)
+  write $ formatWith [bold] ("=== " <> show (name project))
   write $ "something went wrong: " <> show err
+printResults (_, Right []) = pure ()
 printResults (project, Right schedules) = do
   write ""
   write $ formatWith [bold] ("=== " <> show (name project))
-  if null schedules
-    then write ""
-    else traverse_ (write . prettyPrintSchedule) schedules
+  traverse_ (write . prettyPrintSchedule) schedules
 
 prettyPrintSchedule :: Schedule -> Text
 prettyPrintSchedule Schedule {..} =

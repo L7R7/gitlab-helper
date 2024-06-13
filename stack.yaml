@@ -17,7 +17,7 @@
 #
 # resolver: ./custom-snapshot.yaml
 # resolver: https://example.com/snapshots/2018-01-01.yaml
-resolver: lts-17.2
+resolver: lts-18.5
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -41,13 +41,36 @@ packages:
 #
 extra-deps:
   - burrito-1.2.0.0@sha256:13490e501d3ce017cc9ba7774d0b1263f72f22e8f755c8f0b7cbd2e8d555f2ae,2877
+  - colourista-0.1.0.1@sha256:98353ee0e2f5d97d2148513f084c1cd37dfda03e48aa9dd7a017c9d9c0ba710e,3307
+  # - co-log-polysemy-0.0.1.2@sha256:a6ea6103f5ca806dc16bcdbb666ee2ebafdbbf36a9626f33103105a41a55d561,3645
   - datetime-0.3.1@sha256:7e275bd0ce7a2f66445bedfa0006abaf4d41af4c2204c3f8004c17eab5480e74,1534
   - envparse-0.4.1@sha256:989902e6368532548f61de1fa245ad2b39176cddd8743b20071af519a709ce30,2842
-  - polysemy-1.4.0.0@sha256:0245a046eaf936557d4208b5a355df1a20799c9e274f91fa889ab2644ecbabae,6541
-  - polysemy-plugin-0.2.5.1@sha256:61c6c0aad2852377aa5d5a8f9639a437905e3a6f0e2a99a41e96fb231dc86836,2952
-
-  - Cabal-3.0.2.0@sha256:f45ee078a8529d1ad3993767345ac83304c7f2ff5eec02c455a1dc200ad22c67,26714
+  - polysemy-1.5.0.0@sha256:7edb723e7f703fe273a40e43fe33f6e8f7659fe60759e8698def1481262d314d,6246
+  - polysemy-plugin-0.3.0.0@sha256:22e7553d0fddb48d9484ba1c71d2ed825213fcb214866d9b502ee02bfb960cb4,3121
   - hvega-0.9.1.0@sha256:4dd359480aba8ddb40f4905222fcc196618a7ff50c1b909bb0b5b8ee09e7c295,10921
+  - github: tek/polysemy-http
+    commit: 1490743a37bbe950cb134bd5449aad33a9e4ebe1
+    subdirs:
+      - packages/polysemy-http
+  - github: tek/polysemy-log
+    commit: 32bea7d7753ea9ae15a4cdd36f4c17b0f6a7c2b6
+    subdirs:
+      - packages/polysemy-log
+      - packages/polysemy-log-co
+  - github: kowainik/co-log
+    commit: d2c7ad66af4e79c7a8f8d5e6c324ea3ff2739277
+    subdirs:
+      - co-log-polysemy
+  - github: tek/polysemy-time
+    commit: 1778634dad241c4fa576c2e53cb1b73a3c7d49eb
+    subdirs:
+      - packages/chronos
+      - packages/time
+  - github: tek/polysemy-conc
+    commit: 28bd2ef2a7ceaa82d4478d98884287fb5fe17e9f
+    subdirs:
+      - packages/conc
+
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

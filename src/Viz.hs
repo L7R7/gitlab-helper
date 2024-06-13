@@ -27,7 +27,7 @@ plotTimeline entries =
         encoding
           . position X [PName "dates", PmType Temporal, PTimeUnit YearMonthDateHoursMinutesSeconds, PAxis [AxTitle "Date (Days)"]]
           . position Y [PName "dur", PmType Quantitative, PAxis [AxTitle "Pipeline duration"]]
-          . row [FName "dates", FmType Temporal, FTimeUnit (Utc Year)]
+          . row [FName "dates", FmType Temporal, FTimeUnit (Utc YearQuarter)]
    in toVegaLite
         [ dat [],
           mark Point [MFilled True],

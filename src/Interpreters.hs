@@ -11,7 +11,7 @@
 module Interpreters (projectsApiToIO, mergeRequestApiToIO, branchesApiToIO, pipelinesApiToIO, schedulesApiToIO, writeToFileToIO, runM) where
 
 import Burrito
-import Config.Types (ApiToken (..), BaseUrl)
+import Config.Types (ApiToken (..), BaseUrl (..))
 import Control.Exception.Base (try)
 import Control.Lens (Lens', Prism', Traversal', filtered, lens, prism', set, _1, _2)
 import Data.Aeson.Types (FromJSON)
@@ -27,6 +27,8 @@ import Network.HTTP.Types.Header (HeaderName)
 import Network.URI (URI)
 import Pipelines hiding (id)
 import Polysemy
+import qualified Polysemy.Http as Http
+import Polysemy.Http.Request (getUrl)
 import Relude
 
 writeToFileToIO :: Member (Embed IO) r => InterpreterFor WriteToFile r
@@ -56,7 +58,7 @@ plotTimeline entries =
 projectsApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> InterpreterFor ProjectsApi r
 projectsApiToIO baseUrl apiToken = interpret $ \case
   GetProjects groupId -> do
-    let template = [uriTemplate|/api/v4/groups/{groupId}/projects?include_subgroups=true&archived=false|]
+    let template = [uriTemplate|/api/v4/groups/{groupId}/projects?include_subgroups=true&archived=false&with_shared=false|]
     embed $ fetchDataPaginated apiToken baseUrl template [("groupId", (stringValue . show) groupId)]
   GetProject project -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}|]
@@ -83,7 +85,7 @@ pipelinesApiToIO baseUrl apiToken = interpret $ \case
     let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines/{pipelineId}|]
     embed $ fetchData baseUrl apiToken template [("projectId", (stringValue . show) project), ("pipelineId", (stringValue . show) pipeline)]
   GetSuccessfulPipelines pId ref -> do
-    let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines?ref=master&status={status}&updated_after=2019-06-09T08:00:00Z|]
+    let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines?ref=master&status={status}&updated_after=2021-04-01T00:00:00Z|]
     embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) pId), ("ref", (stringValue . show) ref), ("status", stringValue "success")]
 
 schedulesApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> InterpreterFor SchedulesApi r
@@ -121,6 +123,16 @@ fetchData' baseUrl apiToken reqTransformer template vars =
       result <- try (mapLeft ConversionError . getResponseBody <$> httpJSONEither request)
       pure $ mapLeft removeApiTokenFromUpdateError $ join $ mapLeft HttpError result
 
+createRequest2 :: BaseUrl -> ApiToken -> (Http.Request -> Http.Request) -> Template -> [(String, Value)] -> Either UpdateError Http.Request
+createRequest2 (BaseUrl url) apiToken reqTransformer template vars = do
+  -- todo query
+  request <- mapLeft ParseUrlError $ getUrl (show url)
+  -- pure $ Http.Request Http.Get host maybePort tls path [] mempty [] ""
+  pure request
+
+requestFromUrl :: URI -> Either UpdateError Http.Request
+requestFromUrl = undefined
+
 createRequest :: BaseUrl -> ApiToken -> RequestTransformer -> Template -> [(String, Value)] -> Either UpdateError Request
 createRequest baseUrl apiToken reqTransformer template vars =
   bimap
@@ -140,7 +152,7 @@ parseNextRequest response = parseNextHeader response >>= rightToMaybe . requestF
 parseNextHeader :: Response a -> Maybe URI
 parseNextHeader response = href <$> find isNextLink (getResponseHeader "link" response >>= concat . parseLinkHeaderBS)
 
-isNextLink :: Link -> Bool
+isNextLink :: Link uri -> Bool
 isNextLink (Link _ [(Rel, "next")]) = True
 isNextLink _ = False
 
@@ -148,6 +160,7 @@ removeApiTokenFromUpdateError :: UpdateError -> UpdateError
 removeApiTokenFromUpdateError (HttpError httpException) = HttpError (removeApiTokenFromHttpException httpException)
 removeApiTokenFromUpdateError (ConversionError jsonException) = ConversionError (removeApiTokenFromJsonException jsonException)
 removeApiTokenFromUpdateError (ExceptionError x) = ExceptionError x
+removeApiTokenFromUpdateError (ParseUrlError x) = ParseUrlError x
 
 removeApiTokenFromHttpException :: HttpException -> HttpException
 removeApiTokenFromHttpException = set (reqPrism . _1 . headers . tokenHeader) "xxxxx"

@@ -17,7 +17,7 @@ parseConfig = do
   partialFromEnv <- parseFromEnv
   pure $ mkConfig (partialFromHome <> partialFromLocal <> partialFromEnv)
 
-mkConfig :: PartialConfig -> Either (NonEmpty String) Config
+mkConfig :: PartialConfig Maybe -> Either (NonEmpty String) Config
 mkConfig (PartialConfig gId url token) =
   validationToEither $
     Config <$> x "Group ID missing" gId <*> x "Base URL missing" url <*> x "API-Token missing" token

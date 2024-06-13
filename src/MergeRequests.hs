@@ -11,8 +11,8 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
 
-module Lib
-  ( evaluateProjects,
+module MergeRequests
+  ( showMergeRequests,
   )
 where
 
@@ -24,8 +24,8 @@ import Effects
 import Polysemy
 import Relude
 
-evaluateProjects :: (Member ProjectsApi r, Member MergeRequestApi r, Member Timer r, Member Writer r) => GroupId -> Sem r ()
-evaluateProjects gId = do
+showMergeRequests :: (Member ProjectsApi r, Member MergeRequestApi r, Member Timer r, Member Writer r) => GroupId -> Sem r ()
+showMergeRequests gId = do
   getProjects gId >>= \case
     Left err -> write $ show err
     Right projects -> do
@@ -45,7 +45,7 @@ printProjectsWithDisabledMergeRequests projects = do
 
 printProjectsWithMergeRequests :: (Member MergeRequestApi r, Member Timer r, Member Writer r) => [Project] -> Sem r ()
 printProjectsWithMergeRequests projects = do
-  write "=== projects with merge requests"
+  write "=== projects with merge requests ( ⚬ = Draft)"
   printProjects projects
   where
     printProjects :: (Member MergeRequestApi r, Member Timer r, Member Writer r) => [Project] -> Sem r ()
@@ -71,7 +71,10 @@ prettyPrintProject project = ["----------", show (name project) <> " (" <> show 
 
 prettyPrintMergeRequest :: UTCTime -> MergeRequest -> Text
 prettyPrintMergeRequest now MergeRequest {..} =
-  "#" <> show mergeRequestId <> ":"
+  (if wip then " ⚬ " else "   ")
+    <> "#"
+    <> show mergeRequestId
+    <> ":"
     <> (if conflicts then " has conflicts," else "")
     <> " opened "
     <> age now createdAt
