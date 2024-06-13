@@ -36,12 +36,7 @@ updateMergeRequests ::
 updateMergeRequests _ _ Merge _ Nothing Execute =
   write "I don't think you want to blindly merge all merge requests for this group. Consider adding a filter. Exiting now."
 updateMergeRequests gId projectExcludes action authorIs maybeSearchTerms execute = do
-  let searchTerm' =
-        ( \case
-            Left st -> st
-            Right (SearchTermTitle s) -> SearchTerm s
-        )
-          <$> maybeSearchTerms
+  let searchTerm' = either id (\(SearchTermTitle s) -> SearchTerm s) <$> maybeSearchTerms
   getOpenMergeRequestsForGroup gId (Just authorIs) searchTerm' >>= \case
     Left err -> write $ show err
     Right [] -> write "no MRs to process"
