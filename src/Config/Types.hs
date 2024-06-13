@@ -62,7 +62,7 @@ parser =
   hsubparser $
     mconcat
       [ command "show-branches" (info (pure ShowBranches) (progDesc "show branches")),
-        command "show-projects" (info (pure ShowProjects) (progDesc "show branches")),
+        command "show-projects" (info (pure ShowProjects) (progDesc "show projects")),
         command "enable-source-branch-deletion" (info (pure EnableSourcBranchDeletionAfterMerge) (progDesc "enable source branch deletion after merge")),
         command "show-schedules" (info (pure ShowSchedules) (progDesc "show schedules")),
         command "show-pipeline-durations" (info (pure ShowPipelineDurations) (progDesc "show pipeline durations")),
