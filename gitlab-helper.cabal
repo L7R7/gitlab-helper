@@ -30,6 +30,7 @@ library
       Config.Config
       Config.Env
       Config.File
+      Config.Optparse
       Config.Types
       Effects
       Interpreters

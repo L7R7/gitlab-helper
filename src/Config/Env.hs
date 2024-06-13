@@ -19,6 +19,7 @@ partialConfigParser =
     <$> maybeFirstParser (GroupId <$> E.var E.auto "HB_GROUP_ID" (E.help "ID of the Gitlab group for which the hooks should be set"))
     <*> maybeFirstParser (BaseUrl <$> E.var (absoluteURIFromEnv <=< E.nonempty) "HB_BASE_URL" (E.help "Base URL of the Gitlab instance (e.g. `https://gitlab.com/`)"))
     <*> maybeFirstParser (ApiToken <$> E.var (E.str <=< E.nonempty) "HB_API_TOKEN" (E.help "API Token to use for authorizing requests against the Gitlab API. `api` scope is required."))
+    <*> empty
 
 maybeFirstParser :: E.Parser E.Error a -> E.Parser E.Error (Maybe (S.First a))
 maybeFirstParser parser = fmap S.First <$> optional parser

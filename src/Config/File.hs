@@ -18,6 +18,7 @@ instance FromJSON (PartialConfig Maybe) where
       pGroupId <- c .:? "groupId"
       pBaseUrl <- c .:? "baseUrl"
       pApiToken <- c .:? "apiToken"
+      let pCommand = Nothing
       pure $ PartialConfig {..}
 
 instance FromJSON BaseUrl where

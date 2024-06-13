@@ -17,8 +17,7 @@ import Util
 run :: IO ()
 run = do
   Config {..} <- parseConfigOrDie
-  command <- commandParser
-  let action = case command of
+  let program = case cmd of
         ShowBranches -> showBranchesForGroup groupId
         (EnableSourceBranchDeletionAfterMerge execution) -> enableSourceBranchDeletionAfterMerge execution groupId
         ShowProjects -> showProjectsForGroup groupId
@@ -30,7 +29,7 @@ run = do
         (EnableSuccessfulPipelineForMergeRequirement execution) -> enableSuccessfulPipelineForMergeRequirement execution groupId
         (CountSuccessfulDeployments year) -> countDeployments groupId year
         (SetMergeMethodToFastForward execution) -> setMergeMethodToFastForward execution groupId
-        (UpdateMergeRequests cmd authorIs searchTerm execution) -> updateMergeRequests groupId cmd authorIs searchTerm execution
+        (UpdateMergeRequests action authorIs searchTerm execution) -> updateMergeRequests groupId action authorIs searchTerm execution
   runM
     . timerToIO
     . writerToIO
@@ -41,4 +40,4 @@ run = do
     . mergeRequestApiToIO baseUrl apiToken
     . pipelinesApiToIO baseUrl apiToken
     . schedulesApiToIO baseUrl apiToken
-    $ action
+    $ program

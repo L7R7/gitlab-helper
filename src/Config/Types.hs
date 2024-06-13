@@ -17,6 +17,7 @@ module Config.Types
     Year (..),
     Execution (..),
     commandParser,
+    parser,
   )
 where
 
@@ -31,14 +32,16 @@ import Relude hiding (Reader)
 data Config = Config
   { groupId :: GroupId,
     baseUrl :: BaseUrl,
-    apiToken :: ApiToken
+    apiToken :: ApiToken,
+    cmd :: Command
   }
   deriving stock (Show)
 
 data PartialConfig f = PartialConfig
   { pGroupId :: f (S.First GroupId),
     pBaseUrl :: f (S.First BaseUrl),
-    pApiToken :: f (S.First ApiToken)
+    pApiToken :: f (S.First ApiToken),
+    pCommand :: f (S.First Command)
   }
   deriving stock (Generic)
   deriving anyclass (FunctorB, TraversableB, ApplicativeB, ConstraintsB)
