@@ -16,14 +16,14 @@ module Schedules
 where
 
 import Colourista.Pure
-import Config.Types
 import Effects
-import Gitlab.Lib (Name (..))
+import Gitlab.Group (Group)
+import Gitlab.Lib (Id, Name (..))
 import Gitlab.Project
 import Polysemy
 import Relude
 
-showSchedulesForGroup :: (Member ProjectsApi r, Member SchedulesApi r, Member Writer r) => GroupId -> Sem r ()
+showSchedulesForGroup :: (Member ProjectsApi r, Member SchedulesApi r, Member Writer r) => Id Group -> Sem r ()
 showSchedulesForGroup gId = do
   write "=================================================="
   write $ "Listing the projects' schedules for Group " <> show gId

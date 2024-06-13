@@ -15,13 +15,15 @@ where
 
 import Config.Types
 import Effects
+import Gitlab.Group
+import Gitlab.Lib (Id)
 import Polysemy
 import Relude
 
 updateMergeRequests ::
   forall r.
   (Member MergeRequestApi r, Member Writer r) =>
-  GroupId ->
+  Id Group ->
   MergeRequestUpdateAction ->
   AuthorIs ->
   Maybe SearchTerm ->

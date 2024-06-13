@@ -16,15 +16,16 @@ module Branches
 where
 
 import Colourista.Pure
-import Config.Types
 import qualified Data.Text as T (intercalate)
 import Data.Time hiding (getCurrentTime)
 import Effects
+import Gitlab.Group
+import Gitlab.Lib (Id)
 import Gitlab.Project
 import Polysemy
 import Relude
 
-showBranchesForGroup :: (Member ProjectsApi r, Member BranchesApi r, Member Timer r, Member Writer r) => GroupId -> Sem r ()
+showBranchesForGroup :: (Member ProjectsApi r, Member BranchesApi r, Member Timer r, Member Writer r) => Id Group -> Sem r ()
 showBranchesForGroup gId = do
   write "=================================================="
   write $ "Listing the projects' branches for Group " <> show gId

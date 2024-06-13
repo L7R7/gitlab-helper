@@ -6,7 +6,6 @@
 
 module Config.Types
   ( Config (..),
-    GroupId (..),
     BaseUrl (..),
     ApiToken (..),
     PartialConfig (..),
@@ -20,9 +19,9 @@ module Config.Types
   )
 where
 
-import Autodocodec
 import Barbies
 import Data.Aeson (FromJSON (..))
+import Gitlab.Group (Group)
 import Gitlab.Lib (Id (..))
 import Gitlab.Project (Project)
 import Network.URI (URI)
@@ -30,7 +29,7 @@ import Options.Applicative
 import Relude hiding (Reader)
 
 data Config = Config
-  { groupId :: GroupId,
+  { groupId :: Id Group,
     baseUrl :: BaseUrl,
     apiToken :: ApiToken,
     projectsExcludeList :: [Id Project],
@@ -39,7 +38,7 @@ data Config = Config
   deriving stock (Show)
 
 data PartialConfig f = PartialConfig
-  { pGroupId :: f GroupId,
+  { pGroupId :: f (Id Group),
     pBaseUrl :: f BaseUrl,
     pApiToken :: f ApiToken,
     pProjectsExcludeList :: f [Id Project],
@@ -53,13 +52,6 @@ instance (Alternative f) => Semigroup (PartialConfig f) where
 
 instance (Alternative f) => Monoid (PartialConfig f) where
   mempty = bpure empty
-
-newtype GroupId = GroupId Int
-  deriving newtype (Show)
-  deriving (FromJSON) via (Autodocodec GroupId)
-
-instance HasCodec GroupId where
-  codec = dimapCodec GroupId (\(GroupId i) -> i) codec
 
 newtype BaseUrl = BaseUrl URI deriving newtype (Show)
 

@@ -20,7 +20,6 @@ module Effects
     getCurrentTime,
     GroupsApi (..),
     getAllGroups,
-    Group (..),
     UsersApi (..),
     getAllUsers,
     UserId (..),
@@ -62,11 +61,12 @@ module Effects
 where
 
 import Autodocodec
-import Config.Types (AuthorIs, GroupId, SearchTerm, Year)
+import Config.Types (AuthorIs, SearchTerm, Year)
 import Data.Aeson (FromJSON (..), ToJSON)
 import Data.Scientific
 import qualified Data.Text as T hiding (partition)
 import Data.Time (UTCTime)
+import Gitlab.Group
 import Gitlab.Lib (Id (..), Ref (..))
 import Gitlab.Project
 import Network.HTTP.Client.Conduit (HttpException)
@@ -219,21 +219,13 @@ data UsersApi m a where
 
 makeSem ''UsersApi
 
-newtype Group = Group
-  { groupId :: GroupId
-  }
-  deriving (FromJSON) via (Autodocodec Group)
-
-instance HasCodec Group where
-  codec = object "Group" $ Group <$> requiredField' "id" .= groupId
-
 data GroupsApi m a where
   GetAllGroups :: GroupsApi m (Either UpdateError [Group])
 
 makeSem ''GroupsApi
 
 data ProjectsApi m a where
-  GetProjectsForGroup :: GroupId -> ProjectsApi m (Either UpdateError [Project])
+  GetProjectsForGroup :: Id Group -> ProjectsApi m (Either UpdateError [Project])
   GetProjectsForUser :: UserId -> ProjectsApi m (Either UpdateError [Project])
   GetProject :: Id Project -> ProjectsApi m (Either UpdateError Project)
   HasCi :: Id Project -> Ref -> ProjectsApi m (Either UpdateError Bool)
@@ -243,7 +235,7 @@ makeSem ''ProjectsApi
 
 data MergeRequestApi m a where
   GetOpenMergeRequests :: Id Project -> Maybe AuthorIs -> MergeRequestApi m (Either UpdateError [MergeRequest])
-  GetOpenMergeRequestsForGroup :: GroupId -> Maybe AuthorIs -> Maybe SearchTerm -> MergeRequestApi m (Either UpdateError [MergeRequest])
+  GetOpenMergeRequestsForGroup :: Id Group -> Maybe AuthorIs -> Maybe SearchTerm -> MergeRequestApi m (Either UpdateError [MergeRequest])
   EnableSourceBranchDeletionAfterMrMerge :: Id Project -> MergeRequestApi m (Either UpdateError ())
   SetSuccessfulPipelineRequirementForMerge :: Id Project -> MergeRequestApi m (Either UpdateError ())
   UnsetSuccessfulPipelineRequirementForMerge :: Id Project -> MergeRequestApi m (Either UpdateError ())

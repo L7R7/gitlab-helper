@@ -16,16 +16,17 @@ module MergeRequests
   )
 where
 
-import Config.Types
 import Data.List (partition)
 import qualified Data.Text as T (intercalate)
 import Data.Time hiding (getCurrentTime)
 import Effects
+import Gitlab.Group (Group)
+import Gitlab.Lib (Id)
 import Gitlab.Project
 import Polysemy
 import Relude
 
-showMergeRequests :: (Member ProjectsApi r, Member MergeRequestApi r, Member Timer r, Member Writer r) => GroupId -> Sem r ()
+showMergeRequests :: (Member ProjectsApi r, Member MergeRequestApi r, Member Timer r, Member Writer r) => Id Group -> Sem r ()
 showMergeRequests gId = do
   getProjectsForGroup gId >>= \case
     Left err -> write $ show err

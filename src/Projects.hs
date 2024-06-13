@@ -26,7 +26,8 @@ import Data.Aeson (encode)
 import qualified Data.Map as M
 import Data.Text (toLower)
 import Effects
-import qualified Effects as G
+import Gitlab.Group (Group)
+import qualified Gitlab.Group as G
 import Gitlab.Lib (EnabledDisabled (..), Id (..), Name (..), Ref (..))
 import Gitlab.Project
 import Polysemy
@@ -47,7 +48,7 @@ listAllProjectsMeta = fetch >>= bitraverse_ (write . show) writeMetaFormat
     getProjectsForUser' = ExceptT . getProjectsForUser
     getAllUsers' = ExceptT getAllUsers
 
-showProjectsForGroup :: (Member ProjectsApi r, Member Writer r) => GroupId -> Sem r ()
+showProjectsForGroup :: (Member ProjectsApi r, Member Writer r) => Id Group -> Sem r ()
 showProjectsForGroup gId = do
   write "=================================================="
   write $ "Listing the projects for Group " <> show gId
@@ -77,23 +78,23 @@ tableReport =
 
 data Processor r
   = OptionSetter
-      GroupId
+      (Id Group)
       -- | headline to be printed
-      (GroupId -> Text)
+      (Id Group -> Text)
       -- | if this returns True, nothing will be done
       (Project -> Bool)
       -- | action to execute
       (Id Project -> Sem r (Either UpdateError ()))
   | Counter
-      GroupId
+      (Id Group)
       -- | headline to be printed
-      (GroupId -> Text)
+      (Id Group -> Text)
       -- | if this returns True, nothing will be done
       (Project -> Bool)
       -- | action to execute
       (Project -> Sem r (Either UpdateError (Sum Int)))
 
-countDeployments :: (Member ProjectsApi r, Member PipelinesApi r, Member Writer r, Member (R.Reader Config) r) => GroupId -> Year -> Sem r ()
+countDeployments :: (Member ProjectsApi r, Member PipelinesApi r, Member Writer r, Member (R.Reader Config) r) => Id Group -> Year -> Sem r ()
 countDeployments gId year@(Year y) = do
   excludes <- R.asks projectsExcludeList
   runProcessor
@@ -108,7 +109,7 @@ countDeployments gId year@(Year y) = do
           pure $ fmap (Sum . length) res
       )
 
-enableSourceBranchDeletionAfterMerge :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => Execution -> GroupId -> Sem r ()
+enableSourceBranchDeletionAfterMerge :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => Execution -> Id Group -> Sem r ()
 enableSourceBranchDeletionAfterMerge execution gId =
   runProcessor
     $ OptionSetter
@@ -120,7 +121,7 @@ enableSourceBranchDeletionAfterMerge execution gId =
           Execute -> enableSourceBranchDeletionAfterMrMerge pi
       )
 
-enableSuccessfulPipelineForMergeRequirement :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => Execution -> GroupId -> Sem r ()
+enableSuccessfulPipelineForMergeRequirement :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => Execution -> Id Group -> Sem r ()
 enableSuccessfulPipelineForMergeRequirement execution gId =
   runProcessor
     $ OptionSetter
@@ -144,7 +145,7 @@ configureOption Execute pId (Right True) = setSuccessfulPipelineRequirementForMe
 logUnset :: (Member Writer r) => Sem r (Either UpdateError ())
 logUnset = write "Project doesn't have CI. Deactivated the option." $> Right ()
 
-enableAllDiscussionsResolvedForMergeRequirement :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => Execution -> GroupId -> Sem r ()
+enableAllDiscussionsResolvedForMergeRequirement :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => Execution -> Id Group -> Sem r ()
 enableAllDiscussionsResolvedForMergeRequirement execution gId =
   runProcessor
     $ OptionSetter
@@ -156,7 +157,7 @@ enableAllDiscussionsResolvedForMergeRequirement execution gId =
           Execute -> setResolvedDiscussionsRequirementForMerge
       )
 
-setMergeMethodToFastForward :: (Member ProjectsApi r, Member Writer r) => Execution -> GroupId -> Sem r ()
+setMergeMethodToFastForward :: (Member ProjectsApi r, Member Writer r) => Execution -> Id Group -> Sem r ()
 setMergeMethodToFastForward execution gId =
   runProcessor
     $ OptionSetter
@@ -168,7 +169,7 @@ setMergeMethodToFastForward execution gId =
           Execute -> (`setMergeMethod` FastForward)
       )
 
-listProjectsMetaForGroup :: (Member ProjectsApi r, Member Writer r) => GroupId -> Sem r ()
+listProjectsMetaForGroup :: (Member ProjectsApi r, Member Writer r) => Id Group -> Sem r ()
 listProjectsMetaForGroup gId =
   getProjectsForGroup gId >>= \case
     Left err -> write $ show err
