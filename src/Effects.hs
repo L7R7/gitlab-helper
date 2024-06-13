@@ -17,11 +17,11 @@ import Data.Aeson (FromJSON (..), ToJSON (..), genericParseJSON, withObject, wit
 import Data.Aeson.Casing
 import qualified Data.Text as T hiding (partition)
 import Data.Time (UTCTime)
-import GHC.Generics (Generic)
 import Network.HTTP.Client.Conduit (HttpException)
 import Network.HTTP.Simple (JSONException)
 import Network.URI
 import Polysemy
+import Relude
 
 newtype ProjectId = ProjectId Int deriving newtype (FromJSON, Show)
 
@@ -91,7 +91,7 @@ data UpdateError
   deriving (Show)
 
 data Writer m a where
-  Write :: String -> Writer m ()
+  Write :: Text -> Writer m ()
 
 makeSem ''Writer
 

@@ -17,11 +17,12 @@ module Lib
 where
 
 import Config
-import Data.Coerce (coerce)
-import Data.List (intercalate, partition)
+import Data.List (partition)
+import qualified Data.Text as T (intercalate)
 import Data.Time hiding (getCurrentTime)
 import Effects
 import Polysemy
+import Relude
 
 evaluateProjects :: (Member ProjectsApi r, Member MergeRequestApi r, Member Timer r, Member Writer r) => GroupId -> Sem r ()
 evaluateProjects gId = do
@@ -40,7 +41,7 @@ printProjectsWithDisabledMergeRequests projects = do
   where
     printProjects :: Member Writer r => [Project] -> Sem r ()
     printProjects [] = write "There are no projects with disabled merge requests"
-    printProjects ps = write $ intercalate ", " (show . name <$> ps)
+    printProjects ps = write $ T.intercalate ", " (show . name <$> ps)
 
 printProjectsWithMergeRequests :: (Member MergeRequestApi r, Member Timer r, Member Writer r) => [Project] -> Sem r ()
 printProjectsWithMergeRequests projects = do
@@ -61,14 +62,14 @@ printProjectsWithMergeRequests' (project, Right mrs) = do
   now <- getCurrentTime
   write $ prettyPrint project mrs now
 
-prettyPrint :: Project -> [MergeRequest] -> UTCTime -> String
+prettyPrint :: Project -> [MergeRequest] -> UTCTime -> Text
 prettyPrint project [] _ = unlines $ prettyPrintProject project <> ["no open merge requests"]
 prettyPrint project mergeRequests now = unlines $ prettyPrintProject project <> (prettyPrintMergeRequest now <$> mergeRequests)
 
-prettyPrintProject :: Project -> [String]
-prettyPrintProject project = ["----------", coerce (name project) <> " (" <> show (projectId project) <> ")"]
+prettyPrintProject :: Project -> [Text]
+prettyPrintProject project = ["----------", show (name project) <> " (" <> show (projectId project) <> ")"]
 
-prettyPrintMergeRequest :: UTCTime -> MergeRequest -> String
+prettyPrintMergeRequest :: UTCTime -> MergeRequest -> Text
 prettyPrintMergeRequest now MergeRequest {..} =
   "#" <> show mergeRequestId <> ":"
     <> (if conflicts then " has conflicts," else "")
@@ -77,7 +78,7 @@ prettyPrintMergeRequest now MergeRequest {..} =
     <> ", see: "
     <> show webUrl
 
-age :: UTCTime -> UTCTime -> String
+age :: UTCTime -> UTCTime -> Text
 age now created =
   if
       | res == 0 -> "today"

@@ -10,10 +10,9 @@ module Config
   )
 where
 
-import Data.ByteString (ByteString)
-import Data.Either.Combinators (maybeToRight)
 import Env
 import Network.URI (URI, parseAbsoluteURI)
+import Relude hiding (Reader)
 
 data Config = Config
   { groupId :: GroupId,

@@ -12,12 +12,8 @@ import Burrito
 import Config (ApiToken (..), BaseUrl)
 import Control.Exception.Base (try)
 import Control.Lens (Lens', Prism', Traversal', filtered, lens, prism', set, _1, _2)
-import Control.Monad (join)
 import Data.Aeson.Types (FromJSON)
-import Data.ByteString (ByteString)
-import Data.Coerce (coerce)
-import Data.Either.Combinators (mapLeft, rightToMaybe)
-import Data.List (find)
+import Data.Either.Combinators (mapLeft)
 import Effects
 import Network.HTTP.Client.Conduit (HttpExceptionContent, requestFromURI, requestHeaders, responseTimeout, responseTimeoutMicro)
 import Network.HTTP.Link.Parser (parseLinkHeaderBS)
@@ -26,6 +22,7 @@ import Network.HTTP.Simple
 import Network.HTTP.Types.Header (HeaderName)
 import Network.URI (URI)
 import Polysemy
+import Relude
 
 projectsApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> Sem (ProjectsApi ': r) a -> Sem r a
 projectsApiToIO baseUrl apiToken = interpret $ \case

@@ -9,6 +9,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Branches
   ( showBranchesForProject,
@@ -17,13 +18,11 @@ where
 
 import Colourista.Pure
 import Config
-import Control.Monad (unless, (>=>))
-import Data.Foldable (traverse_)
-import Data.List (intercalate, sortOn)
-import Data.Monoid (Sum (..))
+import qualified Data.Text as T (intercalate)
 import Data.Time hiding (getCurrentTime)
 import Effects
 import Polysemy
+import Relude
 
 showBranchesForProject :: (Member ProjectsApi r, Member BranchesApi r, Member Timer r, Member Writer r) => GroupId -> Sem r ()
 showBranchesForProject gId = do
@@ -57,23 +56,23 @@ printResult input@(project, Right branches) = do
     traverse_ (\b -> write $ " " <> prettyPrintBranch now b) branchesWithoutDefaultBranch
   pure input
 
-prettyPrintBranch :: UTCTime -> Branch -> String
+prettyPrintBranch :: UTCTime -> Branch -> Text
 prettyPrintBranch now Branch {..} =
   prefix
     <> show branchName
     <> ": "
-    <> intercalate ", " [prettyPrintAge ageDays, "see: " <> show branchWebUrl]
+    <> T.intercalate ", " [prettyPrintAge ageDays, "see: " <> show branchWebUrl]
   where
     mergedPrefix = if branchMerged then "✔" else " "
     stalePrefix = if ageDays > 90 then "✗" else " "
     protectedPrefix = if branchProtected then "⚬" else " "
-    prefix = unwords [mergedPrefix, stalePrefix, protectedPrefix] <> " "
+    prefix = unwords [mergedPrefix, stalePrefix, protectedPrefix, ""]
     ageDays = age now branchCommittedDate
 
-prettyPrintAge :: Integer -> String
+prettyPrintAge :: Integer -> Text
 prettyPrintAge = unwords . reverse . go []
   where
-    go :: [String] -> Integer -> [String]
+    go :: [Text] -> Integer -> [Text]
     go acc n
       | n >= 365 = let (years, days) = divMod n 356 in go ((show years <> "y") : acc) days
       | n >= 30 = let (months, days) = divMod n 30 in go ((show months <> "m") : acc) days
@@ -97,7 +96,7 @@ writeSummary results = do
 summary :: UTCTime -> [(Project, Either UpdateError [Branch])] -> (ProjectCount, BranchesCount, StaleBranchesCount)
 summary now = foldMap (count now)
 
-showSummary :: (ProjectCount, BranchesCount, StaleBranchesCount) -> String
+showSummary :: (ProjectCount, BranchesCount, StaleBranchesCount) -> Text
 showSummary (projects, branches, stale) = formatWith [bold] $ unwords [" ▶", show . getSum $ branches, "branches in", show . getSum $ projects, "projects.", show . getSum $ stale, "of them are stale"]
 
 count :: UTCTime -> (Project, Either UpdateError [Branch]) -> (ProjectCount, BranchesCount, StaleBranchesCount)
