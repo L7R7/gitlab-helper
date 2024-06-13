@@ -75,7 +75,9 @@ data Project = Project
     name :: ProjectName,
     mergeRequestsEnabled :: Bool,
     defaultBranch :: Maybe Ref,
-    removeSourceBranchAfterMerge :: Maybe Bool
+    removeSourceBranchAfterMerge :: Maybe Bool,
+    onlyAllowMergeIfPipelineSucceeds :: Bool,
+    onlyAllowMergeIfAllDiscussionsAreResolved :: Bool
   }
 
 instance Show Project where
@@ -90,6 +92,10 @@ instance Show Project where
       <> show defaultBranch
       <> ",\tremove source branch after merge: "
       <> show removeSourceBranchAfterMerge
+      <> ",\tonly allow merge if pipeline succeeds: "
+      <> show onlyAllowMergeIfPipelineSucceeds
+      <> ",\tonly allow merge if all discussions are resolved: "
+      <> show onlyAllowMergeIfAllDiscussionsAreResolved
 
 instance FromJSON Project where
   parseJSON = withObject "Project" $ \p ->
@@ -98,6 +104,8 @@ instance FromJSON Project where
       <*> (p .: "merge_requests_enabled")
       <*> (p .: "default_branch")
       <*> (p .: "remove_source_branch_after_merge")
+      <*> (p .: "only_allow_merge_if_pipeline_succeeds")
+      <*> (p .: "only_allow_merge_if_all_discussions_are_resolved")
 
 instance FromJSON URI where
   parseJSON = withText "URI" $ \v -> maybe (fail "Bad URI") pure (parseURI (toString v))
