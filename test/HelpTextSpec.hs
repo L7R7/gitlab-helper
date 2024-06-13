@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeApplications #-}
+{-# OPTIONS_GHC -Wno-deprecations #-}
 
 module HelpTextSpec (spec) where
 
