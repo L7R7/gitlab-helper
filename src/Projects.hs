@@ -11,7 +11,7 @@ module Projects
 where
 
 import Colourista (bold, formatWith)
-import Config
+import Config.Types
 import qualified Data.Map as M
 import Effects
 import Polysemy
@@ -24,7 +24,7 @@ showProjectsForGroup gId = do
   write $ "Listing the projects for Group " <> show gId
   getProjects gId >>= \case
     Left err -> write $ show err
-    Right projects -> traverse_ (write . show) projects
+    Right projects -> traverse_ (write . show) (sortOn name projects)
 
 enableSourceBranchDeletionAfterMerge :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => GroupId -> Sem r ()
 enableSourceBranchDeletionAfterMerge gId = do

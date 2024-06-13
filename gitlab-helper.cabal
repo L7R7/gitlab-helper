@@ -37,6 +37,7 @@ library
     , Lib
     , Pipelines
     , Projects
+    , Schedules
     , Util
     , Viz
   other-modules:

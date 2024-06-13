@@ -7,7 +7,7 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Interpreters (projectsApiToIO, mergeRequestApiToIO, branchesApiToIO, pipelinesApiToIO, writeToFileToIO, runM) where
+module Interpreters (projectsApiToIO, mergeRequestApiToIO, branchesApiToIO, pipelinesApiToIO, schedulesApiToIO, writeToFileToIO, runM) where
 
 import Burrito
 import Config.Types (ApiToken (..), BaseUrl)
@@ -84,6 +84,12 @@ pipelinesApiToIO baseUrl apiToken = interpret $ \case
   GetSuccessfulPipelines pId ref -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines?ref=master&status={status}&updated_after=2019-06-09T08:00:00Z|]
     embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) pId), ("ref", (stringValue . show) ref), ("status", stringValue "success")]
+
+schedulesApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> Sem (SchedulesApi ': r) a -> Sem r a
+schedulesApiToIO baseUrl apiToken = interpret $ \case
+  GetSchedules project -> do
+    let template = [uriTemplate|/api/v4/projects/{projectId}/pipeline_schedules|]
+    embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) project)]
 
 fetchDataPaginated :: (FromJSON a) => ApiToken -> BaseUrl -> Template -> [(String, Value)] -> IO (Either UpdateError [a])
 fetchDataPaginated apiToken baseUrl template vars = do

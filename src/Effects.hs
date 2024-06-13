@@ -27,6 +27,8 @@ module Effects
     PipelinesApi (..),
     getPipeline,
     getSuccessfulPipelines,
+    SchedulesApi (..),
+    getSchedules,
     UpdateError (..),
     Branch (..),
     Project (..),
@@ -39,6 +41,7 @@ module Effects
     ProjectId (..),
     ProjectName (..),
     CompactPipeline (..),
+    Schedule (..),
   )
 where
 
@@ -56,7 +59,7 @@ import qualified Text.Show
 
 newtype ProjectId = ProjectId Int deriving newtype (FromJSON, Show)
 
-newtype ProjectName = ProjectName String deriving newtype (Eq, FromJSON, Show)
+newtype ProjectName = ProjectName String deriving newtype (Eq, FromJSON, Ord, Show)
 
 newtype Ref = Ref T.Text deriving newtype (FromJSON, Show)
 
@@ -130,6 +133,26 @@ instance FromJSON Branch where
       <*> p .: "web_url"
       <*> (p .: "commit" >>= \c -> c .: "committed_date")
 
+data Schedule = Schedule
+  { scheduleId :: Int,
+    scheduleDescription :: Text,
+    scheduleCron :: Text,
+    scheduleCronTimezone :: Text,
+    scheduleNextRunAt :: UTCTime,
+    scheduleActive :: Bool,
+    scheduleOwner :: Text
+  }
+
+instance FromJSON Schedule where
+  parseJSON = withObject "Schedule" $ \s ->
+    Schedule <$> s .: "id"
+      <*> s .: "description"
+      <*> s .: "cron"
+      <*> s .: "cron_timezone"
+      <*> s .: "next_run_at"
+      <*> s .: "active"
+      <*> (s .: "owner" >>= \o -> o .: "name")
+
 data UpdateError
   = HttpError HttpException
   | ExceptionError SomeException
@@ -198,3 +221,8 @@ data PipelinesApi m a where
   GetSuccessfulPipelines :: ProjectId -> Ref -> PipelinesApi m (Either UpdateError [CompactPipeline])
 
 makeSem ''PipelinesApi
+
+data SchedulesApi m a where
+  GetSchedules :: ProjectId -> SchedulesApi m (Either UpdateError [Schedule])
+
+makeSem ''SchedulesApi

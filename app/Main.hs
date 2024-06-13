@@ -12,7 +12,7 @@ import Pipelines
 import Projects
 import Util
 import Prelude
-import Projects
+import Schedules (showSchedulesForGroup)
 
 main :: IO ()
 main =
@@ -24,11 +24,10 @@ main =
       . projectsApiToIO baseUrl apiToken
       . mergeRequestApiToIO baseUrl apiToken
       . pipelinesApiToIO baseUrl apiToken
+      . schedulesApiToIO baseUrl apiToken
       . writeToFileToIO
+           $ showSchedulesForGroup groupId
       --      $ showPipelineDurationsForProject (ProjectId 795) -- 818) -- 795)
-
---      $ showProjectsForGroup groupId
---      $ showBranchesForGroup groupId
-      $ enableSourceBranchDeletionAfterMerge groupId
-
---      $ evaluateProjects groupId
+      --      $ showProjectsForGroup groupId
+      --      $ evaluateProjects groupId
+      -- $ enableSourceBranchDeletionAfterMerge groupId
