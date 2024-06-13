@@ -1,3 +1,4 @@
+# Inspired by https://github.com/kowainik/stan/blob/30ae41dccde49feefe19913039014f3612e5d44c/.github/workflows/release.yml
 name: Release
 
 on:
@@ -62,7 +63,6 @@ jobs:
           enable-stack: true
           stack-version: ${{ matrix.cabal }}
 
-
       - name: Cache ~/.stack
         uses: actions/cache@v4
         with:
@@ -113,5 +113,5 @@ jobs:
         with:
           upload_url: ${{ env.upload_url }}
           asset_path: ${{ env.BINARY_PATH }}
-          asset_name: gitlab-helper-${{ steps.tag.outputs.tag }}-${{ runner.os }}-ghc-${{ matrix.ghc }}${{ env.EXT }}
+          asset_name: gitlab-helper-${{ steps.tag.outputs.tag }}-${{ runner.os }}${{ env.EXT }}
           asset_content_type: application/octet-stream
