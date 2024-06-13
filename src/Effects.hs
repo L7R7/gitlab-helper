@@ -49,6 +49,7 @@ module Effects
     getSchedules,
     UpdateError (..),
     Branch (..),
+    Commit (..),
     Duration (..),
     Sha (..),
     Source (..),
@@ -81,7 +82,7 @@ data Branch = Branch
     branchProtected :: Bool,
     branchDefault :: Bool,
     branchWebUrl :: URI,
-    branchCommittedDate :: UTCTime
+    branchCommit :: Commit
   }
   deriving stock (Show)
   deriving (FromJSON) via (Autodocodec Branch)
@@ -100,12 +101,14 @@ instance HasCodec Branch where
       .= branchDefault
       <*> requiredField' "web_url"
       .= branchWebUrl
-      <*> (committedDate <$> (requiredField' "commit" .= (Commit . branchCommittedDate)))
+      <*> requiredField' "commit"
+      .= branchCommit
 
-newtype Commit = Commit {committedDate :: UTCTime}
+newtype Commit = Commit {commitCommittedDate :: UTCTime}
+  deriving stock (Show)
 
 instance HasCodec Commit where
-  codec = object "Commit" $ Commit <$> requiredField' "committed_date" .= committedDate
+  codec = object "Commit" $ Commit <$> requiredField' "committed_date" .= commitCommittedDate
 
 data Schedule = Schedule
   { scheduleId :: Int,

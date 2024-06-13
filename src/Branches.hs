@@ -49,7 +49,7 @@ printResult input@(project, Left err) = do
   write $ "something went wrong: " <> show err
   pure input
 printResult input@(project, Right branches) = do
-  let branchesWithoutDefaultBranch = sortOn branchCommittedDate $ filter (not . branchDefault) branches
+  let branchesWithoutDefaultBranch = sortOn (commitCommittedDate . branchCommit) $ filter (not . branchDefault) branches
   unless (null branchesWithoutDefaultBranch) $ do
     write ""
     write $ formatWith [bold] ("=== " <> show (projectName project))
@@ -68,7 +68,7 @@ prettyPrintBranch now Branch {..} =
     stalePrefix = if ageDays > 90 then "✗" else " "
     protectedPrefix = if branchProtected then "⚬" else " "
     prefix = unwords [mergedPrefix, stalePrefix, protectedPrefix, ""]
-    ageDays = age now branchCommittedDate
+    ageDays = age now (commitCommittedDate branchCommit)
 
 prettyPrintAge :: Integer -> Text
 prettyPrintAge = unwords . reverse . go []
@@ -128,7 +128,7 @@ count now (_, Right branches) = (hasBranches, notDefaultCount, stale, merged)
     (notDefaultCount, stale, merged) = foldMap (\b -> (countBranch b, isStale now b, isMerged b)) notDefault
 
 isStale :: UTCTime -> Branch -> StaleBranchesCount
-isStale now branch = Sum $ if age now (branchCommittedDate branch) > 90 then 1 else 0
+isStale now branch = Sum $ if age now ((commitCommittedDate . branchCommit) branch) > 90 then 1 else 0
 
 isMerged :: Branch -> MergedBranchesCount
 isMerged branch = Sum $ if branchMerged branch then 1 else 0
