@@ -49,7 +49,7 @@ updateMergeRequests gId projectExcludes action authorIs maybeSearchTerms execute
         [] -> write "no MRs to process after applying filters"
         mergeRequests -> forM_ mergeRequests $ \mr -> do
           performAction (mergeRequestProjectId mr) mr >>= \case
-            Left err -> write $ show err
+            Left err -> write $ "failed to update merge request: " <> show err
             Right _ -> pure ()
   where
     performAction pId mr = do
