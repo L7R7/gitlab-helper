@@ -1,4 +1,6 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
@@ -11,33 +13,39 @@
 module Effects where
 
 import Config
-import Data.Aeson (FromJSON (..), ToJSON (..), withObject, withText, (.:))
-import qualified Data.Text as TX hiding (partition)
+import Data.Aeson (FromJSON (..), ToJSON (..), genericParseJSON, withObject, withText, (.:))
+import Data.Aeson.Casing
+import qualified Data.Text as T hiding (partition)
 import Data.Time (UTCTime)
+import GHC.Generics (Generic)
 import Network.HTTP.Client.Conduit (HttpException)
 import Network.HTTP.Simple (JSONException)
 import Network.URI
 import Polysemy
 
-newtype ProjectId = ProjectId Int deriving newtype (Show, ToJSON)
+newtype ProjectId = ProjectId Int deriving newtype (FromJSON, Show)
 
-newtype ProjectName = ProjectName String deriving newtype (Show)
+newtype ProjectName = ProjectName String deriving newtype (FromJSON, Show)
+
+newtype Ref = Ref T.Text deriving newtype (FromJSON, Show)
 
 data Project = Project
   { projectId :: ProjectId,
     name :: ProjectName,
-    mergeRequestsEnabled :: Bool
+    mergeRequestsEnabled :: Bool,
+    defaultBranch :: Maybe Ref
   }
   deriving (Show)
 
 instance FromJSON Project where
   parseJSON = withObject "Project" $ \p ->
-    Project <$> (ProjectId <$> p .: "id")
-      <*> (ProjectName <$> p .: "name")
+    Project <$> (p .: "id")
+      <*> (p .: "name")
       <*> (p .: "merge_requests_enabled")
+      <*> (p .: "default_branch")
 
 instance FromJSON URI where
-  parseJSON = withText "URI" $ \v -> maybe (fail "Bad URI") pure (parseURI (TX.unpack v))
+  parseJSON = withText "URI" $ \v -> maybe (fail "Bad URI") pure (parseURI (T.unpack v))
 
 data MergeRequest = MergeRequest
   { mergeRequestId :: MergeRequestId,
@@ -59,7 +67,7 @@ instance FromJSON MergeRequest where
 newtype MergeRequestId = MergeRequestId Int deriving newtype (Show, ToJSON)
 
 data Branch = Branch
-  { branchName :: TX.Text,
+  { branchName :: T.Text,
     branchMerged :: Bool,
     branchProtected :: Bool,
     branchDefault :: Bool,
@@ -94,6 +102,7 @@ makeSem ''Timer
 
 data ProjectsApi m a where
   GetProjects :: GroupId -> ProjectsApi m (Either UpdateError [Project])
+  GetProject :: ProjectId -> ProjectsApi m (Either UpdateError Project)
 
 makeSem ''ProjectsApi
 
@@ -106,3 +115,36 @@ data BranchesApi m a where
   GetBranches :: ProjectId -> BranchesApi m (Either UpdateError [Branch])
 
 makeSem ''BranchesApi
+
+newtype PipelineId = PipelineId Int deriving newtype (Eq, FromJSON, Num, Ord, Show)
+
+newtype Duration = Duration Int deriving newtype (FromJSON, Show)
+
+newtype Sha = Sha T.Text deriving newtype (FromJSON, Show)
+
+data Pipeline = Pipeline
+  { pipelineId :: PipelineId,
+    pipelineSha :: Sha,
+    pipelineDuration :: Maybe Duration,
+    pipelineCreatedAt :: UTCTime,
+    pipelineWebUrl :: URI
+  }
+  deriving (Generic, Show)
+
+instance FromJSON Pipeline where
+  parseJSON = genericParseJSON $ aesonPrefix snakeCase
+
+data CompactPipeline = CompactPipeline
+  { compactPipelineId :: PipelineId,
+    compactPipelineSha :: Sha
+  }
+  deriving (Generic)
+
+instance FromJSON CompactPipeline where
+  parseJSON = genericParseJSON $ aesonDrop 15 snakeCase
+
+data PipelinesApi m a where
+  GetPipeline :: ProjectId -> PipelineId -> PipelinesApi m (Either UpdateError Pipeline)
+  GetSuccessfulPipelines :: ProjectId -> Ref -> PipelinesApi m (Either UpdateError [CompactPipeline])
+
+makeSem ''PipelinesApi

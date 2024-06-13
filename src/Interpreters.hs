@@ -6,7 +6,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Interpreters (projectsApiToIO, mergeRequestApiToIO, branchesApiToIO, runM) where
+module Interpreters (projectsApiToIO, mergeRequestApiToIO, branchesApiToIO, pipelinesApiToIO, runM) where
 
 import Burrito
 import Config (ApiToken (..), BaseUrl)
@@ -32,6 +32,9 @@ projectsApiToIO baseUrl apiToken = interpret $ \case
   GetProjects groupId -> do
     let template = [uriTemplate|/api/v4/groups/{groupId}/projects?include_subgroups=true&archived=false|]
     embed $ fetchDataPaginated apiToken baseUrl template [("groupId", (stringValue . show) groupId)]
+  GetProject projectId -> do
+    let template = [uriTemplate|/api/v4/projects/{projectId}|]
+    embed $ fetchData baseUrl apiToken template [("projectId", (stringValue . show) projectId)]
 
 mergeRequestApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> Sem (MergeRequestApi ': r) a -> Sem r a
 mergeRequestApiToIO baseUrl apiToken = interpret $ \case
@@ -39,11 +42,20 @@ mergeRequestApiToIO baseUrl apiToken = interpret $ \case
     let template = [uriTemplate|/api/v4/projects/{projectId}/merge_requests?state=opened|]
     embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) projectId)]
 
-branchesApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> Sem(BranchesApi ': r) a -> Sem r a
+branchesApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> Sem (BranchesApi ': r) a -> Sem r a
 branchesApiToIO baseUrl apiToken = interpret $ \case
   GetBranches projectId -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}/repository/branches|]
     embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) projectId)]
+
+pipelinesApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> Sem (PipelinesApi ': r) a -> Sem r a
+pipelinesApiToIO baseUrl apiToken = interpret $ \case
+  GetPipeline projectId pipelineId -> do
+    let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines/{pipelineId}|]
+    embed $ fetchData baseUrl apiToken template [("projectId", (stringValue . show) projectId), ("pipelineId", (stringValue . show) pipelineId)]
+  GetSuccessfulPipelines projectId ref -> do
+    let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines?ref=master&status={status}&updated_after=2019-06-09T08:00:00Z|]
+    embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) projectId), ("ref", (stringValue . show) ref), ("status", stringValue "success")]
 
 fetchDataPaginated :: (FromJSON a) => ApiToken -> BaseUrl -> Template -> [(String, Value)] -> IO (Either UpdateError [a])
 fetchDataPaginated apiToken baseUrl template vars = do
@@ -59,6 +71,17 @@ fetchDataPaginated' apiToken template request acc = do
     case mapLeft ConversionError $ getResponseBody response of
       Left err -> pure $ Left err
       Right as -> maybe (pure $ Right (as <> acc)) (\req -> fetchDataPaginated' apiToken template req (as <> acc)) next
+  pure $ mapLeft removeApiTokenFromUpdateError $ join $ mapLeft HttpError result
+
+fetchData :: (FromJSON a) => BaseUrl -> ApiToken -> Template -> [(String, Value)] -> IO (Either UpdateError a)
+fetchData baseUrl apiToken template vars = do
+  try (parseRequest (show baseUrl <> "/" <> expand vars template)) >>= \case
+    Left invalidUrl -> pure $ Left $ HttpError invalidUrl
+    Right request -> fetchData' apiToken request
+
+fetchData' :: (FromJSON a) => ApiToken -> Request -> IO (Either UpdateError a)
+fetchData' apiToken request = do
+  result <- try (mapLeft ConversionError . getResponseBody <$> httpJSONEither (setTimeout $ addToken apiToken request))
   pure $ mapLeft removeApiTokenFromUpdateError $ join $ mapLeft HttpError result
 
 setTimeout :: Request -> Request

@@ -3,10 +3,11 @@
 module Main where
 
 import Config (Config (..), parseConfigOrDie)
+import Effects (ProjectId (..))
 import Interpreters
-import Lib
+import Pipelines
 import Util
-import Branches
+
 main :: IO ()
 main =
   parseConfigOrDie >>= \Config {..} ->
@@ -15,6 +16,9 @@ main =
       . writerToIO
       . branchesApiToIO baseUrl apiToken
       . projectsApiToIO baseUrl apiToken
-      $ showBranchesForProject groupId
---      . mergeRequestApiToIO baseUrl apiToken
+      . mergeRequestApiToIO baseUrl apiToken
+      . pipelinesApiToIO baseUrl apiToken
+      $ showPipelineDurationsForProject (ProjectId 795)
+
+--      $ showBranchesForProject groupId
 --      $ evaluateProjects groupId
