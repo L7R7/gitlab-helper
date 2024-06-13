@@ -21,6 +21,7 @@ import Data.List (partition)
 import qualified Data.Text as T (intercalate)
 import Data.Time hiding (getCurrentTime)
 import Effects
+import Gitlab.Project
 import Polysemy
 import Relude
 
@@ -29,7 +30,7 @@ showMergeRequests gId = do
   getProjectsForGroup gId >>= \case
     Left err -> write $ show err
     Right projects -> do
-      let (mrEnabled, mrDisabled) = partition mergeRequestsEnabled projects
+      let (mrEnabled, mrDisabled) = partition projectMergeRequestsEnabled projects
       printProjectsWithDisabledMergeRequests mrDisabled
       write ""
       printProjectsWithMergeRequests mrEnabled
@@ -41,7 +42,7 @@ printProjectsWithDisabledMergeRequests projects = do
   where
     printProjects :: (Member Writer r) => [Project] -> Sem r ()
     printProjects [] = write "There are no projects with disabled merge requests"
-    printProjects ps = write $ T.intercalate ", " (show . name <$> ps)
+    printProjects ps = write $ T.intercalate ", " (show . projectName <$> ps)
 
 printProjectsWithMergeRequests :: (Member MergeRequestApi r, Member Timer r, Member Writer r) => [Project] -> Sem r ()
 printProjectsWithMergeRequests projects = do
@@ -67,7 +68,7 @@ prettyPrint project [] _ = unlines $ prettyPrintProject project <> ["no open mer
 prettyPrint project mergeRequests now = unlines $ prettyPrintProject project <> (prettyPrintMergeRequest now <$> mergeRequests)
 
 prettyPrintProject :: Project -> [Text]
-prettyPrintProject project = ["----------", show (name project) <> " (" <> show (projectId project) <> ")"]
+prettyPrintProject project = ["----------", show (projectName project) <> " (" <> show (projectId project) <> ")"]
 
 prettyPrintMergeRequest :: UTCTime -> MergeRequest -> Text
 prettyPrintMergeRequest now MergeRequest {..} =

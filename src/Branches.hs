@@ -20,6 +20,7 @@ import Config.Types
 import qualified Data.Text as T (intercalate)
 import Data.Time hiding (getCurrentTime)
 import Effects
+import Gitlab.Project
 import Polysemy
 import Relude
 
@@ -43,14 +44,14 @@ getBranchesForProject p = (p,) <$> getBranches (projectId p)
 
 printResult :: (Member Writer r, Member Timer r) => (Project, Either UpdateError [Branch]) -> Sem r (Project, Either UpdateError [Branch])
 printResult input@(project, Left err) = do
-  write $ "=== " <> show (name project)
+  write $ "=== " <> show (projectName project)
   write $ "something went wrong: " <> show err
   pure input
 printResult input@(project, Right branches) = do
   let branchesWithoutDefaultBranch = sortOn branchCommittedDate $ filter (not . branchDefault) branches
   unless (null branchesWithoutDefaultBranch) $ do
     write ""
-    write $ formatWith [bold] ("=== " <> show (name project))
+    write $ formatWith [bold] ("=== " <> show (projectName project))
     now <- getCurrentTime
     traverse_ (\b -> write $ " " <> prettyPrintBranch now b) branchesWithoutDefaultBranch
   pure input

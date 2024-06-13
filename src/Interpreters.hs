@@ -21,6 +21,8 @@ import Control.Lens (Lens', Prism', Traversal', filtered, lens, prism', set, _1,
 import Data.Aeson hiding (Value)
 import Data.Either.Combinators (mapLeft)
 import Effects
+import Gitlab.Lib (Ref (..))
+import Gitlab.Project
 import Network.HTTP.Client.Conduit (HttpExceptionContent, requestFromURI, requestHeaders, responseTimeout, responseTimeoutMicro)
 import Network.HTTP.Link.Parser (parseLinkHeaderBS)
 import Network.HTTP.Link.Types (Link (..), LinkParam (Rel), href)

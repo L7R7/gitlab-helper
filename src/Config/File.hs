@@ -1,16 +1,20 @@
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Config.File (readPartialOptionsFromHomeDir, readPartialOptionsFromLocalDir) where
 
+import Autodocodec
 import Barbies (bmap)
 import Config.Types
 import Data.Aeson
 import qualified Data.Semigroup as S
 import Data.Yaml
+import Gitlab.Lib (Id)
 import Network.URI (parseURI)
 import Relude
 import System.Directory (doesFileExist, getCurrentDirectory, getHomeDirectory)
@@ -24,6 +28,8 @@ instance FromJSON (PartialConfig Maybe) where
       pProjectsExcludeList <- c .:? "excludeProjects"
       let pCommand = Nothing
       pure $ PartialConfig {..}
+
+deriving via (Autodocodec (Id a)) instance FromJSON (Id a)
 
 instance FromJSON (PartialConfig (Compose Maybe S.First)) where
   parseJSON = fmap (bmap (Compose . fmap S.First)) . (parseJSON @(PartialConfig Maybe))

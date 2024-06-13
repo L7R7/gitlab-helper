@@ -18,6 +18,8 @@ where
 import Colourista.Pure
 import Config.Types
 import Effects
+import Gitlab.Lib (Name (..))
+import Gitlab.Project
 import Polysemy
 import Relude
 
@@ -28,7 +30,7 @@ showSchedulesForGroup gId = do
   getProjectsForGroup gId >>= \case
     Left err -> write $ show err
     Right projects -> do
-      results <- traverse getSchedulesForProject (sortOn name projects)
+      results <- traverse getSchedulesForProject (sortOn (getName . projectName) projects)
       traverse_ printResults results
       writeSummary results
 
@@ -37,12 +39,12 @@ getSchedulesForProject p = (p,) <$> getSchedules (projectId p)
 
 printResults :: (Member Writer r) => (Project, Either UpdateError [Schedule]) -> Sem r ()
 printResults (project, Left err) = do
-  write $ formatWith [bold] ("=== " <> show (name project))
+  write $ formatWith [bold] ("=== " <> show (projectName project))
   write $ "something went wrong: " <> show err
 printResults (_, Right []) = pure ()
 printResults (project, Right schedules) = do
   write ""
-  write $ formatWith [bold] ("=== " <> show (name project))
+  write $ formatWith [bold] ("=== " <> show (projectName project))
   traverse_ (write . prettyPrintSchedule) schedules
 
 prettyPrintSchedule :: Schedule -> Text

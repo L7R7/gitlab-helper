@@ -27,6 +27,8 @@ import qualified Data.Map as M
 import Data.Text (toLower)
 import Effects
 import qualified Effects as G
+import Gitlab.Lib (EnabledDisabled (..), Id (..), Name (..), Ref (..))
+import Gitlab.Project
 import Polysemy
 import qualified Polysemy.Reader as R
 import Relude hiding (pi)
@@ -52,7 +54,7 @@ showProjectsForGroup gId = do
   getProjectsForGroup gId >>= \case
     Left err -> write $ show err
     Right projects -> do
-      write . toText $ tableReport (sortOn (toLower . getProjectName . name) projects)
+      write . toText $ tableReport (sortOn (toLower . getName . projectName) projects)
       writeSummary $ foldMap summarizeSingle projects
 
 tableReport :: (Foldable f) => f Project -> String
@@ -61,16 +63,16 @@ tableReport =
     $ mconcat
       [ cap
           ""
-          (headed "ID" (show . projectId) <> headed "Name" (show . name) <> headed "default branch" (maybe "-" (\(Ref r) -> toString r) . defaultBranch)),
+          (headed "ID" (show . projectId) <> headed "Name" (show . projectName) <> headed "default branch" (maybe "-" (\(Ref r) -> toString r) . projectDefaultBranch)),
         cap
           "Merge Requests"
-          (headed "enabled" (show . mergeRequestsEnabled) <> headed "Remove source branch after merge" (maybe "unknown" show . removeSourceBranchAfterMerge) <> headed "merge method" (show . mergeMethod)),
+          (headed "enabled" (show . projectMergeRequestsEnabled) <> headed "Remove source branch after merge" (maybe "unknown" show . projectRemoveSourceBranchAfterMerge) <> headed "merge method" (show . projectMergeMethod)),
         cap
           "Requirements for a merge request to be merged"
-          (headed "successful pipeline" (maybe "unknown" show . onlyAllowMergeIfPipelineSucceeds) <> headed "all discussions resolved" (maybe "unknown" show . onlyAllowMergeIfAllDiscussionsAreResolved)),
+          (headed "successful pipeline" (maybe "unknown" show . projectOnlyAllowMergeIfPipelineSucceeds) <> headed "all discussions resolved" (maybe "unknown" show . projectOnlyAllowMergeIfAllDiscussionsAreResolved)),
         cap
           "Pipelines"
-          (headed "auto cancel pending" (show . autoCancelPendingPipelines))
+          (headed "auto cancel pending" (show . projectAutoCancelPendingPipelines))
       ]
 
 data Processor r
@@ -81,7 +83,7 @@ data Processor r
       -- | if this returns True, nothing will be done
       (Project -> Bool)
       -- | action to execute
-      (ProjectId -> Sem r (Either UpdateError ()))
+      (Id Project -> Sem r (Either UpdateError ()))
   | Counter
       GroupId
       -- | headline to be printed
@@ -100,8 +102,8 @@ countDeployments gId year@(Year y) = do
       (\gi -> "Listing the number of successful deployments in " <> show y <> " for all projects in group " <> show gi)
       (\p -> projectId p `elem` excludes)
       ( \p -> do
-          res <- case defaultBranch p of
-            Nothing -> Right [] <$ write (formatWith [bold] (show (name p) <> ": ") <> formatWith [red] "has no default branch")
+          res <- case projectDefaultBranch p of
+            Nothing -> Right [] <$ write (formatWith [bold] (show (projectName p) <> ": ") <> formatWith [red] "has no default branch")
             Just ref -> getSuccessfulPushPipelines year (projectId p) ref
           pure $ fmap (Sum . length) res
       )
@@ -112,7 +114,7 @@ enableSourceBranchDeletionAfterMerge execution gId =
     $ OptionSetter
       gId
       (\gi -> "Enabling automatic branch deletion after MR merge for Group " <> show gi)
-      (\p -> Just True == removeSourceBranchAfterMerge p)
+      (\p -> Just True == projectRemoveSourceBranchAfterMerge p)
       ( \pi -> case execution of
           DryRun -> Right () <$ write ("Dry Run. Pretending to set option for Project " <> show pi)
           Execute -> enableSourceBranchDeletionAfterMrMerge pi
@@ -124,15 +126,15 @@ enableSuccessfulPipelineForMergeRequirement execution gId =
     $ OptionSetter
       gId
       (\gi -> "Enabling the requirement that a successful pipeline is required for a MR to be merged for Group " <> show gi)
-      (or . onlyAllowMergeIfPipelineSucceeds)
+      (or . projectOnlyAllowMergeIfPipelineSucceeds)
       (\pId -> getProject pId >>= (projectHasCi >=> configureOption execution pId))
 
 projectHasCi :: (Member ProjectsApi r) => Either UpdateError Project -> Sem r (Either UpdateError Bool)
 projectHasCi (Left err) = pure $ Left err
-projectHasCi (Right (Project pId _ _ _ (Just ref) _ _ _ _ _ _)) = hasCi pId ref
+projectHasCi (Right (Project pId _ _ (Just ref) _ _ _ _ _ _ _ _)) = hasCi pId ref
 projectHasCi (Right _) = pure $ Right False -- no default branch, no CI
 
-configureOption :: (Member MergeRequestApi r, Member Writer r) => Execution -> ProjectId -> Either UpdateError Bool -> Sem r (Either UpdateError ())
+configureOption :: (Member MergeRequestApi r, Member Writer r) => Execution -> Id Project -> Either UpdateError Bool -> Sem r (Either UpdateError ())
 configureOption _ _ (Left err) = pure $ Left err
 configureOption DryRun _ (Right False) = Right () <$ write "Dry Run. Pretending to unset option for project" >> logUnset
 configureOption Execute pId (Right False) = unsetSuccessfulPipelineRequirementForMerge pId >> logUnset
@@ -148,7 +150,7 @@ enableAllDiscussionsResolvedForMergeRequirement execution gId =
     $ OptionSetter
       gId
       (\gi -> "Enabling the requirement that all discussions must be resolved for a MR to be merged for Group " <> show gi)
-      (or . onlyAllowMergeIfAllDiscussionsAreResolved)
+      (or . projectOnlyAllowMergeIfAllDiscussionsAreResolved)
       ( case execution of
           DryRun -> (\pId -> Right () <$ write ("Dry Run. Pretending to set option for Project " <> show pId))
           Execute -> setResolvedDiscussionsRequirementForMerge
@@ -160,7 +162,7 @@ setMergeMethodToFastForward execution gId =
     $ OptionSetter
       gId
       (\gi -> "Setting the merge method to \"Fast Forward\" for all projects in group " <> show gi)
-      (\p -> mergeMethod p == FastForward)
+      (\p -> projectMergeMethod p == FastForward)
       ( case execution of
           DryRun -> (\pId -> Right () <$ write ("Dry Run. Pretending to set merge method for Project " <> show pId))
           Execute -> (`setMergeMethod` FastForward)
@@ -173,7 +175,7 @@ listProjectsMetaForGroup gId =
     Right projects -> writeMetaFormat projects
 
 writeMetaFormat :: (Member Writer r) => [Project] -> Sem r ()
-writeMetaFormat projects = write $ decodeUtf8 $ encode $ M.fromList $ (\p -> (pathWithNamespace p, sshUrlToRepo p)) <$> projects
+writeMetaFormat projects = write $ decodeUtf8 $ encode $ M.fromList $ (\p -> (projectPathWithNamespace p, projectSshUrlToRepo p)) <$> projects
 
 runProcessor :: (Member ProjectsApi r, Member Writer r) => Processor r -> Sem r ()
 runProcessor (OptionSetter gId title skipIf action) = do
@@ -199,10 +201,10 @@ runProcessor (Counter gId title skipIf action) = do
       write ""
       write $ "done. Total: " <> show (getSum $ fold res) <> " deployments"
 
-process :: (Member Writer r) => (Project -> Bool) -> (ProjectId -> Sem r (Either UpdateError ())) -> Project -> Sem r Result
+process :: (Member Writer r) => (Project -> Bool) -> (Id Project -> Sem r (Either UpdateError ())) -> Project -> Sem r Result
 process skipIf action project = do
   write ""
-  write $ formatWith [bold] ("=== " <> show (name project))
+  write $ formatWith [bold] ("=== " <> show (projectName project))
   if skipIf project
     then write "option is already enabled. Not doing anything" $> AlreadySet
     else do
@@ -223,7 +225,7 @@ countSingle skipIf action project = count >>= \(output, result) -> write (title 
           case res of
             Left err -> pure (formatWith [red] "something went wrong: " <> show err, mempty)
             Right s -> pure (show (getSum s) <> " deployments", s)
-    title = formatWith [bold] (show (name project) <> " (#" <> show (projectId project) <> "): ")
+    title = formatWith [bold] (show (projectName project) <> " (#" <> show (projectId project) <> "): ")
 
 data Result = AlreadySet | Set | Error deriving stock (Bounded, Enum, Eq, Ord, Show)
 
@@ -298,8 +300,8 @@ summarizeSingle project =
   )
   where
     sourceBranchDeletionEnabledDisabled = mkEnabledDisabledCount' branchDeletionEnabled
-    branchDeletionEnabled = or (removeSourceBranchAfterMerge project)
-    noDefaultBranch = Count $ if isJust (defaultBranch project) then 0 else 1
-    successfulPipelineForMergeEnabledDisabled = mkEnabledDisabledCount' $ or $ onlyAllowMergeIfPipelineSucceeds project
-    allDiscussionsResolvedForMergeEnabledDisabled = mkEnabledDisabledCount' $ or $ onlyAllowMergeIfAllDiscussionsAreResolved project
-    autoCancelPendingPipelinesEnabledDisabled = mkEnabledDisabledCount (fromMaybe Disabled (autoCancelPendingPipelines project))
+    branchDeletionEnabled = or (projectRemoveSourceBranchAfterMerge project)
+    noDefaultBranch = Count $ if isJust (projectDefaultBranch project) then 0 else 1
+    successfulPipelineForMergeEnabledDisabled = mkEnabledDisabledCount' $ or $ projectOnlyAllowMergeIfPipelineSucceeds project
+    allDiscussionsResolvedForMergeEnabledDisabled = mkEnabledDisabledCount' $ or $ projectOnlyAllowMergeIfAllDiscussionsAreResolved project
+    autoCancelPendingPipelinesEnabledDisabled = mkEnabledDisabledCount (fromMaybe Disabled (projectAutoCancelPendingPipelines project))

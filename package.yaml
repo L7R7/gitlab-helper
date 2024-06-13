@@ -63,6 +63,7 @@ library:
     - http-conduit
     - http-link-header
     - http-types
+    - gitlab-api-types
     - lens
     - network-uri
     - optparse-applicative

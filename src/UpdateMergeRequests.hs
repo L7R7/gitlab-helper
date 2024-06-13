@@ -14,7 +14,7 @@ module UpdateMergeRequests
 where
 
 import Config.Types
-import Effects hiding (Merge)
+import Effects
 import Polysemy
 import Relude
 

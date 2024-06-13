@@ -8,10 +8,11 @@
 
 module Pipelines (showPipelineDurationsForProject, PipelineWithDuration (..), WriteToFile (..), writeResult, showPipelineWithDuration) where
 
-import Config.Types (ProjectId)
 import Data.Time (UTCTime)
 import Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds)
 import Effects
+import Gitlab.Lib (Id, Ref)
+import Gitlab.Project
 import Network.URI (URI)
 import Polysemy
 import Relude hiding (id)
@@ -23,18 +24,18 @@ data WriteToFile m a where
 writeResult :: (Member WriteToFile r) => [PipelineWithDuration] -> Sem r ()
 writeResult x = send (WriteResult x :: WriteToFile (Sem r) ())
 
-showPipelineDurationsForProject :: (Member WriteToFile r, Member PipelinesApi r, Member ProjectsApi r, Member Writer r) => ProjectId -> Sem r ()
+showPipelineDurationsForProject :: (Member WriteToFile r, Member PipelinesApi r, Member ProjectsApi r, Member Writer r) => Id Project -> Sem r ()
 showPipelineDurationsForProject pId = do
   write "starting..."
   project <- getProject pId
   case project of
     Left err -> write $ "something went wrong" <> show err
-    Right (Project _ _ _ _ Nothing _ _ _ _ _ _) -> write $ "Found project without default branch: " <> show pId
-    Right (Project _ _ _ _ (Just ref) _ _ _ _ _ _) -> do
+    Right (Project _ _ _ Nothing _ _ _ _ _ _ _ _) -> write $ "Found project without default branch: " <> show pId
+    Right (Project _ _ _ (Just ref) _ _ _ _ _ _ _ _) -> do
       results <- evaluateProject pId ref
       writeResult $ filter (\(PipelineWithDuration _ _ _ _ _ _ so) -> so /= SourceSchedule) $ sortOn (\(PipelineWithDuration _ _ _ _ ut _ _) -> ut) results
 
-evaluateProject :: (Member PipelinesApi r, Member Writer r) => ProjectId -> Ref -> Sem r [PipelineWithDuration]
+evaluateProject :: (Member PipelinesApi r, Member Writer r) => Id Project -> Ref -> Sem r [PipelineWithDuration]
 evaluateProject pId ref = do
   compactPipelinesResult <- getSuccessfulPipelines pId ref
   pipelinesResult <- case compactPipelinesResult of

@@ -50,132 +50,34 @@ module Effects
     getSchedules,
     UpdateError (..),
     Branch (..),
-    Project (..),
-    MergeMethod (..),
     MergeRequest (..),
     Duration (..),
     Sha (..),
     Source (..),
     Pipeline (..),
     PipelineId (..),
-    Ref (..),
-    ProjectName (..),
     CompactPipeline (..),
     Schedule (..),
-    EnabledDisabled (..),
   )
 where
 
 import Autodocodec
-import Config.Types (AuthorIs, GroupId, ProjectId, SearchTerm, Year)
+import Config.Types (AuthorIs, GroupId, SearchTerm, Year)
 import Data.Aeson (FromJSON (..), ToJSON)
 import Data.Scientific
 import qualified Data.Text as T hiding (partition)
 import Data.Time (UTCTime)
+import Gitlab.Lib (Id (..), Ref (..))
+import Gitlab.Project
 import Network.HTTP.Client.Conduit (HttpException)
 import Network.HTTP.Simple (JSONException)
 import Network.URI
 import Polysemy
 import Relude
-import qualified Text.Show
-
-newtype ProjectName = ProjectName {getProjectName :: Text}
-  deriving newtype (Eq, Ord)
-  deriving (FromJSON) via (Autodocodec ProjectName)
-
-instance Show ProjectName where
-  show = toString . getProjectName
-
-instance HasCodec ProjectName where
-  codec = dimapCodec ProjectName getProjectName textCodec
-
-newtype Ref = Ref {getRef :: T.Text}
-  deriving newtype (Show)
-  deriving (FromJSON) via (Autodocodec Ref)
-
-instance HasCodec Ref where
-  codec = dimapCodec Ref getRef textCodec
-
-data Project = Project
-  { projectId :: ProjectId,
-    name :: ProjectName,
-    mergeRequestsEnabled :: Bool,
-    mergeMethod :: MergeMethod,
-    defaultBranch :: Maybe Ref,
-    removeSourceBranchAfterMerge :: Maybe Bool,
-    onlyAllowMergeIfPipelineSucceeds :: Maybe Bool,
-    onlyAllowMergeIfAllDiscussionsAreResolved :: Maybe Bool,
-    autoCancelPendingPipelines :: Maybe EnabledDisabled,
-    pathWithNamespace :: Text,
-    sshUrlToRepo :: Text
-  }
-  deriving (FromJSON) via (Autodocodec Project)
-
-instance Show Project where
-  show Project {..} =
-    "----\n"
-      <> show name
-      <> " ("
-      <> show projectId
-      <> ")\nMRs enabled:"
-      <> show mergeRequestsEnabled
-      <> ",\tdefault branch: "
-      <> show defaultBranch
-      <> ",\tremove source branch after merge: "
-      <> show removeSourceBranchAfterMerge
-      <> ",\tonly allow merge if pipeline succeeds: "
-      <> show onlyAllowMergeIfPipelineSucceeds
-      <> ",\tonly allow merge if all discussions are resolved: "
-      <> show onlyAllowMergeIfAllDiscussionsAreResolved
-      <> ",\tauto cancel pending pipelines: "
-      <> show autoCancelPendingPipelines
-
-instance HasCodec Project where
-  codec =
-    object "Project"
-      $ Project
-      <$> requiredField' "id"
-      .= projectId
-      <*> requiredField' "name"
-      .= name
-      <*> requiredField' "merge_requests_enabled"
-      .= mergeRequestsEnabled
-      <*> requiredField' "merge_method"
-      .= mergeMethod
-      <*> optionalField' "default_branch"
-      .= defaultBranch
-      <*> requiredField' "remove_source_branch_after_merge"
-      .= removeSourceBranchAfterMerge
-      <*> requiredField' "only_allow_merge_if_pipeline_succeeds"
-      .= onlyAllowMergeIfPipelineSucceeds
-      <*> requiredField' "only_allow_merge_if_all_discussions_are_resolved"
-      .= onlyAllowMergeIfAllDiscussionsAreResolved
-      <*> optionalField' "auto_cancel_pending_pipelines"
-      .= autoCancelPendingPipelines
-      <*> requiredField' "path_with_namespace"
-      .= pathWithNamespace
-      <*> requiredField' "ssh_url_to_repo"
-      .= sshUrlToRepo
-
-instance HasCodec URI where
-  codec = bimapCodec (maybeToRight "can't parse URI" . parseURI) show stringCodec
-
-data EnabledDisabled = Enabled | Disabled
-  deriving stock (Eq, Show)
-  deriving (FromJSON) via (Autodocodec EnabledDisabled)
-
-instance HasCodec EnabledDisabled where
-  codec = stringConstCodec $ (Enabled, "enabled") :| [(Disabled, "disabled")]
-
-data MergeMethod = Merge | RebaseMerge | FastForward
-  deriving stock (Eq, Show)
-
-instance HasCodec MergeMethod where
-  codec = stringConstCodec $ (Merge, "merge") :| [(RebaseMerge, "rebase_merge"), (FastForward, "ff")]
 
 data MergeRequest = MergeRequest
   { mergeRequestId :: MergeRequestId,
-    mergeRequestProjectId :: ProjectId,
+    mergeRequestProjectId :: Id Project,
     mergeRequestTitle :: Text,
     mergeRequestDescription :: Text,
     wip :: Bool,
@@ -333,26 +235,26 @@ makeSem ''GroupsApi
 data ProjectsApi m a where
   GetProjectsForGroup :: GroupId -> ProjectsApi m (Either UpdateError [Project])
   GetProjectsForUser :: UserId -> ProjectsApi m (Either UpdateError [Project])
-  GetProject :: ProjectId -> ProjectsApi m (Either UpdateError Project)
-  HasCi :: ProjectId -> Ref -> ProjectsApi m (Either UpdateError Bool)
-  SetMergeMethod :: ProjectId -> MergeMethod -> ProjectsApi m (Either UpdateError ())
+  GetProject :: Id Project -> ProjectsApi m (Either UpdateError Project)
+  HasCi :: Id Project -> Ref -> ProjectsApi m (Either UpdateError Bool)
+  SetMergeMethod :: Id Project -> MergeMethod -> ProjectsApi m (Either UpdateError ())
 
 makeSem ''ProjectsApi
 
 data MergeRequestApi m a where
-  GetOpenMergeRequests :: ProjectId -> Maybe AuthorIs -> MergeRequestApi m (Either UpdateError [MergeRequest])
+  GetOpenMergeRequests :: Id Project -> Maybe AuthorIs -> MergeRequestApi m (Either UpdateError [MergeRequest])
   GetOpenMergeRequestsForGroup :: GroupId -> Maybe AuthorIs -> Maybe SearchTerm -> MergeRequestApi m (Either UpdateError [MergeRequest])
-  EnableSourceBranchDeletionAfterMrMerge :: ProjectId -> MergeRequestApi m (Either UpdateError ())
-  SetSuccessfulPipelineRequirementForMerge :: ProjectId -> MergeRequestApi m (Either UpdateError ())
-  UnsetSuccessfulPipelineRequirementForMerge :: ProjectId -> MergeRequestApi m (Either UpdateError ())
-  SetResolvedDiscussionsRequirementForMerge :: ProjectId -> MergeRequestApi m (Either UpdateError ())
-  MergeMergeRequest :: ProjectId -> MergeRequestId -> MergeRequestApi m (Either UpdateError ())
-  RebaseMergeRequest :: ProjectId -> MergeRequestId -> MergeRequestApi m (Either UpdateError ())
+  EnableSourceBranchDeletionAfterMrMerge :: Id Project -> MergeRequestApi m (Either UpdateError ())
+  SetSuccessfulPipelineRequirementForMerge :: Id Project -> MergeRequestApi m (Either UpdateError ())
+  UnsetSuccessfulPipelineRequirementForMerge :: Id Project -> MergeRequestApi m (Either UpdateError ())
+  SetResolvedDiscussionsRequirementForMerge :: Id Project -> MergeRequestApi m (Either UpdateError ())
+  MergeMergeRequest :: Id Project -> MergeRequestId -> MergeRequestApi m (Either UpdateError ())
+  RebaseMergeRequest :: Id Project -> MergeRequestId -> MergeRequestApi m (Either UpdateError ())
 
 makeSem ''MergeRequestApi
 
 data BranchesApi m a where
-  GetBranches :: ProjectId -> BranchesApi m (Either UpdateError [Branch])
+  GetBranches :: Id Project -> BranchesApi m (Either UpdateError [Branch])
 
 makeSem ''BranchesApi
 
@@ -450,13 +352,13 @@ instance HasCodec CompactPipeline where
       .= compactPipelineSha
 
 data PipelinesApi m a where
-  GetPipeline :: ProjectId -> PipelineId -> PipelinesApi m (Either UpdateError Pipeline)
-  GetSuccessfulPipelines :: ProjectId -> Ref -> PipelinesApi m (Either UpdateError [CompactPipeline])
-  GetSuccessfulPushPipelines :: Year -> ProjectId -> Ref -> PipelinesApi m (Either UpdateError [CompactPipeline])
+  GetPipeline :: Id Project -> PipelineId -> PipelinesApi m (Either UpdateError Pipeline)
+  GetSuccessfulPipelines :: Id Project -> Ref -> PipelinesApi m (Either UpdateError [CompactPipeline])
+  GetSuccessfulPushPipelines :: Year -> Id Project -> Ref -> PipelinesApi m (Either UpdateError [CompactPipeline])
 
 makeSem ''PipelinesApi
 
 data SchedulesApi m a where
-  GetSchedules :: ProjectId -> SchedulesApi m (Either UpdateError [Schedule])
+  GetSchedules :: Id Project -> SchedulesApi m (Either UpdateError [Schedule])
 
 makeSem ''SchedulesApi
