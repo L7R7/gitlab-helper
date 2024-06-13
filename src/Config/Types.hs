@@ -76,7 +76,11 @@ commandParser =
   execParser $
     info
       (helper <*> parser)
-      (fullDesc <> progDesc "gitlab-helper" <> header "gitlab-helper - a collection of utilities for dealing with a load of projects in Gitlab")
+      ( fullDesc
+          <> progDesc "gitlab-helper"
+          <> header "gitlab-helper - a collection of utilities for dealing with a load of projects in Gitlab"
+          <> footer "For the commands that are not read-only, use \"-x\" to make them actually do stuff"
+      )
 
 parser :: Parser Command
 parser =
