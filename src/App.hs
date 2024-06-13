@@ -31,7 +31,7 @@ run = do
         (EnableSuccessfulPipelineForMergeRequirement execution) -> enableSuccessfulPipelineForMergeRequirement execution groupId
         (CountSuccessfulDeployments year) -> countDeployments groupId year
         (SetMergeMethodToFastForward execution) -> setMergeMethodToFastForward execution groupId
-        (UpdateMergeRequests action authorIs searchTerm execution) -> updateMergeRequests groupId action authorIs searchTerm execution
+        (UpdateMergeRequests action authorIs searchTerm execution) -> updateMergeRequests groupId projectsExcludeList action authorIs searchTerm execution
   runM
     . timerToIO
     . writerToIO
