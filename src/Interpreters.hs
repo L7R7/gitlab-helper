@@ -4,6 +4,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
 
@@ -28,7 +29,7 @@ import Pipelines hiding (id)
 import Polysemy
 import Relude
 
-writeToFileToIO :: Member (Embed IO) r => Sem (WriteToFile ': r) a -> Sem r a
+writeToFileToIO :: Member (Embed IO) r => InterpreterFor WriteToFile r
 writeToFileToIO = interpret $ \case
   WriteResult results -> embed $ toHtmlFile "test.html" $ plotTimeline results
 
@@ -52,7 +53,7 @@ plotTimeline entries =
           height 400
         ]
 
-projectsApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> Sem (ProjectsApi ': r) a -> Sem r a
+projectsApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> InterpreterFor ProjectsApi r
 projectsApiToIO baseUrl apiToken = interpret $ \case
   GetProjects groupId -> do
     let template = [uriTemplate|/api/v4/groups/{groupId}/projects?include_subgroups=true&archived=false|]
@@ -61,7 +62,7 @@ projectsApiToIO baseUrl apiToken = interpret $ \case
     let template = [uriTemplate|/api/v4/projects/{projectId}|]
     embed $ fetchData baseUrl apiToken template [("projectId", (stringValue . show) project)]
 
-mergeRequestApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> Sem (MergeRequestApi ': r) a -> Sem r a
+mergeRequestApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> InterpreterFor MergeRequestApi r
 mergeRequestApiToIO baseUrl apiToken = interpret $ \case
   GetOpenMergeRequests project -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}/merge_requests?state=opened|]
@@ -70,13 +71,13 @@ mergeRequestApiToIO baseUrl apiToken = interpret $ \case
     let template = [uriTemplate|/api/v4/projects/{projectId}?remove_source_branch_after_merge=true|]
     embed $ void <$> fetchData' @Project baseUrl apiToken (setRequestMethod "PUT") template [("projectId", (stringValue . show) project)]
 
-branchesApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> Sem (BranchesApi ': r) a -> Sem r a
+branchesApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> InterpreterFor BranchesApi r
 branchesApiToIO baseUrl apiToken = interpret $ \case
   GetBranches project -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}/repository/branches|]
     embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) project)]
 
-pipelinesApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> Sem (PipelinesApi ': r) a -> Sem r a
+pipelinesApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> InterpreterFor PipelinesApi r
 pipelinesApiToIO baseUrl apiToken = interpret $ \case
   GetPipeline project pipeline -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines/{pipelineId}|]
@@ -85,7 +86,7 @@ pipelinesApiToIO baseUrl apiToken = interpret $ \case
     let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines?ref=master&status={status}&updated_after=2019-06-09T08:00:00Z|]
     embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) pId), ("ref", (stringValue . show) ref), ("status", stringValue "success")]
 
-schedulesApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> Sem (SchedulesApi ': r) a -> Sem r a
+schedulesApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> InterpreterFor SchedulesApi r
 schedulesApiToIO baseUrl apiToken = interpret $ \case
   GetSchedules project -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}/pipeline_schedules|]
