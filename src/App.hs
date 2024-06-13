@@ -24,7 +24,7 @@ run = do
         EnableSourcBranchDeletionAfterMerge -> enableSourceBranchDeletionAfterMerge groupId
         ShowProjects -> showProjectsForGroup groupId
         ShowSchedules -> showSchedulesForGroup groupId
-        ShowPipelineDurations -> error "not implemented"
+        ShowPipelineDurations -> showPipelineDurationsForProject (ProjectId 720)
         ShowMergeRequests -> showMergeRequests groupId
   runM
     . timerToIO
