@@ -6,7 +6,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Pipelines (showPipelineDurationsForProject, PipelineWithDuration (..), WriteToFile (..), writeResult) where
+module Pipelines (showPipelineDurationsForProject, PipelineWithDuration (..), WriteToFile (..), writeResult, showPipelineWithDuration) where
 
 import Data.Time (UTCTime)
 import Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds)
@@ -32,7 +32,7 @@ showPipelineDurationsForProject pId = do
     Right (Project _ _ _ Nothing _) -> write $ "Found project without default branch: " <> show pId
     Right (Project _ _ _ (Just ref) _) -> do
       results <- evaluateProject pId ref
-      writeResult results
+      writeResult $ filter (\(PipelineWithDuration _ _ _ _ _ _ so) -> so /= SourceSchedule) $ sortOn (\(PipelineWithDuration _ _ _ _ ut _ _) -> ut) results
 
 evaluateProject :: (Member PipelinesApi r, Member Writer r) => ProjectId -> Ref -> Sem r [PipelineWithDuration]
 evaluateProject pId ref = do
@@ -46,19 +46,21 @@ evaluateProject pId ref = do
   pure . catMaybes $ f <$> ps
 
 f :: Pipeline -> Maybe PipelineWithDuration
-f (Pipeline _ _ Nothing _ _) = Nothing
-f (Pipeline id sha (Just duration) createdAt webUrl) = Just PipelineWithDuration {..}
+f (Pipeline id sha (Just duration) (Just queuedDuration) createdAt webUrl source) = Just PipelineWithDuration {..}
+f Pipeline {} = Nothing
 
 data PipelineWithDuration = PipelineWithDuration
   { id :: PipelineId,
     sha :: Sha,
     duration :: Duration,
+    queuedDuration :: Duration,
     createdAt :: UTCTime,
-    webUrl :: URI
+    webUrl :: URI,
+    source :: Source
   }
 
 showPipelineWithDuration :: PipelineWithDuration -> Text
-showPipelineWithDuration (PipelineWithDuration _ _ duration created _) = (show . utcTimeToEpochTime) created <> ";" <> show duration
+showPipelineWithDuration (PipelineWithDuration _ _ duration queued created _ source) = (show . utcTimeToEpochTime) created <> ";" <> show duration <> "," <> show queued <> "," <> show source
 
 utcTimeToEpochTime :: UTCTime -> EpochTime
 utcTimeToEpochTime = fromIntegral . toSecs

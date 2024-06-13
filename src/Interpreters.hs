@@ -1,10 +1,13 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
 
@@ -14,9 +17,10 @@ import Burrito
 import Config.Types (ApiToken (..), BaseUrl (..))
 import Control.Exception.Base (try)
 import Control.Lens (Lens', Prism', Traversal', filtered, lens, prism', set, _1, _2)
-import Data.Aeson.Types (FromJSON)
+import Data.Aeson hiding (Value) -- .Types (FromJSON, ToJSON)
 import qualified Data.DateTime as DT
 import Data.Either.Combinators (mapLeft)
+import Data.Time (UTCTime)
 import Effects
 import Graphics.Vega.VegaLite
 import Network.HTTP.Client.Conduit (HttpExceptionContent, requestFromURI, requestHeaders, responseTimeout, responseTimeoutMicro)
@@ -33,7 +37,11 @@ import Relude
 
 writeToFileToIO :: Member (Embed IO) r => InterpreterFor WriteToFile r
 writeToFileToIO = interpret $ \case
-  WriteResult results -> embed $ toHtmlFile "test.html" $ plotTimeline results
+  WriteResult results ->
+    -- embed $ toHtmlFile "test.html" $ plotTimeline results
+    embed $ putStrLn @IO $ decodeUtf8 $ encode ((\(PipelineWithDuration _ _ du _ ut _ _) -> Entry ut du) <$> results)
+
+data Entry = Entry {created :: UTCTime, dur :: Duration} deriving (Generic, ToJSON)
 
 plotTimeline :: [PipelineWithDuration] -> VegaLite
 plotTimeline entries =
@@ -85,7 +93,7 @@ pipelinesApiToIO baseUrl apiToken = interpret $ \case
     let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines/{pipelineId}|]
     embed $ fetchData baseUrl apiToken template [("projectId", (stringValue . show) project), ("pipelineId", (stringValue . show) pipeline)]
   GetSuccessfulPipelines pId ref -> do
-    let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines?ref=master&status={status}&updated_after=2021-04-01T00:00:00Z|]
+    let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines?ref=master&status={status}&updated_after=2021-01-06T00:00:00Z&source=push|]
     embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) pId), ("ref", (stringValue . show) ref), ("status", stringValue "success")]
 
 schedulesApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> InterpreterFor SchedulesApi r

@@ -12,8 +12,9 @@ import Relude
 
 test :: [PipelineWithDuration]
 test =
-  [ PipelineWithDuration (PipelineId 1) (Sha "sha-123") (Duration 123) (DT.fromSeconds 1000) $$(staticURI "https://my.gitlab.com/projects/512/foo"),
-    PipelineWithDuration (PipelineId 2) (Sha "sha-123") (Duration 231) (DT.fromSeconds 86402) $$(staticURI "https://my.gitlab.com/projects/512/foo")
+  [ 
+    -- PipelineWithDuration (PipelineId 1) (Sha "sha-123") (Duration 123) (Duration 0) (DT.fromSeconds 1000) $$(staticURI "https://my.gitlab.com/projects/512/foo"),
+    -- PipelineWithDuration (PipelineId 2) (Sha "sha-123") (Duration 231) (Duration 1) (DT.fromSeconds 86402) $$(staticURI "https://my.gitlab.com/projects/512/foo")
   ]
 
 plotTimeline :: [PipelineWithDuration] -> VegaLite

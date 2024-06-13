@@ -5,10 +5,12 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TemplateHaskell #-}
 
 module Effects
@@ -35,6 +37,7 @@ module Effects
     MergeRequest (..),
     Duration (..),
     Sha (..),
+    Source (..),
     Pipeline (..),
     PipelineId (..),
     Ref (..),
@@ -55,6 +58,7 @@ import Network.HTTP.Simple (JSONException)
 import Network.URI
 import Polysemy
 import Relude
+import Relude.Extra (inverseMap)
 import qualified Text.Show
 
 newtype ProjectId = ProjectId Int deriving newtype (FromJSON, Show)
@@ -192,7 +196,7 @@ makeSem ''BranchesApi
 
 newtype PipelineId = PipelineId Int deriving newtype (Eq, FromJSON, Num, Ord, Show)
 
-newtype Duration = Duration Int deriving newtype (FromJSON, Show)
+newtype Duration = Duration Double deriving newtype (FromJSON, Show, ToJSON)
 
 instance ToText Duration where
   toText (Duration duration) = show duration
@@ -203,13 +207,36 @@ data Pipeline = Pipeline
   { pipelineId :: PipelineId,
     pipelineSha :: Sha,
     pipelineDuration :: Maybe Duration,
+    pipelineQueuedDuration :: Maybe Duration,
     pipelineCreatedAt :: UTCTime,
-    pipelineWebUrl :: URI
+    pipelineWebUrl :: URI,
+    pipelineSource :: Source
   }
   deriving (Generic, Show)
 
 instance FromJSON Pipeline where
   parseJSON = genericParseJSON $ aesonPrefix snakeCase
+
+data Source = SourcePush | SourceWeb | SourceTrigger | SourceSchedule | SourceApi | SourceExternal | SourcePipeline | SourceChat | SourceWebide | SourceMergeRequestEvent | SourceExternalPullRequestEvent | SourceParentPipeline | SourceOndemandDastScan | SourceOndemandDastValidation deriving stock (Bounded, Enum, Eq, Generic, Show)
+
+sourceToApiRep :: Source -> Text
+sourceToApiRep SourcePush = "push"
+sourceToApiRep SourceWeb = "web"
+sourceToApiRep SourceTrigger = "trigger"
+sourceToApiRep SourceSchedule = "schedule"
+sourceToApiRep SourceApi = "api"
+sourceToApiRep SourceExternal = "external"
+sourceToApiRep SourcePipeline = "pipeline"
+sourceToApiRep SourceChat = "chat"
+sourceToApiRep SourceWebide = "webide"
+sourceToApiRep SourceMergeRequestEvent = "merge_request_event"
+sourceToApiRep SourceExternalPullRequestEvent = "external_pull_request_event"
+sourceToApiRep SourceParentPipeline = "parent_pipeline"
+sourceToApiRep SourceOndemandDastScan = "ondemand_dast_scan"
+sourceToApiRep SourceOndemandDastValidation = "ondemand_dast_validation"
+
+instance FromJSON Source where
+  parseJSON = withText "Source" $ \text -> maybe (error $ "can't parse '" <> text <> "' into Source") pure (inverseMap sourceToApiRep text)
 
 data CompactPipeline = CompactPipeline
   { compactPipelineId :: PipelineId,
