@@ -1,0 +1,86 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 8308d481a56f764cc4585bde956521388ef4e1ec16490c023421abb44a2c3b27
+
+name:           mr-bot
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/L7R7/mr-bot#readme>
+homepage:       https://github.com/L7R7/mr-bot#readme
+bug-reports:    https://github.com/L7R7/mr-bot/issues
+author:         Leonhard Riedißer
+maintainer:     leo008180@googlemail.com
+copyright:      2020 Leonhard Riedißer
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/L7R7/mr-bot
+
+library
+  exposed-modules:
+      Branches
+    , Config
+    , Effects
+    , Interpreters
+    , Lib
+    , Poly
+    , Util
+  other-modules:
+      Paths_mr_bot
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -Wmissing-export-lists -fno-warn-orphans -fwrite-ide-info -hiedir=.hie -O2 -flate-specialise -fspecialise-aggressively
+  build-depends:
+      base >=4.7 && <5
+    , aeson
+    , aeson-casing
+    , burrito
+    , bytestring
+    , colourista
+    , containers
+    , either
+    , envparse
+    , http-conduit
+    , http-link-header
+    , http-types
+    , lens
+    , network-uri
+    , polysemy
+    , polysemy-plugin
+    , text
+    , time
+  default-language: Haskell2010
+
+executable mr-bot-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_mr_bot
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , mr-bot
+  default-language: Haskell2010
+
+test-suite mr-bot-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_mr_bot
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , mr-bot
+  default-language: Haskell2010
