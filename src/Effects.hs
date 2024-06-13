@@ -59,7 +59,7 @@ module Effects
 where
 
 import Autodocodec
-import Config.Types (AuthorIs, SearchTerm, Year)
+import Config.Types (AuthorIs, MergeCiOption, SearchTerm, Year)
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Scientific
 import qualified Data.Text as T hiding (partition)
@@ -159,7 +159,7 @@ data MergeRequestApi m a where
   SetSuccessfulPipelineRequirementForMerge :: Id Project -> MergeRequestApi m (Either UpdateError ())
   UnsetSuccessfulPipelineRequirementForMerge :: Id Project -> MergeRequestApi m (Either UpdateError ())
   SetResolvedDiscussionsRequirementForMerge :: Id Project -> MergeRequestApi m (Either UpdateError ())
-  MergeMergeRequest :: Id Project -> Id MergeRequest -> MergeRequestApi m (Either UpdateError ())
+  MergeMergeRequest :: Id Project -> Id MergeRequest -> MergeCiOption -> MergeRequestApi m (Either UpdateError ())
   RebaseMergeRequest :: Id Project -> Id MergeRequest -> MergeRequestApi m (Either UpdateError ())
   SetMergeRequestTitle :: Id Project -> Id MergeRequest -> Text -> MergeRequestApi m (Either UpdateError ())
 

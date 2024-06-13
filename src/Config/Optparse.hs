@@ -1,5 +1,3 @@
-{-# LANGUAGE TypeApplications #-}
-
 module Config.Optparse (parseConfigFromOptions) where
 
 import Barbies (TraversableB (btraverse))
@@ -61,7 +59,7 @@ commandParser =
 mergeRequestUpdatActionParser :: Parser Command
 mergeRequestUpdatActionParser =
   UpdateMergeRequests
-    <$> argument (eitherReader f) (metavar "ACTION" <> help ("The action to perform. Must be one of " <> optionList))
+    <$> mergeRequestUpdateActionParser
     <*> option (AuthorIs <$> auto) (short 'u' <> long "user-id" <> help "only MRs opened by the user with this ID are taken into account" <> metavar "ID")
     <*> optional
       ( (Left . SearchTerm <$> strOption (short 's' <> long "search" <> help "Optional. a string that must appear in the MR description or title. Mutually exclusive with --search-title" <> metavar "TXT"))
@@ -71,16 +69,20 @@ mergeRequestUpdatActionParser =
       )
     <*> executionParser
   where
-    optionList = intercalate ", " (updateActionToString <$> universe @MergeRequestUpdateAction)
+    mergeRequestUpdateActionParser :: Parser MergeRequestUpdateAction
+    mergeRequestUpdateActionParser =
+      hsubparser
+        $ mconcat
+          [ command "rebase" (info (pure Rebase) (progDesc "rebase the merge requests")),
+            command "merge" (info (Merge <$> mergeCiOptionParser) (progDesc "merge the merge requests")),
+            command "draft" (info (pure SetToDraft) (progDesc "set the merge requests to `draft`")),
+            command "ready" (info (pure MarkAsReady) (progDesc "mark the merge requests as ready")),
+            command "list" (info (pure List) (progDesc "list the merge requests"))
+          ]
 
-    updateActionToString Rebase = "rebase"
-    updateActionToString Merge = "merge"
-    updateActionToString SetToDraft = "draft"
-    updateActionToString MarkAsReady = "ready"
-    updateActionToString List = "list"
-
-    f :: String -> Either String MergeRequestUpdateAction
-    f s = maybeToRight (s <> " is not a valid MergeRequestUpdateAction") (inverseMap updateActionToString s)
+    mergeCiOptionParser :: Parser MergeCiOption
+    mergeCiOptionParser =
+      flag PipelineMustSucceed SkipCi (long "skip-ci" <> help "don't enforce that a merge request requires a successful pipeline to be merged (also helpful for projects that don't have pipelines on non-default branches)")
 
 executionParser :: Parser Execution
 executionParser =

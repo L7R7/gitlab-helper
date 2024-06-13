@@ -33,7 +33,7 @@ updateMergeRequests ::
   Maybe (Either SearchTerm SearchTermTitle) ->
   Execution ->
   Sem r ()
-updateMergeRequests _ _ Merge _ Nothing Execute =
+updateMergeRequests _ _ (Merge _) _ Nothing Execute =
   write "I don't think you want to blindly merge all merge requests for this group. Consider adding a filter. Exiting now."
 updateMergeRequests gId projectExcludes action authorIs maybeSearchTerms execute = do
   let searchTerm' = either id (\(SearchTermTitle s) -> SearchTerm s) <$> maybeSearchTerms
@@ -64,7 +64,7 @@ updateMergeRequests gId projectExcludes action authorIs maybeSearchTerms execute
     performActionExecute pId mr = case action of
       List -> Right () <$ printMergeRequest mr
       Rebase -> rebaseMergeRequest pId (mergeRequestIid mr)
-      Merge -> mergeMergeRequest pId (mergeRequestIid mr)
+      (Merge mergeCiOption) -> mergeMergeRequest pId (mergeRequestIid mr) mergeCiOption
       SetToDraft ->
         if mergeRequestWip mr
           then Right () <$ write "merge request is already in state \"Draft\""
@@ -78,7 +78,7 @@ updateMergeRequests gId projectExcludes action authorIs maybeSearchTerms execute
       Right () <$ case action of
         List -> printMergeRequest mr
         Rebase -> write "dry run. skipping rebase"
-        Merge -> write "dry run. skipping merge"
+        (Merge _) -> write "dry run. skipping merge"
         SetToDraft ->
           if mergeRequestWip mr
             then write "merge request is already in state \"Draft\""

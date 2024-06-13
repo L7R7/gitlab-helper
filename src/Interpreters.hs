@@ -15,7 +15,7 @@
 module Interpreters (usersApiToIO, groupsApiToIO, projectsApiToIO, mergeRequestApiToIO, branchesApiToIO, pipelinesApiToIO, schedulesApiToIO, runM) where
 
 import Burrito
-import Config.Types (AuthorIs (..), SearchTerm (..), Year (..))
+import Config.Types (AuthorIs (..), MergeCiOption (..), SearchTerm (..), Year (..))
 import Data.Aeson hiding (Value)
 import Effects
 import Gitlab.Client
@@ -96,9 +96,11 @@ mergeRequestApiToIO baseUrl apiToken = interpret $ \case
   SetResolvedDiscussionsRequirementForMerge project -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}?only_allow_merge_if_all_discussions_are_resolved=true|]
     embed $ void <$> fetchData' @Project baseUrl apiToken (setRequestMethod "PUT") template [("projectId", (stringValue . show) project)]
-  MergeMergeRequest project mrId -> do
-    let template = [uriTemplate|/api/v4/projects/{projectId}/merge_requests/{mergeRequestId}/merge?should_remove_source_branch=true&merge_when_pipeline_succeeds=true|]
-    embed $ void <$> fetchData' @Object baseUrl apiToken (setRequestMethod "PUT") template [("projectId", (stringValue . show) project), ("mergeRequestId", (stringValue . show) mrId)]
+  MergeMergeRequest project mrId skipCiOption -> do
+    let skipCiOptionToParam PipelineMustSucceed = "true"
+        skipCiOptionToParam SkipCi = "false"
+        template = [uriTemplate|/api/v4/projects/{projectId}/merge_requests/{mergeRequestId}/merge?should_remove_source_branch=true&merge_when_pipeline_succeeds={pipelineMustSucceed}|]
+    embed $ void <$> fetchData' @Object baseUrl apiToken (setRequestMethod "PUT") template [("projectId", (stringValue . show) project), ("mergeRequestId", (stringValue . show) mrId), ("pipelineMustSucceed", stringValue $ skipCiOptionToParam skipCiOption)]
   RebaseMergeRequest project mrId -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}/merge_requests/{mergeRequestId}/rebase|]
     -- Right (fromList [("rebase_in_progress",Bool True)])

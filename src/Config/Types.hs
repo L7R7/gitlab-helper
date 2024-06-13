@@ -8,6 +8,7 @@ module Config.Types
     PartialConfig (..),
     Command (..),
     MergeRequestUpdateAction (..),
+    MergeCiOption (..),
     AuthorIs (..),
     SearchTerm (..),
     SearchTermTitle (..),
@@ -68,7 +69,9 @@ data Command
 
 data Execution = DryRun | Execute deriving stock (Eq, Show)
 
-data MergeRequestUpdateAction = List | Rebase | Merge | SetToDraft | MarkAsReady deriving stock (Bounded, Enum, Show)
+data MergeRequestUpdateAction = List | Rebase | Merge MergeCiOption | SetToDraft | MarkAsReady deriving stock (Show)
+
+data MergeCiOption = PipelineMustSucceed | SkipCi deriving stock (Show)
 
 newtype AuthorIs = AuthorIs Int deriving stock (Show)
 
