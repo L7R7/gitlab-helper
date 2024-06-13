@@ -30,16 +30,14 @@ import Polysemy
 import Relude hiding (pi)
 
 showProjectsForAllGroups :: (Member GroupsApi r, Member ProjectsApi r, Member Writer r) => Sem r ()
-showProjectsForAllGroups = do
-  write "=================================================="
-  write "Listing the projects for all Groups I can find"
+showProjectsForAllGroups =
   getAllGroups >>= \case
     Left err -> write $ show err
     Right groups -> do
       projects <- fmap join <$> (sequence <$> traverse (getProjects . G.groupId) groups)
       case projects of
         Left err -> write $ show err
-        Right projects -> writeMetaFormat projects
+        Right ps -> writeMetaFormat ps
 
 showProjectsForGroup :: (Member ProjectsApi r, Member Writer r) => GroupId -> Sem r ()
 showProjectsForGroup gId = do
