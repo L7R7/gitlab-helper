@@ -95,7 +95,7 @@ countDeployments gId year@(Year y) =
   runProcessor
     $ Counter
       gId
-      (\gi -> "Listing the number of successful deployments in " <> show y <> " for all projects in Group " <> show gi)
+      (\gi -> "Listing the number of successful deployments in " <> show y <> " for all projects in group " <> show gi)
       (\p -> projectId p `elem` excludes)
       ( \p -> do
           res <- case defaultBranch p of
@@ -164,7 +164,7 @@ setMergeMethodToFastForward execution gId =
   runProcessor
     $ OptionSetter
       gId
-      (\gi -> "Setting the merge method to \"Fast Forward\" for all projects in Group " <> show gi)
+      (\gi -> "Setting the merge method to \"Fast Forward\" for all projects in group " <> show gi)
       (\p -> mergeMethod p == FastForward)
       ( case execution of
           DryRun -> (\pId -> Right () <$ write ("Dry Run. Pretending to set merge method for Project " <> show pId))
@@ -202,7 +202,7 @@ runProcessor (Counter gId title skipIf action) = do
     Right projects -> do
       res <- traverse (countSingle skipIf action) projects
       write ""
-      write $ "done. in total: " <> show (getSum $ fold res) <> " deployments"
+      write $ "done. Total: " <> show (getSum $ fold res) <> " deployments"
 
 process :: (Member Writer r) => (Project -> Bool) -> (ProjectId -> Sem r (Either UpdateError ())) -> Project -> Sem r Result
 process skipIf action project = do
