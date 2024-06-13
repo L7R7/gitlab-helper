@@ -15,13 +15,13 @@ parseConfig = do
   partialFromHome <- readPartialOptionsFromHomeDir
   partialFromLocal <- readPartialOptionsFromLocalDir
   partialFromEnv <- parseFromEnv
-  pure $ mkConfig (partialFromHome <> partialFromLocal <> partialFromEnv)
+  pure $ mkConfig (partialFromEnv <> partialFromLocal <> partialFromHome)
 
 mkConfig :: PartialConfig Maybe -> Either (NonEmpty String) Config
 mkConfig (PartialConfig gId url token) =
   validationToEither $
     Config <$> x "Group ID missing" gId <*> x "Base URL missing" url <*> x "API-Token missing" token
 
-x :: String -> Maybe (S.Last a) -> Validation (NonEmpty String) a
+x :: String -> Maybe (S.First a) -> Validation (NonEmpty String) a
 x err Nothing = Failure $ err :| []
-x _ (Just (S.Last a)) = Success a
+x _ (Just (S.First a)) = Success a

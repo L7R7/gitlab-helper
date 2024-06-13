@@ -17,7 +17,7 @@ module Config.Types where
 
 import Barbies
 import Data.Aeson (FromJSON (..))
-import qualified Data.Semigroup as S (Last (..))
+import qualified Data.Semigroup as S (First (..))
 import Network.URI (URI)
 import Options.Applicative
 import Relude hiding (Reader)
@@ -30,9 +30,9 @@ data Config = Config
   deriving (Show)
 
 data PartialConfig f = PartialConfig
-  { pGroupId :: f (S.Last GroupId),
-    pBaseUrl :: f (S.Last BaseUrl),
-    pApiToken :: f (S.Last ApiToken)
+  { pGroupId :: f (S.First GroupId),
+    pBaseUrl :: f (S.First BaseUrl),
+    pApiToken :: f (S.First ApiToken)
   }
   deriving (Generic, FunctorB, TraversableB, ApplicativeB, ConstraintsB)
 
