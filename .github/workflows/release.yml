@@ -46,6 +46,8 @@ jobs:
             target: x86_64-unknown-linux-gnu
           - os: macOS-latest
             target: universal-apple-darwin
+          - os: macOS-latest
+            target: aarch64-apple-darwin
           - os: macOS-13
             target: x86_64-apple-darwin
           - os: windows-latest
@@ -118,5 +120,5 @@ jobs:
         with:
           upload_url: ${{ env.upload_url }}
           asset_path: ${{ env.BINARY_PATH }}
-          asset_name: gitlab-helper-${{ steps.tag.outputs.tag }}-${{ runner.os }}-${{ runner.os.target }}${{ env.EXT }}
+          asset_name: gitlab-helper-${{ steps.tag.outputs.tag }}-${{ runner.os }}-${{ matrix.target }}${{ env.EXT }}
           asset_content_type: application/octet-stream
