@@ -78,7 +78,7 @@ jobs:
 
       - if: matrix.os == 'windows-latest'
         name: Set binary path name on Windows
-        run: echo "BINARY_PATH=./bin/gitlab-helper.exe" >> $env:GITHUB_ENV
+        run: echo "BINARY_PATH=./bin/gitlab-helper-exe.exe" >> $env:GITHUB_ENV
 
       - if: matrix.os != 'windows-latest'
         name: Set binary path name not on Windows
@@ -100,7 +100,6 @@ jobs:
         run: |
           echo "upload_url=$(cat release_url/release_url.txt)" >> $env:GITHUB_ENV
 
-      # See Note [environment variables]
       - if: matrix.os != 'windows-latest'
         name: Get Release File Name & Upload URL not on Widows
         run: |
