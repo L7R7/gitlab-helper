@@ -13,7 +13,6 @@ import Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds)
 import Effects
 import Network.URI (URI)
 import Polysemy
-import Polysemy.Internal (send)
 import Relude hiding (id)
 import System.Posix.Types (EpochTime)
 

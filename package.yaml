@@ -92,5 +92,5 @@ tests:
       - -threaded
       - -rtsopts
       - -with-rtsopts=-N
-    dependencies:
-      - gitlab-helper
+    dependencies: []
+      # - gitlab-helper
