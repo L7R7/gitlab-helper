@@ -267,7 +267,7 @@ data BranchesApi m a where
 
 makeSem ''BranchesApi
 
-newtype PipelineId = PipelineId {getPipelineId ::Int}
+newtype PipelineId = PipelineId {getPipelineId :: Int}
   deriving newtype (Eq, Num, Ord, Show)
   deriving (FromJSON) via (Autodocodec PipelineId)
 

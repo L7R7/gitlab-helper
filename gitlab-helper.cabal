@@ -40,7 +40,6 @@ library
     , Projects
     , Schedules
     , Util
-    , Viz
   other-modules:
       Paths_gitlab_helper
   hs-source-dirs:
@@ -55,14 +54,12 @@ library
     , colonnade
     , colourista
     , containers
-    , datetime
     , directory
     , either
     , envparse
     , http-conduit
     , http-link-header
     , http-types
-    , hvega <= 0.9.1.0
     , lens
     , network-uri
     , optparse-applicative

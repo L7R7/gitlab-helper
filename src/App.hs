@@ -24,7 +24,6 @@ run = do
         (EnableSourceBranchDeletionAfterMerge execution) -> enableSourceBranchDeletionAfterMerge execution groupId
         ShowProjects -> showProjectsForGroup groupId
         ShowSchedules -> showSchedulesForGroup groupId
-        ShowPipelineDurations -> showPipelineDurationsForProject (ProjectId 720)
         ShowMergeRequests -> showMergeRequests groupId
         (EnableAllDiscussionsMustBeResolvedForMergeRequirement execution) -> enableAllDiscussionsResolvedForMergeRequirement execution groupId
         (EnableSuccessfulPipelineForMergeRequirement execution) -> enableSuccessfulPipelineForMergeRequirement execution groupId
@@ -36,5 +35,4 @@ run = do
     . mergeRequestApiToIO baseUrl apiToken
     . pipelinesApiToIO baseUrl apiToken
     . schedulesApiToIO baseUrl apiToken
-    . writeToFileToIO
     $ action

@@ -42,8 +42,6 @@ packages:
 extra-deps:
   - aeson-1.5.6.0@sha256:5003bb6fd260d2e2d5a51dee2bf5c8e8f29e4e0e0288fef805c22dcc80ecab06,6788
   - colourista-0.1.0.1@sha256:98353ee0e2f5d97d2148513f084c1cd37dfda03e48aa9dd7a017c9d9c0ba710e,3307
-  - datetime-0.3.1@sha256:7e275bd0ce7a2f66445bedfa0006abaf4d41af4c2204c3f8004c17eab5480e74,1534
-  - hvega-0.9.1.0@sha256:4dd359480aba8ddb40f4905222fcc196618a7ff50c1b909bb0b5b8ee09e7c295,10921
   - github: srid/autodocodec # TODO: 2022-03-25 lriedisser: switch back to mainline version as soon as GHC 9.x support has landed
     commit: 42b42a7407f33c6c74fa4e8c84906aebfed28daf
     subdirs:

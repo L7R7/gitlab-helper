@@ -12,18 +12,15 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Interpreters (projectsApiToIO, mergeRequestApiToIO, branchesApiToIO, pipelinesApiToIO, schedulesApiToIO, writeToFileToIO, runM) where
+module Interpreters (projectsApiToIO, mergeRequestApiToIO, branchesApiToIO, pipelinesApiToIO, schedulesApiToIO, runM) where
 
 import Burrito
 import Config.Types (ApiToken (..), BaseUrl (..))
 import Control.Exception.Base (try)
 import Control.Lens (Lens', Prism', Traversal', filtered, lens, prism', set, _1, _2)
 import Data.Aeson hiding (Value)
-import qualified Data.DateTime as DT
 import Data.Either.Combinators (mapLeft)
-import Data.Time (UTCTime)
 import Effects
-import Graphics.Vega.VegaLite
 import Network.HTTP.Client.Conduit (HttpExceptionContent, requestFromURI, requestHeaders, responseTimeout, responseTimeoutMicro)
 import Network.HTTP.Link.Parser (parseLinkHeaderBS)
 import Network.HTTP.Link.Types (Link (..), LinkParam (Rel), href)
@@ -31,37 +28,8 @@ import Network.HTTP.Simple
 import Network.HTTP.Types (Status (statusCode))
 import Network.HTTP.Types.Header (HeaderName)
 import Network.URI (URI)
-import Pipelines hiding (id)
 import Polysemy
 import Relude
-
-writeToFileToIO :: Member (Embed IO) r => InterpreterFor WriteToFile r
-writeToFileToIO = interpret $ \case
-  WriteResult results ->
-    -- embed $ putStrLn @IO $ decodeUtf8 $ encode ((\(PipelineWithDuration _ _ du _ ut _ _) -> Entry ut du) <$> results)
-    embed $ toHtmlFile "test.html" $ plotTimeline results
-
-data Entry = Entry {created :: UTCTime, dur :: Duration} deriving (Generic, ToJSON)
-
-plotTimeline :: [PipelineWithDuration] -> VegaLite
-plotTimeline entries =
-  let dates = map (toText . DT.formatDateTime "%Y-%m-%d-%H-%M" . Pipelines.createdAt) entries
-      dat =
-        dataFromColumns [Parse [("createdAt", FoUtc "%Y-%m-%d-%H-%M")]]
-          . dataColumn "createdAt" (Strings dates) -- TODO: investigate hvega DateTime datatype
-          . dataColumn "duration" (Strings (map (toText . duration) entries)) -- TODO: investigate hvega DateTime datatype
-      enc =
-        encoding
-          . position X [PName "createdAt", PmType Temporal, PTimeUnit YearMonthDateHoursMinutesSeconds, PAxis [AxTitle "Date (Days)"]]
-          . position Y [PName "duration", PmType Quantitative, PAxis [AxTitle "Pipeline duration"]]
-          . row [FName "createdAt", FmType Temporal, FTimeUnit (Utc Year)]
-   in toVegaLite
-        [ dat [],
-          mark Point [MFilled True, MTooltip TTEncoding],
-          enc [],
-          width 1600,
-          height 400
-        ]
 
 projectsApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> InterpreterFor ProjectsApi r
 projectsApiToIO baseUrl apiToken = interpret $ \case
