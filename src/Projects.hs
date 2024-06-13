@@ -16,6 +16,7 @@ module Projects
   )
 where
 
+import Colonnade
 import Colourista (bold, formatWith)
 import Config.Types
 import qualified Data.Map as M
@@ -32,8 +33,23 @@ showProjectsForGroup gId = do
   getProjects gId >>= \case
     Left err -> write $ show err
     Right projects -> do
-      traverse_ (write . show) (sortOn (toLower . getProjectName . name) projects)
+      write . toText $ tableReport (sortOn (toLower . getProjectName . name) projects)
       writeSummary $ foldMap summarizeSingle projects
+
+tableReport :: Foldable f => f Project -> String
+tableReport =
+  asciiCapped $
+    mconcat
+      [ cap
+          ""
+          (headed "ID" (show . projectId) <> headed "Name" (show . name) <> headed "default branch" (maybe "-" (\(Ref r) -> toString r) . defaultBranch)),
+        cap
+          "Merge Requests"
+          (headed "enabled" (show . mergeRequestsEnabled) <> headed "Remove source branch after merge" (maybe "unknown" show . removeSourceBranchAfterMerge)),
+        cap
+          "Requirements for a merge request to be merged"
+          (headed "successful pipeline" (show . onlyAllowMergeIfPipelineSucceeds) <> headed "all discussions resolved" (show . onlyAllowMergeIfAllDiscussionsAreResolved))
+      ]
 
 data Processor r = Processor
   { groupId :: GroupId,
@@ -156,7 +172,6 @@ writeSummary
     EnabledDisabledCount (Count successfulPipelineForMergeEnabled, Count successfulPipelineForMergeDisabled),
     EnabledDisabledCount (Count allDiscussionsResolvedForMergeEnabled, Count allDiscussionsResolvedForMergeDisabled)
     ) = do
-    write ""
     write $ formatWith [bold] "=== Summary"
     write $ "Anzahl Projekte: " <> show numProjects
     write $ "Projekte die 'remove_source_branch_after_merge' aktiviert haben: " <> show branchDeletionEnabled

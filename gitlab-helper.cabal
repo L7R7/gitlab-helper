@@ -53,6 +53,7 @@ library
     , barbies
     , burrito
     , bytestring
+    , colonnade
     , colourista
     , containers
     , datetime
