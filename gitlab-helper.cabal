@@ -44,7 +44,7 @@ library
       Paths_gitlab_helper
   hs-source-dirs:
       src
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -Wmissing-export-lists -fno-warn-orphans -fwrite-ide-info -hiedir=.hie -O2 -flate-specialise -fspecialise-aggressively -frefinement-level-hole-fits=3
+  ghc-options: -Wall -Wunused-packages -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -Wmissing-export-lists -fno-warn-orphans -fwrite-ide-info -hiedir=.hie -O2 -flate-specialise -fspecialise-aggressively -frefinement-level-hole-fits=3
   build-depends:
       base >=4.7 && <5
     , aeson
