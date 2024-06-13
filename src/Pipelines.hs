@@ -43,7 +43,7 @@ evaluateProject pId ref = do
       pure []
     Right pipelines -> traverse (getPipeline pId . compactPipelineId) pipelines
   let (_, ps) = partitionEithers pipelinesResult
-  pure . catMaybes $ f <$> ps
+  pure (mapMaybe f ps)
 
 f :: Pipeline -> Maybe PipelineWithDuration
 f (Pipeline id sha (Just duration) (Just queuedDuration) createdAt webUrl source) = Just PipelineWithDuration {..}

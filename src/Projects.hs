@@ -5,7 +5,6 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TupleSections #-}
 
 module Projects
@@ -35,9 +34,9 @@ listAllProjectsMeta = fetch >>= bitraverse_ (write . show) writeMetaFormat
   where
     fetch =
       runExceptT $
-        ((<>))
-          <$> (getAllGroups' >>= (\groups -> join <$> traverse (getProjectsForGroup' . G.groupId) groups))
-          <*> (getAllUsers' >>= (\users -> join <$> traverse (getProjectsForUser' . userId) users))
+        (<>)
+          <$> (getAllGroups' >>= fmap join . traverse (getProjectsForGroup' . G.groupId))
+          <*> (getAllUsers' >>= fmap join . traverse (getProjectsForUser' . userId))
 
     getAllGroups' = ExceptT getAllGroups
     getProjectsForGroup' = ExceptT . getProjectsForGroup
@@ -97,7 +96,7 @@ countDeploymentsIn2022 gId =
       gId
       (\gi -> "Listing the number of successful deployments in 2022 for all projects in Group " <> show gi)
       (\p -> projectId p `elem` excludes)
-      (\pi -> (fmap (Sum . length)) <$> getSuccessfulPushPipelinesIn2022 pi undefined)
+      (\pi -> fmap (Sum . length) <$> getSuccessfulPushPipelinesIn2022 pi undefined)
   where
     excludes =
       ProjectId
@@ -185,7 +184,7 @@ runProcessor (Counter groupId title skipIf action) = do
     Right projects -> do
       res <- traverse (countSingle skipIf action) projects
       write ""
-      write $ "done. in total: " <> (show $ getSum $ fold res) <> " deployments"
+      write $ "done. in total: " <> show (getSum $ fold res) <> " deployments"
 
 process :: (Member Writer r) => (Project -> Bool) -> (ProjectId -> Sem r (Either UpdateError ())) -> Project -> Sem r Result
 process skipIf action project = do
@@ -209,8 +208,8 @@ countSingle skipIf action project = count >>= \(output, result) -> write (title 
         else do
           res <- action (projectId project)
           case res of
-            Left err -> pure $ (formatWith [red] ("something went wrong: ") <> show err, mempty)
-            Right s -> pure $ (show ((getSum s)) <> " deployments", s)
+            Left err -> pure (formatWith [red] "something went wrong: " <> show err, mempty)
+            Right s -> pure (show (getSum s) <> " deployments", s)
     title = formatWith [bold] (show (name project) <> ": ") -- "(" <> show (projectId project) <> "): ")
 
 data Result = AlreadySet | Set | Error deriving stock (Bounded, Enum, Eq, Ord, Show)
