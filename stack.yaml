@@ -17,7 +17,7 @@
 #
 # resolver: ./custom-snapshot.yaml
 # resolver: https://example.com/snapshots/2018-01-01.yaml
-resolver: lts-18.7
+resolver: lts-18.10
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -70,7 +70,6 @@ extra-deps:
     commit: 28bd2ef2a7ceaa82d4478d98884287fb5fe17e9f
     subdirs:
       - packages/conc
-
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
