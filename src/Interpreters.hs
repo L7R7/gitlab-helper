@@ -15,7 +15,7 @@
 module Interpreters (usersApiToIO, groupsApiToIO, projectsApiToIO, mergeRequestApiToIO, branchesApiToIO, pipelinesApiToIO, schedulesApiToIO, runM) where
 
 import Burrito
-import Config.Types (ApiToken (..), AuthorIs (..), BaseUrl (..))
+import Config.Types (ApiToken (..), AuthorIs (..), BaseUrl (..), SearchTerm (..))
 import Control.Exception.Base (try)
 import Control.Lens (Lens', Prism', Traversal', filtered, lens, prism', set, _1, _2)
 import Data.Aeson hiding (Value)
@@ -29,7 +29,7 @@ import Network.HTTP.Types (Status (statusCode))
 import Network.HTTP.Types.Header (HeaderName)
 import Network.URI (URI)
 import Polysemy
-import Relude
+import Relude hiding (group)
 
 usersApiToIO :: (Member (Embed IO) r) => BaseUrl -> ApiToken -> InterpreterFor UsersApi r
 usersApiToIO baseUrl apiToken = interpret $ \case
@@ -75,6 +75,19 @@ mergeRequestApiToIO baseUrl apiToken = interpret $ \case
       Just (AuthorIs i) -> do
         let template = [uriTemplate|/api/v4/projects/{projectId}/merge_requests?state=opened&author_id={authorId}|]
         embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) project), ("authorId", (stringValue . show) i)]
+  GetOpenMergeRequestsForGroup group maybeAuthorIs maybeSearchTerm -> do
+    let template = [uriTemplate|/api/v4/groups/{groupId}/merge_requests?state=opened{&author_id,search}|]
+    embed
+      $ fetchDataPaginated
+        apiToken
+        baseUrl
+        template
+        ( mconcat
+            [ [("groupId", (stringValue . show) group)],
+              foldMap (\(AuthorIs i) -> [("authorId", (stringValue . show) i)]) maybeAuthorIs,
+              foldMap (\(SearchTerm s) -> [("search", stringValue s)]) maybeSearchTerm
+            ]
+        )
   EnableSourceBranchDeletionAfterMrMerge project -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}?remove_source_branch_after_merge=true|]
     embed $ void <$> fetchData' @Project baseUrl apiToken (setRequestMethod "PUT") template [("projectId", (stringValue . show) project)]

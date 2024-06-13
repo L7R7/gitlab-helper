@@ -13,8 +13,7 @@ module Config.Types
     Command (..),
     MergeRequestUpdateAction (..),
     AuthorIs (..),
-    MergeRequestTitleFilter (..),
-    MergeRequestDescriptionFilter (..),
+    SearchTerm (..),
     Execution (..),
     commandParser,
   )
@@ -72,7 +71,7 @@ data Command
   | EnableSuccessfulPipelineForMergeRequirement Execution
   | SetMergeMethodToFastForward Execution
   | CountSuccessfulDeploymentsIn2022
-  | UpdateMergeRequests MergeRequestUpdateAction AuthorIs (Maybe MergeRequestTitleFilter) (Maybe MergeRequestDescriptionFilter) Execution
+  | UpdateMergeRequests MergeRequestUpdateAction AuthorIs (Maybe SearchTerm) Execution
   deriving stock (Show)
 
 data Execution = DryRun | Execute deriving stock (Eq, Show)
@@ -81,9 +80,7 @@ data MergeRequestUpdateAction = Rebase | Merge deriving stock (Show)
 
 newtype AuthorIs = AuthorIs Int deriving stock (Show)
 
-newtype MergeRequestTitleFilter = TitleContains String deriving stock (Show)
-
-newtype MergeRequestDescriptionFilter = DescriptionContains String deriving stock (Show)
+newtype SearchTerm = SearchTerm String deriving stock (Show)
 
 commandParser :: IO Command
 commandParser =
@@ -119,8 +116,7 @@ mergeRequestUpdatActionParser =
   UpdateMergeRequests
     <$> argument (eitherReader f) (metavar "ACTION" <> help "The action to perform. Must be one of \"rebase\", \"merge\"")
     <*> option (AuthorIs <$> auto) (short 'u' <> long "user-id" <> help "only MRs opened by the user with this ID are taken into account" <> metavar "ID")
-    <*> optional (TitleContains <$> strOption (short 't' <> long "title-contains" <> help "Optional. a string that must appear in the MR title" <> metavar "TXT"))
-    <*> optional (DescriptionContains <$> strOption (short 'd' <> long "description-contains" <> help "Optional. a string that must appear in the MR description" <> metavar "TXT"))
+    <*> optional (SearchTerm <$> strOption (short 's' <> long "search" <> help "Optional. a string that must appear in the MR description or title" <> metavar "TXT"))
     <*> executionParser
   where
     f :: String -> Either String MergeRequestUpdateAction

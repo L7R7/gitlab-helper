@@ -30,7 +30,7 @@ run = do
         (EnableSuccessfulPipelineForMergeRequirement execution) -> enableSuccessfulPipelineForMergeRequirement execution groupId
         CountSuccessfulDeploymentsIn2022 -> countDeploymentsIn2022 groupId
         (SetMergeMethodToFastForward execution) -> setMergeMethodToFastForward execution groupId
-        (UpdateMergeRequests cmd authorIs titleFilter descFilter execution) -> updateMergeRequests groupId cmd authorIs titleFilter descFilter execution
+        (UpdateMergeRequests cmd authorIs searchTerm execution) -> updateMergeRequests groupId cmd authorIs searchTerm execution
   runM
     . timerToIO
     . writerToIO

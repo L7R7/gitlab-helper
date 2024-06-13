@@ -33,6 +33,7 @@ module Effects
     setMergeMethod,
     MergeRequestApi (..),
     getOpenMergeRequests,
+    getOpenMergeRequestsForGroup,
     enableSourceBranchDeletionAfterMrMerge,
     setSuccessfulPipelineRequirementForMerge,
     unsetSuccessfulPipelineRequirementForMerge,
@@ -182,6 +183,7 @@ instance HasCodec MergeMethod where
 
 data MergeRequest = MergeRequest
   { mergeRequestId :: MergeRequestId,
+    mergeRequestProjectId :: ProjectId,
     mergeRequestTitle :: Text,
     mergeRequestDescription :: Text,
     wip :: Bool,
@@ -198,6 +200,8 @@ instance HasCodec MergeRequest where
       $ MergeRequest
       <$> requiredField "iid" "NOTE: IID OF THE MR, NOT ID"
       .= mergeRequestId
+      <*> requiredField' "project_id"
+      .= mergeRequestProjectId
       <*> requiredField' "title"
       .= mergeRequestTitle
       <*> requiredField' "description"
@@ -345,6 +349,7 @@ makeSem ''ProjectsApi
 
 data MergeRequestApi m a where
   GetOpenMergeRequests :: ProjectId -> Maybe AuthorIs -> MergeRequestApi m (Either UpdateError [MergeRequest])
+  GetOpenMergeRequestsForGroup :: GroupId -> Maybe AuthorIs -> Maybe SearchTerm -> MergeRequestApi m (Either UpdateError [MergeRequest])
   EnableSourceBranchDeletionAfterMrMerge :: ProjectId -> MergeRequestApi m (Either UpdateError ())
   SetSuccessfulPipelineRequirementForMerge :: ProjectId -> MergeRequestApi m (Either UpdateError ())
   UnsetSuccessfulPipelineRequirementForMerge :: ProjectId -> MergeRequestApi m (Either UpdateError ())
