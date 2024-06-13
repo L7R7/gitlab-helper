@@ -130,7 +130,7 @@ instance HasCodec Project where
         <*> requiredField' "name" .= name
         <*> requiredField' "merge_requests_enabled" .= mergeRequestsEnabled
         <*> requiredField' "merge_method" .= mergeMethod
-        <*> requiredField' "default_branch" .= defaultBranch
+        <*> optionalField' "default_branch" .= defaultBranch
         <*> requiredField' "remove_source_branch_after_merge" .= removeSourceBranchAfterMerge
         <*> requiredField' "only_allow_merge_if_pipeline_succeeds" .= onlyAllowMergeIfPipelineSucceeds
         <*> requiredField' "only_allow_merge_if_all_discussions_are_resolved" .= onlyAllowMergeIfAllDiscussionsAreResolved
