@@ -34,10 +34,10 @@ listAllProjectsMeta :: (Member UsersApi r, Member GroupsApi r, Member ProjectsAp
 listAllProjectsMeta = fetch >>= bitraverse_ (write . show) writeMetaFormat
   where
     fetch =
-      runExceptT $
-        (<>)
-          <$> (getAllGroups' >>= fmap join . traverse (getProjectsForGroup' . G.groupId))
-          <*> (getAllUsers' >>= fmap join . traverse (getProjectsForUser' . userId))
+      runExceptT
+        $ (<>)
+        <$> (getAllGroups' >>= fmap join . traverse (getProjectsForGroup' . G.groupId))
+        <*> (getAllUsers' >>= fmap join . traverse (getProjectsForUser' . userId))
 
     getAllGroups' = ExceptT getAllGroups
     getProjectsForGroup' = ExceptT . getProjectsForGroup
@@ -56,8 +56,8 @@ showProjectsForGroup gId = do
 
 tableReport :: (Foldable f) => f Project -> String
 tableReport =
-  asciiCapped $
-    mconcat
+  asciiCapped
+    $ mconcat
       [ cap
           ""
           (headed "ID" (show . projectId) <> headed "Name" (show . name) <> headed "default branch" (maybe "-" (\(Ref r) -> toString r) . defaultBranch)),
@@ -75,31 +75,31 @@ tableReport =
 data Processor r
   = OptionSetter
       GroupId
+      -- | headline to be printed
       (GroupId -> Text)
-      -- ^ headline to be printed
+      -- | if this returns True, nothing will be done
       (Project -> Bool)
-      -- ^ if this returns True, nothing will be done
+      -- | action to execute
       (ProjectId -> Sem r (Either UpdateError ()))
-      -- ^ action to execute
   | Counter
       GroupId
+      -- | headline to be printed
       (GroupId -> Text)
-      -- ^ headline to be printed
+      -- | if this returns True, nothing will be done
       (Project -> Bool)
-      -- ^ if this returns True, nothing will be done
+      -- | action to execute
       (Project -> Sem r (Either UpdateError (Sum Int)))
-      -- ^ action to execute
 
 countDeploymentsIn2022 :: (Member ProjectsApi r, Member PipelinesApi r, Member Writer r) => GroupId -> Sem r ()
 countDeploymentsIn2022 gId =
-  runProcessor $
-    Counter
+  runProcessor
+    $ Counter
       gId
       (\gi -> "Listing the number of successful deployments in 2022 for all projects in Group " <> show gi)
       (\p -> projectId p `elem` excludes)
       ( \p -> do
-          res <- case (defaultBranch p) of
-            Nothing -> Right [] <$ (write $ formatWith [bold] (show (name p) <> ": ") <> formatWith [red] "has no default branch")
+          res <- case defaultBranch p of
+            Nothing -> Right [] <$ write (formatWith [bold] (show (name p) <> ": ") <> formatWith [red] "has no default branch")
             Just ref -> getSuccessfulPushPipelinesIn2022 (projectId p) ref
           pure $ fmap (Sum . length) res
       )
@@ -107,14 +107,14 @@ countDeploymentsIn2022 gId =
     excludes =
       ProjectId
         <$> [94, 198, 509, 554, 572, 583, 587, 648, 663, 738]
-          ++ [1071, 1141, 1703, 1720, 1726, 1757, 1759, 1765, 1766, 1767, 1770, 1771, 1871]
-          ++ [2011, 2040, 2041, 2145, 2151, 2155, 2191, 2260, 2261, 2328, 2507, 2756, 2828, 2843, 2871, 2941]
-          ++ [3015, 3053]
+        ++ [1071, 1141, 1703, 1720, 1726, 1757, 1759, 1765, 1766, 1767, 1770, 1771, 1871]
+        ++ [2011, 2040, 2041, 2145, 2151, 2155, 2191, 2260, 2261, 2328, 2507, 2756, 2828, 2843, 2871, 2941]
+        ++ [3015, 3053]
 
 enableSourceBranchDeletionAfterMerge :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => Execution -> GroupId -> Sem r ()
 enableSourceBranchDeletionAfterMerge execution gId =
-  runProcessor $
-    OptionSetter
+  runProcessor
+    $ OptionSetter
       gId
       (\gi -> "Enabling automatic branch deletion after MR merge for Group " <> show gi)
       (\p -> Just True == removeSourceBranchAfterMerge p)
@@ -125,8 +125,8 @@ enableSourceBranchDeletionAfterMerge execution gId =
 
 enableSuccessfulPipelineForMergeRequirement :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => Execution -> GroupId -> Sem r ()
 enableSuccessfulPipelineForMergeRequirement execution gId =
-  runProcessor $
-    OptionSetter
+  runProcessor
+    $ OptionSetter
       gId
       (\gi -> "Enabling the requirement that a successful pipeline is required for a MR to be merged for Group " <> show gi)
       (or . onlyAllowMergeIfPipelineSucceeds)
@@ -149,8 +149,8 @@ logUnset = write "Project doesn't have CI. Deactivated the option." $> Right ()
 
 enableAllDiscussionsResolvedForMergeRequirement :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => Execution -> GroupId -> Sem r ()
 enableAllDiscussionsResolvedForMergeRequirement execution gId =
-  runProcessor $
-    OptionSetter
+  runProcessor
+    $ OptionSetter
       gId
       (\gi -> "Enabling the requirement that all discussions must be resolved for a MR to be merged for Group " <> show gi)
       (or . onlyAllowMergeIfAllDiscussionsAreResolved)
@@ -161,8 +161,8 @@ enableAllDiscussionsResolvedForMergeRequirement execution gId =
 
 setMergeMethodToFastForward :: (Member ProjectsApi r, Member Writer r) => Execution -> GroupId -> Sem r ()
 setMergeMethodToFastForward execution gId =
-  runProcessor $
-    OptionSetter
+  runProcessor
+    $ OptionSetter
       gId
       (\gi -> "Setting the merge method to \"Fast Forward\" for all projects in Group " <> show gi)
       (\p -> mergeMethod p == FastForward)

@@ -73,8 +73,8 @@ data Execution = DryRun | Execute
 
 commandParser :: IO Command
 commandParser =
-  execParser $
-    info
+  execParser
+    $ info
       (helper <*> parser)
       ( fullDesc
           <> progDesc "gitlab-helper"
@@ -84,8 +84,8 @@ commandParser =
 
 parser :: Parser Command
 parser =
-  hsubparser $
-    mconcat
+  hsubparser
+    $ mconcat
       [ command "show-branches" (info (pure ShowBranches) (progDesc "show branches")),
         command "show-projects" (info (pure ShowProjects) (progDesc "show projects")),
         command "list-all-projects-meta" (info (pure ListAllProjectsMeta) (progDesc "list all the projects for all groups that are visible for the provided API token in (almost) meta compatible JSON format")),

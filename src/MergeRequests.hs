@@ -84,8 +84,8 @@ prettyPrintMergeRequest now MergeRequest {..} =
 age :: UTCTime -> UTCTime -> Text
 age now created =
   if
-      | res == 0 -> "today"
-      | res == 1 -> "yesterday"
-      | otherwise -> show res <> " days ago"
+    | res == 0 -> "today"
+    | res == 1 -> "yesterday"
+    | otherwise -> show res <> " days ago"
   where
     res = fst . timeToDaysAndTimeOfDay $ diffUTCTime now created

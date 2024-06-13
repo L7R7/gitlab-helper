@@ -81,8 +81,8 @@ summary = foldMap count
 
 showSummary :: (ProjectCount, SchedulesCount, ProjectsWithoutSchedule, ProjectsWithSchedules, ErrorCount) -> Text
 showSummary (projects, schedules, withoutSchedule, withSchedules, errors) =
-  formatWith [bold] $
-    unwords
+  formatWith [bold]
+    $ unwords
       [ " ▶",
         show . getSum $ schedules,
         "schedules in",

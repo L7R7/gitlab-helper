@@ -22,8 +22,11 @@ mkConfig = mkConfig' . mconcat
 
 mkConfig' :: PartialConfig Maybe -> Either (NonEmpty String) Config
 mkConfig' (PartialConfig gId url token) =
-  validationToEither $
-    Config <$> x "Group ID missing" gId <*> x "Base URL missing" url <*> x "API-Token missing" token
+  validationToEither
+    $ Config
+    <$> x "Group ID missing" gId
+    <*> x "Base URL missing" url
+    <*> x "API-Token missing" token
 
 x :: String -> Maybe (S.First a) -> Validation (NonEmpty String) a
 x err Nothing = Failure $ err :| []
