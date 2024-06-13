@@ -56,6 +56,20 @@ stack install
 
 Optionally, install autocompletion:
 
+If you use `zsh`:
+
+```shell script
+source <(gitlab-helper-exe --zsh-completion-script `which gitlab-helper-exe`)
+```
+
+You may have to fix `/proc/self/fd/15:compadd:27: can only be called from completion function` errors:
+
+```shell script
+autoload -Uz compinstall && compinstall
+```
+
+Or, if you use `bash`:
+
 ```shell script
 source <(gitlab-helper-exe --bash-completion-script `which gitlab-helper-exe`)
 ```
@@ -66,6 +80,6 @@ See what the tool can do for you:
 gitlab-helper-exe -h
 ```
 
-The app will start only if all properties are set in one of the sources.
+The tool will start only if all properties are set in one of the sources.
 
 The repository contains a config file that sets reasonable defaults, see [.gitlab-helper.yaml](.gitlab-helper.yml).
