@@ -111,9 +111,7 @@ enableAllDiscussionsResolvedForMergeRequirement execution gId =
       )
 
 listProjectsMetaForGroup :: (Member ProjectsApi r, Member Writer r) => GroupId -> Sem r ()
-listProjectsMetaForGroup gId = do
-  write "=================================================="
-  write $ "Listing the projects for Group " <> show gId
+listProjectsMetaForGroup gId =
   getProjects gId >>= \case
     Left err -> write $ show err
     Right projects -> write $ decodeUtf8 $ encode $ M.fromList $ (\p -> (pathWithNamespace p, sshUrlToRepo p)) <$> projects
