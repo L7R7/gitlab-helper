@@ -33,6 +33,7 @@ library
     , Interpreters
     , Lib
     , Pipelines
+    , Projects
     , Util
     , Viz
   other-modules:

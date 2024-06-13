@@ -5,11 +5,8 @@
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell #-}
 
-module Pipelines where
-
---(showPipelineDurationsForProject, PipelineWithDuration (..))
+module Pipelines (showPipelineDurationsForProject, PipelineWithDuration (..), WriteToFile (..), writeResult) where
 
 import Data.Time (UTCTime)
 import Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds)
@@ -32,12 +29,10 @@ showPipelineDurationsForProject pId = do
   project <- getProject pId
   case project of
     Left err -> write $ "something went wrong" <> show err
-    Right (Project _ _ _ Nothing) -> write $ "Found project without default branch: " <> show pId
-    Right (Project _ _ _ (Just ref)) -> do
+    Right (Project _ _ _ Nothing _) -> write $ "Found project without default branch: " <> show pId
+    Right (Project _ _ _ (Just ref) _) -> do
       results <- evaluateProject pId ref
       writeResult results
-
---      traverse_ (write . showPipelineWithDuration) $ sortOn (negate . id) results
 
 evaluateProject :: (Member PipelinesApi r, Member Writer r) => ProjectId -> Ref -> Sem r [PipelineWithDuration]
 evaluateProject pId ref = do

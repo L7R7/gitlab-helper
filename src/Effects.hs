@@ -7,6 +7,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
 
@@ -20,6 +21,7 @@ module Effects
     getProject,
     MergeRequestApi (..),
     getOpenMergeRequests,
+    enableSourceBranchDeletionAfterMrMerge,
     BranchesApi (..),
     getBranches,
     PipelinesApi (..),
@@ -35,6 +37,7 @@ module Effects
     PipelineId (..),
     Ref (..),
     ProjectId (..),
+    ProjectName (..),
     CompactPipeline (..),
   )
 where
@@ -49,10 +52,11 @@ import Network.HTTP.Simple (JSONException)
 import Network.URI
 import Polysemy
 import Relude
+import qualified Text.Show
 
 newtype ProjectId = ProjectId Int deriving newtype (FromJSON, Show)
 
-newtype ProjectName = ProjectName String deriving newtype (FromJSON, Show)
+newtype ProjectName = ProjectName String deriving newtype (Eq, FromJSON, Show)
 
 newtype Ref = Ref T.Text deriving newtype (FromJSON, Show)
 
@@ -60,9 +64,22 @@ data Project = Project
   { projectId :: ProjectId,
     name :: ProjectName,
     mergeRequestsEnabled :: Bool,
-    defaultBranch :: Maybe Ref
+    defaultBranch :: Maybe Ref,
+    removeSourceBranchAfterMerge :: Maybe Bool
   }
-  deriving (Show)
+
+instance Show Project where
+  show Project {..} =
+    "----\n"
+      <> show name
+      <> " ("
+      <> show projectId
+      <> ")\nMRs enabled:"
+      <> show mergeRequestsEnabled
+      <> ",\tdefault branch: "
+      <> show defaultBranch
+      <> ",\tremove source branch after merge: "
+      <> show removeSourceBranchAfterMerge
 
 instance FromJSON Project where
   parseJSON = withObject "Project" $ \p ->
@@ -70,6 +87,7 @@ instance FromJSON Project where
       <*> (p .: "name")
       <*> (p .: "merge_requests_enabled")
       <*> (p .: "default_branch")
+      <*> (p .: "remove_source_branch_after_merge")
 
 instance FromJSON URI where
   parseJSON = withText "URI" $ \v -> maybe (fail "Bad URI") pure (parseURI (toString v))
@@ -114,6 +132,7 @@ instance FromJSON Branch where
 
 data UpdateError
   = HttpError HttpException
+  | ExceptionError SomeException
   | ConversionError JSONException
   deriving (Show)
 
@@ -135,6 +154,7 @@ makeSem ''ProjectsApi
 
 data MergeRequestApi m a where
   GetOpenMergeRequests :: ProjectId -> MergeRequestApi m (Either UpdateError [MergeRequest])
+  EnableSourceBranchDeletionAfterMrMerge :: ProjectId -> MergeRequestApi m (Either UpdateError ())
 
 makeSem ''MergeRequestApi
 

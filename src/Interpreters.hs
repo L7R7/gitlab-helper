@@ -4,6 +4,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
 
 module Interpreters (projectsApiToIO, mergeRequestApiToIO, branchesApiToIO, pipelinesApiToIO, writeToFileToIO, runM) where
@@ -23,7 +24,7 @@ import Network.HTTP.Link.Types (Link (..), LinkParam (Rel), href)
 import Network.HTTP.Simple
 import Network.HTTP.Types.Header (HeaderName)
 import Network.URI (URI)
-import Pipelines
+import Pipelines hiding (id)
 import Polysemy
 import Relude
 
@@ -65,6 +66,9 @@ mergeRequestApiToIO baseUrl apiToken = interpret $ \case
   GetOpenMergeRequests project -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}/merge_requests?state=opened|]
     embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) project)]
+  EnableSourceBranchDeletionAfterMrMerge project -> do
+    let template = [uriTemplate|/api/v4/projects/{projectId}?remove_source_branch_after_merge=true|]
+    embed $ void <$> fetchDataX @Project baseUrl apiToken (setRequestMethod "PUT") template [("projectId", (stringValue . show) project)]
 
 branchesApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> Sem (BranchesApi ': r) a -> Sem r a
 branchesApiToIO baseUrl apiToken = interpret $ \case
@@ -97,15 +101,25 @@ fetchDataPaginated' apiToken template request acc = do
       Right as -> maybe (pure $ Right (as <> acc)) (\req -> fetchDataPaginated' apiToken template req (as <> acc)) next
   pure $ mapLeft removeApiTokenFromUpdateError $ join $ mapLeft HttpError result
 
-fetchData :: (FromJSON a) => BaseUrl -> ApiToken -> Template -> [(String, Value)] -> IO (Either UpdateError a)
-fetchData baseUrl apiToken template vars = do
+fetchDataX :: (FromJSON a) => BaseUrl -> ApiToken -> (Request -> Request) -> Template -> [(String, Value)] -> IO (Either UpdateError a)
+fetchDataX baseUrl apiToken reqTransformer template vars = do
   try (parseRequest (show baseUrl <> "/" <> expand vars template)) >>= \case
     Left invalidUrl -> pure $ Left $ HttpError invalidUrl
-    Right request -> fetchData' apiToken request
+    Right request -> fetchData' (reqTransformer . setTimeout . addToken apiToken $request)
 
-fetchData' :: (FromJSON a) => ApiToken -> Request -> IO (Either UpdateError a)
-fetchData' apiToken request = do
-  result <- try (mapLeft ConversionError . getResponseBody <$> httpJSONEither (setTimeout $ addToken apiToken request))
+bar :: BaseUrl -> ApiToken -> (Request -> Request) -> Template -> [(String, Value)] -> Either UpdateError Request
+bar baseUrl apiToken reqTransformer template vars =
+  bimap
+    ExceptionError
+    (reqTransformer . setTimeout . addToken apiToken)
+    (parseRequest (show baseUrl <> "/" <> expand vars template))
+
+fetchData :: (FromJSON a) => BaseUrl -> ApiToken -> Template -> [(String, Value)] -> IO (Either UpdateError a)
+fetchData baseUrl apiToken = fetchDataX baseUrl apiToken id
+
+fetchData' :: (FromJSON a) => Request -> IO (Either UpdateError a)
+fetchData' request = do
+  result <- try (mapLeft ConversionError . getResponseBody <$> httpJSONEither request)
   pure $ mapLeft removeApiTokenFromUpdateError $ join $ mapLeft HttpError result
 
 setTimeout :: Request -> Request
@@ -127,6 +141,7 @@ isNextLink _ = False
 removeApiTokenFromUpdateError :: UpdateError -> UpdateError
 removeApiTokenFromUpdateError (HttpError httpException) = HttpError (removeApiTokenFromHttpException httpException)
 removeApiTokenFromUpdateError (ConversionError jsonException) = ConversionError (removeApiTokenFromJsonException jsonException)
+removeApiTokenFromUpdateError (ExceptionError x) = ExceptionError x
 
 removeApiTokenFromHttpException :: HttpException -> HttpException
 removeApiTokenFromHttpException = set (reqPrism . _1 . headers . tokenHeader) "xxxxx"

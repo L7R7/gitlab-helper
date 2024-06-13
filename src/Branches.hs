@@ -11,7 +11,7 @@
 {-# LANGUAGE TupleSections #-}
 
 module Branches
-  ( showBranchesForProject,
+  ( showBranchesForGroup,
   )
 where
 
@@ -23,8 +23,8 @@ import Effects
 import Polysemy
 import Relude
 
-showBranchesForProject :: (Member ProjectsApi r, Member BranchesApi r, Member Timer r, Member Writer r) => GroupId -> Sem r ()
-showBranchesForProject gId = do
+showBranchesForGroup :: (Member ProjectsApi r, Member BranchesApi r, Member Timer r, Member Writer r) => GroupId -> Sem r ()
+showBranchesForGroup gId = do
   write "=================================================="
   write $ "Listing the projects' branches for Group " <> show gId
   write "Only those projects that have branches other than the default branch will be printed"

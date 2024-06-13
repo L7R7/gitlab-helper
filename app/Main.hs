@@ -3,13 +3,14 @@
 
 module Main where
 
-import Branches (showBranchesForProject)
+import Branches (showBranchesForGroup)
 import Config (Config (..), parseConfigOrDie)
 import Effects (ProjectId (..))
 import Interpreters
 import Pipelines
 import Util
 import Prelude
+import Projects
 
 main :: IO ()
 main =
@@ -24,6 +25,8 @@ main =
       . writeToFileToIO
       --      $ showPipelineDurationsForProject (ProjectId 795) -- 818) -- 795)
 
-      $ showBranchesForProject groupId
+--      $ showProjectsForGroup groupId
+--      $ showBranchesForGroup groupId
+      $ enableSourceBranchDeletionAfterMerge groupId
 
 --      $ evaluateProjects groupId
