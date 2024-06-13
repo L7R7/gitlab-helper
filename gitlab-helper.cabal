@@ -49,7 +49,7 @@ library
   build-depends:
       base >=4.7 && <5
     , aeson
-    , aeson-casing
+    , autodocodec
     , barbies
     , burrito >= 2.0.1.0
     , colonnade
@@ -69,6 +69,7 @@ library
     , polysemy >= 1.5.0.0
     , polysemy-plugin >= 0.3.0.0
     , relude
+    , scientific
     , text
     , time
     , yaml

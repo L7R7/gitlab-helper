@@ -1,7 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -53,9 +52,10 @@ module Effects
   )
 where
 
+import Autodocodec
 import Config.Types
-import Data.Aeson (FromJSON (..), ToJSON (..), genericParseJSON, withObject, withText, (.:))
-import Data.Aeson.Casing
+import Data.Aeson (FromJSON (..), ToJSON)
+import Data.Scientific
 import qualified Data.Text as T hiding (partition)
 import Data.Time (UTCTime)
 import Network.HTTP.Client.Conduit (HttpException)
@@ -65,14 +65,29 @@ import Polysemy
 import Relude
 import qualified Text.Show
 
-newtype ProjectId = ProjectId Int deriving newtype (FromJSON, Show)
+newtype ProjectId = ProjectId {getProjectId :: Int}
+  deriving newtype (Show)
+  deriving (FromJSON) via (Autodocodec ProjectId)
 
-newtype ProjectName = ProjectName {getProjectName :: Text} deriving newtype (Eq, FromJSON, Ord)
+instance HasCodec ProjectId where
+  codec = dimapCodec ProjectId getProjectId boundedIntegralCodec
+
+newtype ProjectName = ProjectName {getProjectName :: Text}
+  deriving newtype (Eq, Ord)
+  deriving (FromJSON) via (Autodocodec ProjectName)
 
 instance Show ProjectName where
   show = toString . getProjectName
 
-newtype Ref = Ref T.Text deriving newtype (FromJSON, Show)
+instance HasCodec ProjectName where
+  codec = dimapCodec ProjectName getProjectName textCodec
+
+newtype Ref = Ref {getRef :: T.Text}
+  deriving newtype (Show)
+  deriving (FromJSON) via (Autodocodec Ref)
+
+instance HasCodec Ref where
+  codec = dimapCodec Ref getRef textCodec
 
 data Project = Project
   { projectId :: ProjectId,
@@ -85,6 +100,7 @@ data Project = Project
     onlyAllowMergeIfAllDiscussionsAreResolved :: Maybe Bool,
     autoCancelPendingPipelines :: EnabledDisabled
   }
+  deriving (FromJSON) via (Autodocodec Project)
 
 instance Show Project where
   show Project {..} =
@@ -105,39 +121,34 @@ instance Show Project where
       <> ",\tauto cancel pending pipelines: "
       <> show autoCancelPendingPipelines
 
-instance FromJSON Project where
-  parseJSON = withObject "Project" $ \p ->
-    Project <$> (p .: "id")
-      <*> (p .: "name")
-      <*> (p .: "merge_requests_enabled")
-      <*> (p .: "merge_method")
-      <*> (p .: "default_branch")
-      <*> (p .: "remove_source_branch_after_merge")
-      <*> (p .: "only_allow_merge_if_pipeline_succeeds")
-      <*> (p .: "only_allow_merge_if_all_discussions_are_resolved")
-      <*> (p .: "auto_cancel_pending_pipelines")
+instance HasCodec Project where
+  codec =
+    object "Project" $
+      Project <$> requiredField' "id" .= projectId
+        <*> requiredField' "name" .= name
+        <*> requiredField' "merge_requests_enabled" .= mergeRequestsEnabled
+        <*> requiredField' "merge_method" .= mergeMethod
+        <*> requiredField' "default_branch" .= defaultBranch
+        <*> requiredField' "remove_source_branch_after_merge" .= removeSourceBranchAfterMerge
+        <*> requiredField' "only_allow_merge_if_pipeline_succeeds" .= onlyAllowMergeIfPipelineSucceeds
+        <*> requiredField' "only_allow_merge_if_all_discussions_are_resolved" .= onlyAllowMergeIfAllDiscussionsAreResolved
+        <*> requiredField' "auto_cancel_pending_pipelines" .= autoCancelPendingPipelines
 
-instance FromJSON URI where
-  parseJSON = withText "URI" $ \v -> maybe (fail "Bad URI") pure (parseURI (toString v))
+instance HasCodec URI where
+  codec = bimapCodec (maybeToRight "can't parse URI" . parseURI) show stringCodec
 
 data EnabledDisabled = Enabled | Disabled
   deriving stock (Eq, Show)
+  deriving (FromJSON) via (Autodocodec EnabledDisabled)
 
-instance FromJSON EnabledDisabled where
-  parseJSON = withText "EnabledDisabled" $ \case
-    "enabled" -> pure Enabled
-    "disabled" -> pure Disabled
-    _ -> fail "bad value"
+instance HasCodec EnabledDisabled where
+  codec = stringConstCodec $ (Enabled, "enabled") :| [(Disabled, "disabled")]
 
 data MergeMethod = Merge | RebaseMerge | FastForward
-  deriving stock (Show)
+  deriving stock (Eq, Show)
 
-instance FromJSON MergeMethod where
-  parseJSON = withText "MergeMethod" $ \case
-    "merge" -> pure Merge
-    "rebase_merge" -> pure RebaseMerge
-    "ff" -> pure FastForward
-    _ -> fail "bad value"
+instance HasCodec MergeMethod where
+  codec = stringConstCodec $ (Merge, "merge") :| [(RebaseMerge, "rebase_merge"), (FastForward, "ff")]
 
 data MergeRequest = MergeRequest
   { mergeRequestId :: MergeRequestId,
@@ -147,16 +158,23 @@ data MergeRequest = MergeRequest
     webUrl :: URI
   }
   deriving (Show)
+  deriving (FromJSON) via (Autodocodec MergeRequest)
 
-instance FromJSON MergeRequest where
-  parseJSON = withObject "MergeRequest" $ \p ->
-    MergeRequest <$> (MergeRequestId <$> p .: "id")
-      <*> p .: "work_in_progress"
-      <*> p .: "has_conflicts"
-      <*> p .: "created_at"
-      <*> p .: "web_url"
+instance HasCodec MergeRequest where
+  codec =
+    object "MergeRequest" $
+      MergeRequest <$> requiredField' "id" .= mergeRequestId
+        <*> requiredField' "work_in_progress" .= wip
+        <*> requiredField' "has_conflicts" .= conflicts
+        <*> requiredField' "created_at" .= createdAt
+        <*> requiredField' "web_url" .= webUrl
 
-newtype MergeRequestId = MergeRequestId Int deriving newtype (Show, ToJSON)
+newtype MergeRequestId = MergeRequestId {getMergeRequestId :: Int}
+  deriving newtype (Show)
+  deriving (FromJSON) via (Autodocodec MergeRequestId)
+
+instance HasCodec MergeRequestId where
+  codec = dimapCodec MergeRequestId getMergeRequestId boundedIntegralCodec
 
 data Branch = Branch
   { branchName :: T.Text,
@@ -167,15 +185,22 @@ data Branch = Branch
     branchCommittedDate :: UTCTime
   }
   deriving (Show)
+  deriving (FromJSON) via (Autodocodec Branch)
 
-instance FromJSON Branch where
-  parseJSON = withObject "Branch" $ \p ->
-    Branch <$> p .: "name"
-      <*> p .: "merged"
-      <*> p .: "protected"
-      <*> p .: "default"
-      <*> p .: "web_url"
-      <*> (p .: "commit" >>= \c -> c .: "committed_date")
+instance HasCodec Branch where
+  codec =
+    object "Branch" $
+      Branch <$> requiredField' "name" .= branchName
+        <*> requiredField' "merged" .= branchMerged
+        <*> requiredField' "protected" .= branchProtected
+        <*> requiredField' "default" .= branchDefault
+        <*> requiredField' "web_url" .= branchWebUrl
+        <*> (committedDate <$> (requiredField' "commit" .= (Commit . branchCommittedDate)))
+
+newtype Commit = Commit {committedDate :: UTCTime}
+
+instance HasCodec Commit where
+  codec = object "Commit" $ Commit <$> requiredField' "committed_date" .= committedDate
 
 data Schedule = Schedule
   { scheduleId :: Int,
@@ -186,16 +211,23 @@ data Schedule = Schedule
     scheduleActive :: Bool,
     scheduleOwner :: Text
   }
+  deriving (FromJSON) via (Autodocodec Schedule)
 
-instance FromJSON Schedule where
-  parseJSON = withObject "Schedule" $ \s ->
-    Schedule <$> s .: "id"
-      <*> s .: "description"
-      <*> s .: "cron"
-      <*> s .: "cron_timezone"
-      <*> s .: "next_run_at"
-      <*> s .: "active"
-      <*> (s .: "owner" >>= \o -> o .: "name")
+instance HasCodec Schedule where
+  codec =
+    object "Schedule" $
+      Schedule <$> requiredField' "id" .= scheduleId
+        <*> requiredField' "description" .= scheduleDescription
+        <*> requiredField' "cron" .= scheduleCron
+        <*> requiredField' "cron_timezone" .= scheduleCronTimezone
+        <*> requiredField' "next_run_at" .= scheduleNextRunAt
+        <*> requiredField' "active" .= scheduleActive
+        <*> (ownerName <$> (requiredField' "owner" .= (Owner . scheduleOwner)))
+
+newtype Owner = Owner {ownerName :: Text}
+
+instance HasCodec Owner where
+  codec = object "Owner" $ Owner <$> requiredField' "name" .= ownerName
 
 data UpdateError
   = HttpError HttpException
@@ -235,14 +267,29 @@ data BranchesApi m a where
 
 makeSem ''BranchesApi
 
-newtype PipelineId = PipelineId Int deriving newtype (Eq, FromJSON, Num, Ord, Show)
+newtype PipelineId = PipelineId {getPipelineId ::Int}
+  deriving newtype (Eq, Num, Ord, Show)
+  deriving (FromJSON) via (Autodocodec PipelineId)
 
-newtype Duration = Duration Double deriving newtype (FromJSON, Show, ToJSON)
+instance HasCodec PipelineId where
+  codec = dimapCodec PipelineId getPipelineId boundedIntegralCodec
+
+newtype Duration = Duration {getDuration :: Scientific}
+  deriving newtype (Show)
+  deriving (FromJSON, ToJSON) via (Autodocodec Duration)
 
 instance ToText Duration where
   toText (Duration duration) = show duration
 
-newtype Sha = Sha T.Text deriving newtype (FromJSON, Show)
+instance HasCodec Duration where
+  codec = dimapCodec Duration getDuration scientificCodec
+
+newtype Sha = Sha {getSha :: T.Text}
+  deriving newtype (Show)
+  deriving (FromJSON) via (Autodocodec Sha)
+
+instance HasCodec Sha where
+  codec = dimapCodec Sha getSha textCodec
 
 data Pipeline = Pipeline
   { pipelineId :: PipelineId,
@@ -253,12 +300,26 @@ data Pipeline = Pipeline
     pipelineWebUrl :: URI,
     pipelineSource :: Source
   }
-  deriving (Generic, Show)
+  deriving (Show)
+  deriving (FromJSON) via (Autodocodec Pipeline)
 
-instance FromJSON Pipeline where
-  parseJSON = genericParseJSON $ aesonPrefix snakeCase
+instance HasCodec Pipeline where
+  codec =
+    object "Pipeline" $
+      Pipeline <$> requiredField' "id" .= pipelineId
+        <*> requiredField' "sha" .= pipelineSha
+        <*> requiredField' "duration" .= pipelineDuration
+        <*> requiredField' "queued_duration" .= pipelineQueuedDuration
+        <*> requiredField' "created_at" .= pipelineCreatedAt
+        <*> requiredField' "web_url" .= pipelineWebUrl
+        <*> requiredField' "source" .= pipelineSource
 
-data Source = SourcePush | SourceWeb | SourceTrigger | SourceSchedule | SourceApi | SourceExternal | SourcePipeline | SourceChat | SourceWebide | SourceMergeRequestEvent | SourceExternalPullRequestEvent | SourceParentPipeline | SourceOndemandDastScan | SourceOndemandDastValidation deriving stock (Bounded, Enum, Eq, Generic, Show)
+data Source = SourcePush | SourceWeb | SourceTrigger | SourceSchedule | SourceApi | SourceExternal | SourcePipeline | SourceChat | SourceWebide | SourceMergeRequestEvent | SourceExternalPullRequestEvent | SourceParentPipeline | SourceOndemandDastScan | SourceOndemandDastValidation
+  deriving stock (Bounded, Enum, Eq, Show)
+  deriving (FromJSON) via (Autodocodec Source)
+
+instance HasCodec Source where
+  codec = bimapCodec (maybeToRight "can't parse source" . inverseMap sourceToApiRep) show textCodec
 
 sourceToApiRep :: Source -> Text
 sourceToApiRep SourcePush = "push"
@@ -276,17 +337,17 @@ sourceToApiRep SourceParentPipeline = "parent_pipeline"
 sourceToApiRep SourceOndemandDastScan = "ondemand_dast_scan"
 sourceToApiRep SourceOndemandDastValidation = "ondemand_dast_validation"
 
-instance FromJSON Source where
-  parseJSON = withText "Source" $ \text -> maybe (error $ "can't parse '" <> text <> "' into Source") pure (inverseMap sourceToApiRep text)
-
 data CompactPipeline = CompactPipeline
   { compactPipelineId :: PipelineId,
     compactPipelineSha :: Sha
   }
-  deriving (Generic)
+  deriving (FromJSON) via (Autodocodec CompactPipeline)
 
-instance FromJSON CompactPipeline where
-  parseJSON = genericParseJSON $ aesonDrop 15 snakeCase
+instance HasCodec CompactPipeline where
+  codec =
+    object "CompactPipeline" $
+      CompactPipeline <$> requiredField' "id" .= compactPipelineId
+        <*> requiredField' "sha" .= compactPipelineSha
 
 data PipelinesApi m a where
   GetPipeline :: ProjectId -> PipelineId -> PipelinesApi m (Either UpdateError Pipeline)
