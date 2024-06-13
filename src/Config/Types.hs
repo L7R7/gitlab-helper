@@ -1,19 +1,20 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE StandaloneDeriving #-}
 
-module Config.Types where
-
--- ( Config (..),
---   GroupId (..),
---   BaseUrl (..),
---   ApiToken (..),
---   PartialConfig (..),
--- )
+module Config.Types
+  ( Config (..),
+    GroupId (..),
+    BaseUrl (..),
+    ApiToken (..),
+    PartialConfig (..),
+    Command (..),
+    Execution (..),
+    commandParser,
+  )
+where
 
 import Barbies
 import Data.Aeson (FromJSON (..))
