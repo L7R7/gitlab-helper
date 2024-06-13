@@ -73,15 +73,15 @@ prettyPrintProject project = ["----------", show (projectName project) <> " (" <
 
 prettyPrintMergeRequest :: UTCTime -> MergeRequest -> Text
 prettyPrintMergeRequest now MergeRequest {..} =
-  (if wip then " ⚬ " else "   ")
+  (if mergeRequestWip then " ⚬ " else "   ")
     <> "#"
     <> show mergeRequestId
     <> ":"
-    <> (if conflicts then " has conflicts," else "")
+    <> (if mergeRequestConflicts then " has conflicts," else "")
     <> " opened "
-    <> age now createdAt
+    <> age now mergeRequestCreatedAt
     <> ", see: "
-    <> show webUrl
+    <> show mergeRequestWebUrl
 
 age :: UTCTime -> UTCTime -> Text
 age now created =

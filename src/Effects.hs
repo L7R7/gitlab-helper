@@ -62,7 +62,7 @@ where
 
 import Autodocodec
 import Config.Types (AuthorIs, SearchTerm, Year)
-import Data.Aeson (FromJSON (..), ToJSON)
+import Data.Aeson (FromJSON, ToJSON)
 import Data.Scientific
 import qualified Data.Text as T hiding (partition)
 import Data.Time (UTCTime)
@@ -76,14 +76,14 @@ import Polysemy
 import Relude
 
 data MergeRequest = MergeRequest
-  { mergeRequestId :: MergeRequestId,
+  { mergeRequestId :: Id MergeRequest,
     mergeRequestProjectId :: Id Project,
     mergeRequestTitle :: Text,
     mergeRequestDescription :: Text,
-    wip :: Bool,
-    conflicts :: Bool,
-    createdAt :: UTCTime,
-    webUrl :: URI
+    mergeRequestWip :: Bool,
+    mergeRequestConflicts :: Bool,
+    mergeRequestCreatedAt :: UTCTime,
+    mergeRequestWebUrl :: URI
   }
   deriving stock (Show)
   deriving (FromJSON) via (Autodocodec MergeRequest)
@@ -101,20 +101,13 @@ instance HasCodec MergeRequest where
       <*> requiredField' "description"
       .= mergeRequestDescription
       <*> requiredField' "work_in_progress"
-      .= wip
+      .= mergeRequestWip
       <*> requiredField' "has_conflicts"
-      .= conflicts
+      .= mergeRequestConflicts
       <*> requiredField' "created_at"
-      .= createdAt
+      .= mergeRequestCreatedAt
       <*> requiredField' "web_url"
-      .= webUrl
-
-newtype MergeRequestId = MergeRequestId {getMergeRequestId :: Int}
-  deriving newtype (Show)
-  deriving (FromJSON) via (Autodocodec MergeRequestId)
-
-instance HasCodec MergeRequestId where
-  codec = dimapCodec MergeRequestId getMergeRequestId boundedIntegralCodec
+      .= mergeRequestWebUrl
 
 data Branch = Branch
   { branchName :: T.Text,
@@ -240,8 +233,8 @@ data MergeRequestApi m a where
   SetSuccessfulPipelineRequirementForMerge :: Id Project -> MergeRequestApi m (Either UpdateError ())
   UnsetSuccessfulPipelineRequirementForMerge :: Id Project -> MergeRequestApi m (Either UpdateError ())
   SetResolvedDiscussionsRequirementForMerge :: Id Project -> MergeRequestApi m (Either UpdateError ())
-  MergeMergeRequest :: Id Project -> MergeRequestId -> MergeRequestApi m (Either UpdateError ())
-  RebaseMergeRequest :: Id Project -> MergeRequestId -> MergeRequestApi m (Either UpdateError ())
+  MergeMergeRequest :: Id Project -> Id MergeRequest -> MergeRequestApi m (Either UpdateError ())
+  RebaseMergeRequest :: Id Project -> Id MergeRequest -> MergeRequestApi m (Either UpdateError ())
 
 makeSem ''MergeRequestApi
 
