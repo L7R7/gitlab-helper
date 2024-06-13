@@ -10,3 +10,4 @@ extra-deps:
       - gitlab-api-http-client
       - gitlab-api-types
 
+system-ghc: false
