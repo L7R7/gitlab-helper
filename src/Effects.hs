@@ -17,6 +17,9 @@ module Effects
     write,
     Timer (..),
     getCurrentTime,
+    GroupsApi (..),
+    getAllGroups,
+    Group (..),
     ProjectsApi (..),
     getProjects,
     getProject,
@@ -53,7 +56,7 @@ module Effects
 where
 
 import Autodocodec
-import Config.Types
+import Config.Types hiding (groupId)
 import Data.Aeson (FromJSON (..), ToJSON)
 import Data.Scientific
 import qualified Data.Text as T hiding (partition)
@@ -249,6 +252,19 @@ data Timer m a where
   GetCurrentTime :: Timer m UTCTime
 
 makeSem ''Timer
+
+newtype Group = Group
+  { groupId :: GroupId
+  }
+  deriving (FromJSON) via (Autodocodec Group)
+
+instance HasCodec Group where
+  codec = object "Group" $ Group <$> requiredField' "id" .= groupId
+
+data GroupsApi m a where
+  GetAllGroups :: GroupsApi m (Either UpdateError [Group])
+
+makeSem ''GroupsApi
 
 data ProjectsApi m a where
   GetProjects :: GroupId -> ProjectsApi m (Either UpdateError [Project])

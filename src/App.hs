@@ -21,6 +21,7 @@ run = do
         ShowBranches -> showBranchesForGroup groupId
         (EnableSourceBranchDeletionAfterMerge execution) -> enableSourceBranchDeletionAfterMerge execution groupId
         ShowProjects -> showProjectsForGroup groupId
+        ListAllProjectsMeta -> showProjectsForAllGroups
         ListProjectsMeta -> listProjectsMetaForGroup groupId
         ShowSchedules -> showSchedulesForGroup groupId
         ShowMergeRequests -> showMergeRequests groupId
@@ -30,6 +31,7 @@ run = do
     . timerToIO
     . writerToIO
     . branchesApiToIO baseUrl apiToken
+    . groupsApiToIO baseUrl apiToken
     . projectsApiToIO baseUrl apiToken
     . mergeRequestApiToIO baseUrl apiToken
     . pipelinesApiToIO baseUrl apiToken

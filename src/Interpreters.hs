@@ -12,7 +12,7 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Interpreters (projectsApiToIO, mergeRequestApiToIO, branchesApiToIO, pipelinesApiToIO, schedulesApiToIO, runM) where
+module Interpreters (groupsApiToIO, projectsApiToIO, mergeRequestApiToIO, branchesApiToIO, pipelinesApiToIO, schedulesApiToIO, runM) where
 
 import Burrito
 import Config.Types (ApiToken (..), BaseUrl (..))
@@ -30,6 +30,12 @@ import Network.HTTP.Types.Header (HeaderName)
 import Network.URI (URI)
 import Polysemy
 import Relude
+
+groupsApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> InterpreterFor GroupsApi r
+groupsApiToIO baseUrl apiToken = interpret $ \case
+  GetAllGroups -> do
+    let template = [uriTemplate|/api/v4/groups?all_available=true|]
+    embed $ fetchDataPaginated apiToken baseUrl template []
 
 projectsApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> InterpreterFor ProjectsApi r
 projectsApiToIO baseUrl apiToken = interpret $ \case

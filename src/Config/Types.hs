@@ -16,6 +16,7 @@ module Config.Types
   )
 where
 
+import Autodocodec
 import Barbies
 import Data.Aeson (FromJSON (..))
 import qualified Data.Semigroup as S (First (..))
@@ -44,7 +45,12 @@ instance (Alternative f) => Semigroup (PartialConfig f) where
 instance (Alternative f) => Monoid (PartialConfig f) where
   mempty = bpure empty
 
-newtype GroupId = GroupId Int deriving newtype (FromJSON, Show)
+newtype GroupId = GroupId Int
+  deriving newtype (Show)
+  deriving (FromJSON) via (Autodocodec GroupId)
+
+instance HasCodec GroupId where
+  codec = dimapCodec GroupId (\(GroupId i) -> i) codec
 
 newtype BaseUrl = BaseUrl URI deriving newtype (Show)
 
@@ -54,6 +60,7 @@ data Command
   = ShowBranches
   | EnableSourceBranchDeletionAfterMerge Execution
   | ShowProjects
+  | ListAllProjectsMeta
   | ListProjectsMeta
   | ShowSchedules
   | ShowMergeRequests
@@ -75,7 +82,8 @@ parser =
     mconcat
       [ command "show-branches" (info (pure ShowBranches) (progDesc "show branches")),
         command "show-projects" (info (pure ShowProjects) (progDesc "show projects")),
-        command "list-projects-meta" (info (pure ListProjectsMeta) (progDesc "list the projects in (almost) meta compatible JSON format")),
+        command "list-all-projects-meta" (info (pure ListAllProjectsMeta) (progDesc "list all the projects for all groups that are visible for the provided API token in (almost) meta compatible JSON format")),
+        command "list-projects-meta" (info (pure ListProjectsMeta) (progDesc "list the projects for the given group in (almost) meta compatible JSON format")),
         command "enable-source-branch-deletion" (info (EnableSourceBranchDeletionAfterMerge <$> executionParser) (progDesc "enable source branch deletion after merge for all projects")),
         command "enable-all-discussions-must-be-resolved-for-merge-requirement" (info (EnableAllDiscussionsMustBeResolvedForMergeRequirement <$> executionParser) (progDesc "enable the requirement that all discussions must be resolved for an MR to be merged for all projects")),
         command "enable-successful-pipeline-for-merge-requirement" (info (EnableSuccessfulPipelineForMergeRequirement <$> executionParser) (progDesc "enable the requirement that there must be a successful pipeline for an MR to be merged for all projects. CAUTION: Use with care, might not do what you want in projects without pipelines")),

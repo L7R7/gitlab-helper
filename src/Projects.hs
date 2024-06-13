@@ -9,7 +9,8 @@
 {-# LANGUAGE TupleSections #-}
 
 module Projects
-  ( showProjectsForGroup,
+  ( showProjectsForAllGroups,
+    showProjectsForGroup,
     enableSourceBranchDeletionAfterMerge,
     enableSuccessfulPipelineForMergeRequirement,
     enableAllDiscussionsResolvedForMergeRequirement,
@@ -24,8 +25,21 @@ import Data.Aeson (encode)
 import qualified Data.Map as M
 import Data.Text (toLower)
 import Effects
+import qualified Effects as G
 import Polysemy
 import Relude hiding (pi)
+
+showProjectsForAllGroups :: (Member GroupsApi r, Member ProjectsApi r, Member Writer r) => Sem r ()
+showProjectsForAllGroups = do
+  write "=================================================="
+  write "Listing the projects for all Groups I can find"
+  getAllGroups >>= \case
+    Left err -> write $ show err
+    Right groups -> do
+      projects <- fmap join <$> (sequence <$> traverse (getProjects . G.groupId) groups)
+      case projects of
+        Left err -> write $ show err
+        Right projects -> writeMetaFormat projects
 
 showProjectsForGroup :: (Member ProjectsApi r, Member Writer r) => GroupId -> Sem r ()
 showProjectsForGroup gId = do
@@ -114,7 +128,10 @@ listProjectsMetaForGroup :: (Member ProjectsApi r, Member Writer r) => GroupId -
 listProjectsMetaForGroup gId =
   getProjects gId >>= \case
     Left err -> write $ show err
-    Right projects -> write $ decodeUtf8 $ encode $ M.fromList $ (\p -> (pathWithNamespace p, sshUrlToRepo p)) <$> projects
+    Right projects -> writeMetaFormat projects
+
+writeMetaFormat :: (Member Writer r) => [Project] -> Sem r ()
+writeMetaFormat projects = write $ decodeUtf8 $ encode $ M.fromList $ (\p -> (pathWithNamespace p, sshUrlToRepo p)) <$> projects
 
 runProcessor :: (Member ProjectsApi r, Member Writer r) => Processor r -> Sem r ()
 runProcessor Processor {..} = do
