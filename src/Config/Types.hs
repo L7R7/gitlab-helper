@@ -10,6 +10,7 @@ module Config.Types
     MergeRequestUpdateAction (..),
     AuthorIs (..),
     SearchTerm (..),
+    SearchTermTitle (..),
     Year (..),
     Execution (..),
     partialConfigToConfig,
@@ -62,7 +63,7 @@ data Command
   | EnableSuccessfulPipelineForMergeRequirement Execution
   | SetMergeMethodToFastForward Execution
   | CountSuccessfulDeployments Year
-  | UpdateMergeRequests MergeRequestUpdateAction AuthorIs (Maybe SearchTerm) Execution
+  | UpdateMergeRequests MergeRequestUpdateAction AuthorIs (Maybe (Either SearchTerm SearchTermTitle)) Execution
   deriving stock (Show)
 
 data Execution = DryRun | Execute deriving stock (Eq, Show)
@@ -72,6 +73,8 @@ data MergeRequestUpdateAction = Rebase | Merge | SetToDraft | MarkAsReady derivi
 newtype AuthorIs = AuthorIs Int deriving stock (Show)
 
 newtype SearchTerm = SearchTerm String deriving stock (Show)
+
+newtype SearchTermTitle = SearchTermTitle String deriving stock (Show)
 
 newtype Year = Year Int deriving stock (Show)
 

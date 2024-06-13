@@ -14,7 +14,7 @@ module UpdateMergeRequests
 where
 
 import Config.Types
-import Data.Text (strip, stripPrefix)
+import Data.Text (isInfixOf, strip, stripPrefix, toLower)
 import Effects
 import Gitlab.Group
 import Gitlab.Lib (Id)
@@ -30,19 +30,28 @@ updateMergeRequests ::
   [Id Project] ->
   MergeRequestUpdateAction ->
   AuthorIs ->
-  Maybe SearchTerm ->
+  Maybe (Either SearchTerm SearchTermTitle) ->
   Execution ->
   Sem r ()
 updateMergeRequests _ _ Merge _ Nothing Execute =
   write "I don't think you want to blindly merge all merge requests for this group. Consider adding a filter. Exiting now."
-updateMergeRequests gId projectExcludes action authorIs searchTerm execute = do
-  getOpenMergeRequestsForGroup gId (Just authorIs) searchTerm >>= \case
+updateMergeRequests gId projectExcludes action authorIs maybeSearchTerms execute = do
+  let searchTerm' =
+        ( \case
+            Left st -> st
+            Right (SearchTermTitle s) -> SearchTerm s
+        )
+          <$> maybeSearchTerms
+  getOpenMergeRequestsForGroup gId (Just authorIs) searchTerm' >>= \case
     Left err -> write $ show err
     Right [] -> write "no MRs to process"
     Right allMergeRequests -> do
-      let filteredMergeRequests = filter (\mr -> mergeRequestProjectId mr `notElem` projectExcludes) allMergeRequests
+      let titleFilter mr = case maybeSearchTerms of
+            Just (Right (SearchTermTitle s)) -> toLower (toText s) `isInfixOf` toLower (mergeRequestTitle mr)
+            _ -> True
+          filteredMergeRequests = filter (\mr -> titleFilter mr && mergeRequestProjectId mr `notElem` projectExcludes) allMergeRequests
       case filteredMergeRequests of
-        [] -> write "no MRs to process after applying project exclude list"
+        [] -> write "no MRs to process after applying filters"
         mergeRequests -> forM_ mergeRequests $ \mr -> do
           performAction (mergeRequestProjectId mr) mr >>= \case
             Left err -> write $ show err
