@@ -110,7 +110,7 @@ data Project = Project
     removeSourceBranchAfterMerge :: Maybe Bool,
     onlyAllowMergeIfPipelineSucceeds :: Maybe Bool,
     onlyAllowMergeIfAllDiscussionsAreResolved :: Maybe Bool,
-    autoCancelPendingPipelines :: EnabledDisabled,
+    autoCancelPendingPipelines :: Maybe EnabledDisabled,
     pathWithNamespace :: Text,
     sshUrlToRepo :: Text
   }
@@ -137,30 +137,30 @@ instance Show Project where
 
 instance HasCodec Project where
   codec =
-    object "Project" $
-      Project
-        <$> requiredField' "id"
-        .= projectId
-        <*> requiredField' "name"
-        .= name
-        <*> requiredField' "merge_requests_enabled"
-        .= mergeRequestsEnabled
-        <*> requiredField' "merge_method"
-        .= mergeMethod
-        <*> optionalField' "default_branch"
-        .= defaultBranch
-        <*> requiredField' "remove_source_branch_after_merge"
-        .= removeSourceBranchAfterMerge
-        <*> requiredField' "only_allow_merge_if_pipeline_succeeds"
-        .= onlyAllowMergeIfPipelineSucceeds
-        <*> requiredField' "only_allow_merge_if_all_discussions_are_resolved"
-        .= onlyAllowMergeIfAllDiscussionsAreResolved
-        <*> requiredField' "auto_cancel_pending_pipelines"
-        .= autoCancelPendingPipelines
-        <*> requiredField' "path_with_namespace"
-        .= pathWithNamespace
-        <*> requiredField' "ssh_url_to_repo"
-        .= sshUrlToRepo
+    object "Project"
+      $ Project
+      <$> requiredField' "id"
+      .= projectId
+      <*> requiredField' "name"
+      .= name
+      <*> requiredField' "merge_requests_enabled"
+      .= mergeRequestsEnabled
+      <*> requiredField' "merge_method"
+      .= mergeMethod
+      <*> optionalField' "default_branch"
+      .= defaultBranch
+      <*> requiredField' "remove_source_branch_after_merge"
+      .= removeSourceBranchAfterMerge
+      <*> requiredField' "only_allow_merge_if_pipeline_succeeds"
+      .= onlyAllowMergeIfPipelineSucceeds
+      <*> requiredField' "only_allow_merge_if_all_discussions_are_resolved"
+      .= onlyAllowMergeIfAllDiscussionsAreResolved
+      <*> optionalField' "auto_cancel_pending_pipelines"
+      .= autoCancelPendingPipelines
+      <*> requiredField' "path_with_namespace"
+      .= pathWithNamespace
+      <*> requiredField' "ssh_url_to_repo"
+      .= sshUrlToRepo
 
 instance HasCodec URI where
   codec = bimapCodec (maybeToRight "can't parse URI" . parseURI) show stringCodec

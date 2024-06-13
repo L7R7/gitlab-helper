@@ -19,7 +19,7 @@ module Projects
   )
 where
 
-import Colonnade
+import Colonnade (asciiCapped, cap, headed)
 import Colourista (bold, formatWith, red)
 import Config.Types
 import Data.Aeson (encode)
@@ -307,4 +307,4 @@ summarizeSingle project =
     noDefaultBranch = Count $ if isJust (defaultBranch project) then 0 else 1
     successfulPipelineForMergeEnabledDisabled = mkEnabledDisabledCount' $ or $ onlyAllowMergeIfPipelineSucceeds project
     allDiscussionsResolvedForMergeEnabledDisabled = mkEnabledDisabledCount' $ or $ onlyAllowMergeIfAllDiscussionsAreResolved project
-    autoCancelPendingPipelinesEnabledDisabled = mkEnabledDisabledCount (autoCancelPendingPipelines project)
+    autoCancelPendingPipelinesEnabledDisabled = mkEnabledDisabledCount (fromMaybe Disabled (autoCancelPendingPipelines project))
