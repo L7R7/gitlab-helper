@@ -54,6 +54,7 @@ data Command
   = ShowBranches
   | EnableSourceBranchDeletionAfterMerge Execution
   | ShowProjects
+  | ListProjectsMeta
   | ShowSchedules
   | ShowMergeRequests
   | EnableAllDiscussionsMustBeResolvedForMergeRequirement Execution
@@ -74,6 +75,7 @@ parser =
     mconcat
       [ command "show-branches" (info (pure ShowBranches) (progDesc "show branches")),
         command "show-projects" (info (pure ShowProjects) (progDesc "show projects")),
+        command "list-projects-meta" (info (pure ListProjectsMeta) (progDesc "list the projects in (almost) meta compatible JSON format")),
         command "enable-source-branch-deletion" (info (EnableSourceBranchDeletionAfterMerge <$> executionParser) (progDesc "enable source branch deletion after merge for all projects")),
         command "enable-all-discussions-must-be-resolved-for-merge-requirement" (info (EnableAllDiscussionsMustBeResolvedForMergeRequirement <$> executionParser) (progDesc "enable the requirement that all discussions must be resolved for an MR to be merged for all projects")),
         command "enable-successful-pipeline-for-merge-requirement" (info (EnableSuccessfulPipelineForMergeRequirement <$> executionParser) (progDesc "enable the requirement that there must be a successful pipeline for an MR to be merged for all projects. CAUTION: Use with care, might not do what you want in projects without pipelines")),

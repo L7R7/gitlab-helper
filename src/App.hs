@@ -21,6 +21,7 @@ run = do
         ShowBranches -> showBranchesForGroup groupId
         (EnableSourceBranchDeletionAfterMerge execution) -> enableSourceBranchDeletionAfterMerge execution groupId
         ShowProjects -> showProjectsForGroup groupId
+        ListProjectsMeta -> listProjectsMetaForGroup groupId
         ShowSchedules -> showSchedulesForGroup groupId
         ShowMergeRequests -> showMergeRequests groupId
         (EnableAllDiscussionsMustBeResolvedForMergeRequirement execution) -> enableAllDiscussionsResolvedForMergeRequirement execution groupId

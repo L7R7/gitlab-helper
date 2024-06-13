@@ -98,7 +98,9 @@ data Project = Project
     removeSourceBranchAfterMerge :: Maybe Bool,
     onlyAllowMergeIfPipelineSucceeds :: Maybe Bool,
     onlyAllowMergeIfAllDiscussionsAreResolved :: Maybe Bool,
-    autoCancelPendingPipelines :: EnabledDisabled
+    autoCancelPendingPipelines :: EnabledDisabled,
+    pathWithNamespace :: Text,
+    sshUrlToRepo :: Text
   }
   deriving (FromJSON) via (Autodocodec Project)
 
@@ -133,6 +135,8 @@ instance HasCodec Project where
         <*> requiredField' "only_allow_merge_if_pipeline_succeeds" .= onlyAllowMergeIfPipelineSucceeds
         <*> requiredField' "only_allow_merge_if_all_discussions_are_resolved" .= onlyAllowMergeIfAllDiscussionsAreResolved
         <*> requiredField' "auto_cancel_pending_pipelines" .= autoCancelPendingPipelines
+        <*> requiredField' "path_with_namespace" .= pathWithNamespace
+        <*> requiredField' "ssh_url_to_repo" .= sshUrlToRepo
 
 instance HasCodec URI where
   codec = bimapCodec (maybeToRight "can't parse URI" . parseURI) show stringCodec

@@ -13,12 +13,14 @@ module Projects
     enableSourceBranchDeletionAfterMerge,
     enableSuccessfulPipelineForMergeRequirement,
     enableAllDiscussionsResolvedForMergeRequirement,
+    listProjectsMetaForGroup,
   )
 where
 
 import Colonnade
 import Colourista (bold, formatWith)
 import Config.Types
+import Data.Aeson (encode)
 import qualified Data.Map as M
 import Data.Text (toLower)
 import Effects
@@ -83,7 +85,7 @@ enableSuccessfulPipelineForMergeRequirement execution gId =
 
 projectHasCi :: (Member ProjectsApi r) => Either UpdateError Project -> Sem r (Either UpdateError Bool)
 projectHasCi (Left err) = pure $ Left err
-projectHasCi (Right (Project pId _ _ _ (Just ref) _ _ _ _)) = hasCi pId ref
+projectHasCi (Right (Project pId _ _ _ (Just ref) _ _ _ _ _ _)) = hasCi pId ref
 projectHasCi (Right _) = pure $ Right False -- no default branch, no CI
 
 configureOption :: (Member MergeRequestApi r, Member Writer r) => Execution -> ProjectId -> Either UpdateError Bool -> Sem r (Either UpdateError ())
@@ -107,6 +109,14 @@ enableAllDiscussionsResolvedForMergeRequirement execution gId =
           DryRun -> (\pId -> Right () <$ write ("Dry Run. Pretending to set option for Project " <> show pId))
           Execute -> setResolvedDiscussionsRequirementForMerge
       )
+
+listProjectsMetaForGroup :: (Member ProjectsApi r, Member Writer r) => GroupId -> Sem r ()
+listProjectsMetaForGroup gId = do
+  write "=================================================="
+  write $ "Listing the projects for Group " <> show gId
+  getProjects gId >>= \case
+    Left err -> write $ show err
+    Right projects -> write $ decodeUtf8 $ encode $ M.fromList $ (\p -> (pathWithNamespace p, sshUrlToRepo p)) <$> projects
 
 runProcessor :: (Member ProjectsApi r, Member Writer r) => Processor r -> Sem r ()
 runProcessor Processor {..} = do
