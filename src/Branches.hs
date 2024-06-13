@@ -19,6 +19,7 @@ import Colourista.Pure
 import qualified Data.Text as T (intercalate)
 import Data.Time hiding (getCurrentTime)
 import Effects
+import Gitlab.Branch
 import Gitlab.Group
 import Gitlab.Lib (Id)
 import Gitlab.Project

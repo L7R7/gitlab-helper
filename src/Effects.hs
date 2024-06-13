@@ -48,8 +48,6 @@ module Effects
     SchedulesApi (..),
     getSchedules,
     UpdateError (..),
-    Branch (..),
-    Commit (..),
     Duration (..),
     Sha (..),
     Source (..),
@@ -66,6 +64,7 @@ import Data.Aeson (FromJSON, ToJSON)
 import Data.Scientific
 import qualified Data.Text as T hiding (partition)
 import Data.Time (UTCTime)
+import Gitlab.Branch
 import Gitlab.Group
 import Gitlab.Lib (Id (..), Ref (..))
 import Gitlab.MergeRequest
@@ -75,40 +74,6 @@ import Network.HTTP.Simple (JSONException)
 import Network.URI
 import Polysemy
 import Relude
-
-data Branch = Branch
-  { branchName :: T.Text,
-    branchMerged :: Bool,
-    branchProtected :: Bool,
-    branchDefault :: Bool,
-    branchWebUrl :: URI,
-    branchCommit :: Commit
-  }
-  deriving stock (Show)
-  deriving (FromJSON) via (Autodocodec Branch)
-
-instance HasCodec Branch where
-  codec =
-    object "Branch"
-      $ Branch
-      <$> requiredField' "name"
-      .= branchName
-      <*> requiredField' "merged"
-      .= branchMerged
-      <*> requiredField' "protected"
-      .= branchProtected
-      <*> requiredField' "default"
-      .= branchDefault
-      <*> requiredField' "web_url"
-      .= branchWebUrl
-      <*> requiredField' "commit"
-      .= branchCommit
-
-newtype Commit = Commit {commitCommittedDate :: UTCTime}
-  deriving stock (Show)
-
-instance HasCodec Commit where
-  codec = object "Commit" $ Commit <$> requiredField' "committed_date" .= commitCommittedDate
 
 data Schedule = Schedule
   { scheduleId :: Int,
