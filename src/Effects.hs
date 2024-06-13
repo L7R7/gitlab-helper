@@ -49,6 +49,7 @@ module Effects
     ProjectName (..),
     CompactPipeline (..),
     Schedule (..),
+    EnabledDisabled(..),
   )
 where
 
@@ -81,7 +82,8 @@ data Project = Project
     defaultBranch :: Maybe Ref,
     removeSourceBranchAfterMerge :: Maybe Bool,
     onlyAllowMergeIfPipelineSucceeds :: Maybe Bool,
-    onlyAllowMergeIfAllDiscussionsAreResolved :: Maybe Bool
+    onlyAllowMergeIfAllDiscussionsAreResolved :: Maybe Bool,
+    autoCancelPendingPipelines :: EnabledDisabled
   }
 
 instance Show Project where
@@ -100,6 +102,8 @@ instance Show Project where
       <> show onlyAllowMergeIfPipelineSucceeds
       <> ",\tonly allow merge if all discussions are resolved: "
       <> show onlyAllowMergeIfAllDiscussionsAreResolved
+      <> ",\tauto cancel pending pipelines: "
+      <> show autoCancelPendingPipelines
 
 instance FromJSON Project where
   parseJSON = withObject "Project" $ \p ->
@@ -110,9 +114,19 @@ instance FromJSON Project where
       <*> (p .: "remove_source_branch_after_merge")
       <*> (p .: "only_allow_merge_if_pipeline_succeeds")
       <*> (p .: "only_allow_merge_if_all_discussions_are_resolved")
+      <*> (p .: "auto_cancel_pending_pipelines")
 
 instance FromJSON URI where
   parseJSON = withText "URI" $ \v -> maybe (fail "Bad URI") pure (parseURI (toString v))
+
+data EnabledDisabled = Enabled | Disabled
+  deriving stock (Eq, Show)
+
+instance FromJSON EnabledDisabled where
+  parseJSON = withText "EnabledDisabled" $ \case
+    "enabled" -> pure Enabled
+    "disabled" -> pure Disabled
+    _ -> fail "bad value"
 
 data MergeRequest = MergeRequest
   { mergeRequestId :: MergeRequestId,

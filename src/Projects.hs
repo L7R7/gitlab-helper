@@ -48,7 +48,10 @@ tableReport =
           (headed "enabled" (show . mergeRequestsEnabled) <> headed "Remove source branch after merge" (maybe "unknown" show . removeSourceBranchAfterMerge)),
         cap
           "Requirements for a merge request to be merged"
-          (headed "successful pipeline" (maybe "unknown" show . onlyAllowMergeIfPipelineSucceeds) <> headed "all discussions resolved" (maybe "unknown" show . onlyAllowMergeIfAllDiscussionsAreResolved))
+          (headed "successful pipeline" (maybe "unknown" show . onlyAllowMergeIfPipelineSucceeds) <> headed "all discussions resolved" (maybe "unknown" show . onlyAllowMergeIfAllDiscussionsAreResolved)),
+        cap
+          "Pipelines"
+          (headed "auto cancel pending" (show . autoCancelPendingPipelines) )
       ]
 
 data Processor r = Processor
@@ -81,7 +84,7 @@ enableSuccessfulPipelineForMergeRequirement execution gId =
 
 projectHasCi :: (Member ProjectsApi r) => Either UpdateError Project -> Sem r (Either UpdateError Bool)
 projectHasCi (Left err) = pure $ Left err
-projectHasCi (Right (Project pId _ _ (Just ref) _ _ _)) = hasCi pId ref
+projectHasCi (Right (Project pId _ _ (Just ref) _ _ _ _)) = hasCi pId ref
 projectHasCi (Right _) = pure $ Right False -- no default branch, no CI
 
 configureOption :: (Member MergeRequestApi r, Member Writer r) => Execution -> ProjectId -> Either UpdateError Bool -> Sem r (Either UpdateError ())
@@ -143,8 +146,12 @@ newtype EnabledDisabledCount a = EnabledDisabledCount (Count a, Count a)
   deriving newtype (Semigroup)
   deriving newtype (Monoid)
 
-mkEnabledDisabledCount :: Bool -> EnabledDisabledCount a
-mkEnabledDisabledCount b = if b then EnabledDisabledCount (Count 1, Count 0) else EnabledDisabledCount (Count 0, Count 1)
+mkEnabledDisabledCount :: EnabledDisabled -> EnabledDisabledCount a
+mkEnabledDisabledCount Enabled = EnabledDisabledCount (Count 1, Count 0)
+mkEnabledDisabledCount Disabled = EnabledDisabledCount (Count 0, Count 1)
+
+mkEnabledDisabledCount' :: Bool -> EnabledDisabledCount a
+mkEnabledDisabledCount' b = if b then EnabledDisabledCount (Count 1, Count 0) else EnabledDisabledCount (Count 0, Count 1)
 
 data ProjectCount
 
@@ -156,12 +163,16 @@ data SuccessfulPipelineForMerge
 
 data AllDiscussionsResolvedForMerge
 
+data AutCancelRedundantPipelines
+
 type Summary =
   ( Count ProjectCount,
     EnabledDisabledCount SourceBranchDeletion,
     Count HasNoDefaultBranch,
     EnabledDisabledCount SuccessfulPipelineForMerge,
-    EnabledDisabledCount AllDiscussionsResolvedForMerge
+    ( EnabledDisabledCount AllDiscussionsResolvedForMerge,
+      EnabledDisabledCount AutCancelRedundantPipelines
+    )
   )
 
 writeSummary :: (Member Writer r) => Summary -> Sem r ()
@@ -170,7 +181,9 @@ writeSummary
     EnabledDisabledCount (Count branchDeletionEnabled, Count branchDeletionDisabled),
     Count hasNoDefaultBranch,
     EnabledDisabledCount (Count successfulPipelineForMergeEnabled, Count successfulPipelineForMergeDisabled),
-    EnabledDisabledCount (Count allDiscussionsResolvedForMergeEnabled, Count allDiscussionsResolvedForMergeDisabled)
+    ( EnabledDisabledCount (Count allDiscussionsResolvedForMergeEnabled, Count allDiscussionsResolvedForMergeDisabled),
+      EnabledDisabledCount (Count autoCancelPendingPipelinesEnabled, Count autoCancelPendingPipelinesDisabled)
+      )
     ) = do
     write $ formatWith [bold] "=== Summary"
     write $ "Anzahl Projekte: " <> show numProjects
@@ -180,6 +193,8 @@ writeSummary
     write $ "Projekte die 'only_allow_merge_if_pipeline_succeeds' NICHT aktiviert haben: " <> show successfulPipelineForMergeDisabled
     write $ "Projekte die 'only_allow_merge_if_all_discussions_are_resolved' aktiviert haben: " <> show allDiscussionsResolvedForMergeEnabled
     write $ "Projekte die 'only_allow_merge_if_all_discussions_are_resolved' NICHT aktiviert haben: " <> show allDiscussionsResolvedForMergeDisabled
+    write $ "Projekte die 'auto_cancel_pending_pipelines' aktiviert haben: " <> show autoCancelPendingPipelinesEnabled
+    write $ "Projekte die 'auto_cancel_pending_pipelines' NICHT aktiviert haben: " <> show autoCancelPendingPipelinesDisabled
     write $ "Projekte ohne default branch: " <> show hasNoDefaultBranch
 
 summarizeSingle :: Project -> Summary
@@ -188,11 +203,14 @@ summarizeSingle project =
     sourceBranchDeletionEnabledDisabled,
     noDefaultBranch,
     successfulPipelineForMergeEnabledDisabled,
-    allDiscussionsResolvedForMergeEnabledDisabled
+    ( allDiscussionsResolvedForMergeEnabledDisabled,
+      autoCancelPendingPipelinesEnabledDisabled
+    )
   )
   where
-    sourceBranchDeletionEnabledDisabled = mkEnabledDisabledCount branchDeletionEnabled
+    sourceBranchDeletionEnabledDisabled = mkEnabledDisabledCount' branchDeletionEnabled
     branchDeletionEnabled = or (removeSourceBranchAfterMerge project)
     noDefaultBranch = Count $ if isJust (defaultBranch project) then 0 else 1
-    successfulPipelineForMergeEnabledDisabled = mkEnabledDisabledCount $ or $ onlyAllowMergeIfPipelineSucceeds project
-    allDiscussionsResolvedForMergeEnabledDisabled = mkEnabledDisabledCount $ or $ onlyAllowMergeIfAllDiscussionsAreResolved project
+    successfulPipelineForMergeEnabledDisabled = mkEnabledDisabledCount' $ or $ onlyAllowMergeIfPipelineSucceeds project
+    allDiscussionsResolvedForMergeEnabledDisabled = mkEnabledDisabledCount' $ or $ onlyAllowMergeIfAllDiscussionsAreResolved project
+    autoCancelPendingPipelinesEnabledDisabled = mkEnabledDisabledCount (autoCancelPendingPipelines project)
