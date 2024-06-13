@@ -30,19 +30,18 @@ import Polysemy
 import Relude hiding (pi)
 
 listAllProjectsMeta :: (Member UsersApi r, Member GroupsApi r, Member ProjectsApi r, Member Writer r) => Sem r ()
-listAllProjectsMeta =
-  getAllGroups >>= \case
-    Left err -> write $ show err
-    Right groups -> do
-      fmap join <$> (sequence <$> traverse (getProjectsForGroup . G.groupId) groups) >>= \case
-        Left err -> write $ show err
-        Right groupProjects -> do
-          getAllUsers >>= \case
-            Left err -> write $ show err
-            Right users -> do
-              fmap join <$> (sequence <$> traverse (getProjectsForUser . userId) users) >>= \case
-                Left err -> write $ show err
-                Right userProjects -> writeMetaFormat $ groupProjects <> userProjects
+listAllProjectsMeta = fetch >>= bitraverse_ (write . show) writeMetaFormat
+  where
+    fetch =
+      runExceptT $
+        ((<>))
+          <$> (getAllGroups' >>= (\groups -> join <$> traverse (getProjectsForGroup' . G.groupId) groups))
+          <*> (getAllUsers' >>= (\users -> join <$> traverse (getProjectsForUser' . userId) users))
+
+    getAllGroups' = ExceptT getAllGroups
+    getProjectsForGroup' = ExceptT . getProjectsForGroup
+    getProjectsForUser' = ExceptT . getProjectsForUser
+    getAllUsers' = ExceptT getAllUsers
 
 showProjectsForGroup :: (Member ProjectsApi r, Member Writer r) => GroupId -> Sem r ()
 showProjectsForGroup gId = do

@@ -22,6 +22,7 @@ module Effects
     Group (..),
     UsersApi (..),
     getAllUsers,
+    UserId (..),
     User (..),
     ProjectsApi (..),
     getProjectsForGroup,
