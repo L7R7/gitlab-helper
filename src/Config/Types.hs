@@ -64,7 +64,7 @@ data Command
   | EnableSuccessfulPipelineForMergeRequirement Execution
   | SetMergeMethodToFastForward Execution
   | CountSuccessfulDeployments Year
-  | UpdateMergeRequests MergeRequestUpdateAction AuthorIs (Maybe (Either SearchTerm SearchTermTitle)) Execution
+  | UpdateMergeRequests MergeRequestUpdateAction (Maybe AuthorIs) (Maybe (Either SearchTerm SearchTermTitle)) Execution
   deriving stock (Show)
 
 data Execution = DryRun | Execute deriving stock (Eq, Show)
