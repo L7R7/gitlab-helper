@@ -1,12 +1,15 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Config.File (readPartialOptionsFromHomeDir, readPartialOptionsFromLocalDir) where
 
+import Barbies (bmap)
 import Config.Types
 import Data.Aeson
+import qualified Data.Semigroup as S
 import Data.Yaml
 import Network.URI (parseURI)
 import Relude
@@ -20,6 +23,9 @@ instance FromJSON (PartialConfig Maybe) where
       pApiToken <- c .:? "apiToken"
       let pCommand = Nothing
       pure $ PartialConfig {..}
+
+instance FromJSON (PartialConfig (Compose Maybe S.First)) where
+  parseJSON = fmap (bmap (Compose . fmap S.First)) . (parseJSON @(PartialConfig Maybe))
 
 instance FromJSON BaseUrl where
   parseJSON = withText "URI" $ \v ->

@@ -17,10 +17,10 @@ parseConfig = do
   --       und ggf gar nicht erst versuchen eine source zu lesen wenn man sie eh nicht braucht
   mkConfig <$> sequence [readPartialOptionsFromHomeDir, readPartialOptionsFromLocalDir, parseFromEnv, parseConfigFromOptions]
 
-mkConfig :: [PartialConfig Maybe] -> Either (NonEmpty String) Config
+mkConfig :: [PartialConfig (Compose Maybe S.First)] -> Either (NonEmpty String) Config
 mkConfig = mkConfig' . mconcat
 
-mkConfig' :: PartialConfig Maybe -> Either (NonEmpty String) Config
+mkConfig' :: PartialConfig (Compose Maybe S.First) -> Either (NonEmpty String) Config
 mkConfig' (PartialConfig gId url token c) =
   validationToEither
     $ Config
@@ -29,6 +29,6 @@ mkConfig' (PartialConfig gId url token c) =
     <*> fieldValueOrMissing "API-Token missing" token
     <*> fieldValueOrMissing "Command missing" c
   where
-    fieldValueOrMissing :: String -> Maybe (S.First a) -> Validation (NonEmpty String) a
-    fieldValueOrMissing err Nothing = Failure $ err :| []
-    fieldValueOrMissing _ (Just (S.First a)) = Success a
+    fieldValueOrMissing :: String -> Compose Maybe S.First a -> Validation (NonEmpty String) a
+    fieldValueOrMissing err (Compose Nothing) = Failure $ err :| []
+    fieldValueOrMissing _ (Compose (Just (S.First a))) = Success a

@@ -21,7 +21,6 @@ where
 import Autodocodec
 import Barbies
 import Data.Aeson (FromJSON (..))
-import qualified Data.Semigroup as S (First (..))
 import Network.URI (URI)
 import Options.Applicative
 import Relude hiding (Reader)
@@ -35,10 +34,10 @@ data Config = Config
   deriving stock (Show)
 
 data PartialConfig f = PartialConfig
-  { pGroupId :: f (S.First GroupId),
-    pBaseUrl :: f (S.First BaseUrl),
-    pApiToken :: f (S.First ApiToken),
-    pCommand :: f (S.First Command)
+  { pGroupId :: f GroupId,
+    pBaseUrl :: f BaseUrl,
+    pApiToken :: f ApiToken,
+    pCommand :: f Command
   }
   deriving stock (Generic)
   deriving anyclass (FunctorB, TraversableB, ApplicativeB, ConstraintsB)
