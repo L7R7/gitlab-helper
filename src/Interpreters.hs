@@ -15,7 +15,7 @@
 module Interpreters (usersApiToIO, groupsApiToIO, projectsApiToIO, mergeRequestApiToIO, branchesApiToIO, pipelinesApiToIO, schedulesApiToIO, runM) where
 
 import Burrito
-import Config.Types (ApiToken (..), AuthorIs (..), BaseUrl (..), SearchTerm (..))
+import Config.Types (ApiToken (..), AuthorIs (..), BaseUrl (..), SearchTerm (..), Year (..))
 import Control.Exception.Base (try)
 import Control.Lens (Lens', Prism', Traversal', filtered, lens, prism', set, _1, _2)
 import Data.Aeson hiding (Value)
@@ -122,10 +122,19 @@ pipelinesApiToIO baseUrl apiToken = interpret $ \case
   GetSuccessfulPipelines pId (Ref ref) -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines?ref={ref}&status={status}&updated_after=2021-01-06T00:00:00Z&source=push|]
     embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) pId), ("ref", (stringValue . toString) ref), ("status", stringValue "success")]
-  GetSuccessfulPushPipelinesIn2022 pId (Ref ref) -> do
-    let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines?ref={ref}&status={status}&updated_after=2022-01-01T00:00:00Z&updated_before=2023-01-01T00:00:00Z&source=push|]
-    -- todo: use the ref argument
-    embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) pId), ("ref", (stringValue . toString) ref), ("status", stringValue "success")]
+  GetSuccessfulPushPipelines (Year year) pId (Ref ref) -> do
+    let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines?ref={ref}&status={status}&updated_after={year0}-01-01T00:00:00Z&updated_before={year1}-01-01T00:00:00Z&source=push|]
+    embed
+      $ fetchDataPaginated
+        apiToken
+        baseUrl
+        template
+        [ ("projectId", (stringValue . show) pId),
+          ("ref", (stringValue . toString) ref),
+          ("status", stringValue "success"),
+          ("year0", (stringValue . show) year),
+          ("year1", (stringValue . show) (year + 1))
+        ]
 
 schedulesApiToIO :: (Member (Embed IO) r) => BaseUrl -> ApiToken -> InterpreterFor SchedulesApi r
 schedulesApiToIO baseUrl apiToken = interpret $ \case

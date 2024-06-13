@@ -28,7 +28,7 @@ run = do
         ShowMergeRequests -> showMergeRequests groupId
         (EnableAllDiscussionsMustBeResolvedForMergeRequirement execution) -> enableAllDiscussionsResolvedForMergeRequirement execution groupId
         (EnableSuccessfulPipelineForMergeRequirement execution) -> enableSuccessfulPipelineForMergeRequirement execution groupId
-        CountSuccessfulDeploymentsIn2022 -> countDeploymentsIn2022 groupId
+        (CountSuccessfulDeployments year) -> countDeployments groupId year
         (SetMergeMethodToFastForward execution) -> setMergeMethodToFastForward execution groupId
         (UpdateMergeRequests cmd authorIs searchTerm execution) -> updateMergeRequests groupId cmd authorIs searchTerm execution
   runM

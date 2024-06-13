@@ -15,7 +15,7 @@ module Projects
     enableAllDiscussionsResolvedForMergeRequirement,
     setMergeMethodToFastForward,
     listProjectsMetaForGroup,
-    countDeploymentsIn2022,
+    countDeployments,
   )
 where
 
@@ -90,17 +90,17 @@ data Processor r
       -- | action to execute
       (Project -> Sem r (Either UpdateError (Sum Int)))
 
-countDeploymentsIn2022 :: (Member ProjectsApi r, Member PipelinesApi r, Member Writer r) => GroupId -> Sem r ()
-countDeploymentsIn2022 gId =
+countDeployments :: (Member ProjectsApi r, Member PipelinesApi r, Member Writer r) => GroupId -> Year -> Sem r ()
+countDeployments gId year@(Year y) =
   runProcessor
     $ Counter
       gId
-      (\gi -> "Listing the number of successful deployments in 2022 for all projects in Group " <> show gi)
+      (\gi -> "Listing the number of successful deployments in " <> show y <> " for all projects in Group " <> show gi)
       (\p -> projectId p `elem` excludes)
       ( \p -> do
           res <- case defaultBranch p of
             Nothing -> Right [] <$ write (formatWith [bold] (show (name p) <> ": ") <> formatWith [red] "has no default branch")
-            Just ref -> getSuccessfulPushPipelinesIn2022 (projectId p) ref
+            Just ref -> getSuccessfulPushPipelines year (projectId p) ref
           pure $ fmap (Sum . length) res
       )
   where
@@ -228,7 +228,7 @@ countSingle skipIf action project = count >>= \(output, result) -> write (title 
           case res of
             Left err -> pure (formatWith [red] "something went wrong: " <> show err, mempty)
             Right s -> pure (show (getSum s) <> " deployments", s)
-    title = formatWith [bold] (show (name project) <> ": ") -- "(" <> show (projectId project) <> "): ")
+    title = formatWith [bold] (show (name project) <> " (#" <> show (projectId project) <> "): ")
 
 data Result = AlreadySet | Set | Error deriving stock (Bounded, Enum, Eq, Ord, Show)
 
