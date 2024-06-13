@@ -34,7 +34,7 @@ jobs:
 
   build_artifact:
     needs: [create_release]
-    name: ${{ matrix.os }}/GHC 9.6.5/${{ github.ref }}
+    name: ${{ matrix.os }}/${{ matrix.target }}/${{ github.ref }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -63,7 +63,6 @@ jobs:
 
       - name: Setup Haskell
         uses: haskell-actions/setup@v2.7.3
-        id: setup-haskell-cabal
         with:
           ghc-version: 9.6.5
           enable-stack: true
@@ -119,5 +118,5 @@ jobs:
         with:
           upload_url: ${{ env.upload_url }}
           asset_path: ${{ env.BINARY_PATH }}
-          asset_name: gitlab-helper-${{ steps.tag.outputs.tag }}-${{ runner.os }}${{ env.EXT }}
+          asset_name: gitlab-helper-${{ steps.tag.outputs.tag }}-${{ runner.os }}-${{ runner.os.target }}${{ env.EXT }}
           asset_content_type: application/octet-stream
