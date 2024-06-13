@@ -72,17 +72,20 @@ tableReport =
           (headed "auto cancel pending" (show . autoCancelPendingPipelines))
       ]
 
-data Processor r = Processor
-  { groupId :: GroupId,
-    title :: GroupId -> Text,
-    runIf :: Project -> Bool,
-    action :: ProjectId -> Sem r (Either UpdateError ())
-  }
+data Processor r
+  = OptionSetter
+      GroupId
+      (GroupId -> Text)
+      -- ^ headline to be printed
+      (Project -> Bool)
+      -- ^ if this returns True, nothing will be done
+      (ProjectId -> Sem r (Either UpdateError ()))
+      -- ^ action to execute
 
 countDeploymentsIn2022 :: (Member ProjectsApi r, Member PipelinesApi r, Member Writer r) => GroupId -> Sem r ()
 countDeploymentsIn2022 gId =
   runProcessor $
-    Processor
+    OptionSetter
       gId
       (\gi -> "Listing the number of successful deployments in 2022 for all projects in Group " <> show gi)
       (const False)
@@ -91,7 +94,7 @@ countDeploymentsIn2022 gId =
 enableSourceBranchDeletionAfterMerge :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => Execution -> GroupId -> Sem r ()
 enableSourceBranchDeletionAfterMerge execution gId =
   runProcessor $
-    Processor
+    OptionSetter
       gId
       (\gi -> "Enabling automatic branch deletion after MR merge for Group " <> show gi)
       (\p -> Just True == removeSourceBranchAfterMerge p)
@@ -103,7 +106,7 @@ enableSourceBranchDeletionAfterMerge execution gId =
 enableSuccessfulPipelineForMergeRequirement :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => Execution -> GroupId -> Sem r ()
 enableSuccessfulPipelineForMergeRequirement execution gId =
   runProcessor $
-    Processor
+    OptionSetter
       gId
       (\gi -> "Enabling the requirement that a successful pipeline is required for a MR to be merged for Group " <> show gi)
       (or . onlyAllowMergeIfPipelineSucceeds)
@@ -127,7 +130,7 @@ logUnset = write "Project doesn't have CI. Deactivated the option." $> Right ()
 enableAllDiscussionsResolvedForMergeRequirement :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => Execution -> GroupId -> Sem r ()
 enableAllDiscussionsResolvedForMergeRequirement execution gId =
   runProcessor $
-    Processor
+    OptionSetter
       gId
       (\gi -> "Enabling the requirement that all discussions must be resolved for a MR to be merged for Group " <> show gi)
       (or . onlyAllowMergeIfAllDiscussionsAreResolved)
@@ -146,13 +149,13 @@ writeMetaFormat :: (Member Writer r) => [Project] -> Sem r ()
 writeMetaFormat projects = write $ decodeUtf8 $ encode $ M.fromList $ (\p -> (pathWithNamespace p, sshUrlToRepo p)) <$> projects
 
 runProcessor :: (Member ProjectsApi r, Member Writer r) => Processor r -> Sem r ()
-runProcessor Processor {..} = do
+runProcessor (OptionSetter groupId title skipIf action) = do
   write "=================================================="
   write $ title groupId
   getProjectsForGroup groupId >>= \case
     Left err -> write $ show err
     Right projects -> do
-      res <- traverse (process runIf action) projects
+      res <- traverse (process skipIf action) projects
       write ""
       write "done: "
       let summary = foldl' (\m r -> M.insertWith (<>) r (Sum (1 :: Int)) m) (M.fromList $ (,mempty) <$> universe) res
@@ -160,10 +163,10 @@ runProcessor Processor {..} = do
       traverse_ write summaryPrint
 
 process :: (Member Writer r) => (Project -> Bool) -> (ProjectId -> Sem r (Either UpdateError ())) -> Project -> Sem r Result
-process predicate action project = do
+process skipIf action project = do
   write ""
   write $ formatWith [bold] ("=== " <> show (name project))
-  if predicate project
+  if skipIf project
     then write "option is already enabled. Not doing anything" $> AlreadySet
     else do
       write "setting option"
@@ -172,7 +175,7 @@ process predicate action project = do
         Left err -> write ("something went wrong. " <> show err) $> Error
         Right _ -> write "done" $> Set
 
-data Result = AlreadySet | Set | Error deriving (Bounded, Enum, Eq, Ord, Show)
+data Result = AlreadySet | Set | Error deriving stock (Bounded, Enum, Eq, Ord, Show)
 
 newtype Count a = Count Int
   deriving (Semigroup) via (Sum Int)
