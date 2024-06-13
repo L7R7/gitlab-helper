@@ -48,7 +48,7 @@ tableReport =
           (headed "enabled" (show . mergeRequestsEnabled) <> headed "Remove source branch after merge" (maybe "unknown" show . removeSourceBranchAfterMerge)),
         cap
           "Requirements for a merge request to be merged"
-          (headed "successful pipeline" (show . onlyAllowMergeIfPipelineSucceeds) <> headed "all discussions resolved" (show . onlyAllowMergeIfAllDiscussionsAreResolved))
+          (headed "successful pipeline" (maybe "unknown" show . onlyAllowMergeIfPipelineSucceeds) <> headed "all discussions resolved" (maybe "unknown" show . onlyAllowMergeIfAllDiscussionsAreResolved))
       ]
 
 data Processor r = Processor
@@ -76,7 +76,7 @@ enableSuccessfulPipelineForMergeRequirement execution gId =
     Processor
       gId
       (\gi -> "Enabling the requirement that a successful pipeline is required for a MR to be merged for Group " <> show gi)
-      onlyAllowMergeIfPipelineSucceeds
+      (or . onlyAllowMergeIfPipelineSucceeds)
       (\pId -> getProject pId >>= (projectHasCi >=> configureOption execution pId))
 
 projectHasCi :: (Member ProjectsApi r) => Either UpdateError Project -> Sem r (Either UpdateError Bool)
@@ -100,7 +100,7 @@ enableAllDiscussionsResolvedForMergeRequirement execution gId =
     Processor
       gId
       (\gi -> "Enabling the requirement that all discussions must be resolved for a MR to be merged for Group " <> show gi)
-      onlyAllowMergeIfAllDiscussionsAreResolved
+      (or . onlyAllowMergeIfAllDiscussionsAreResolved)
       ( case execution of
           DryRun -> (\pId -> Right () <$ write ("Dry Run. Pretending to set option for Project " <> show pId))
           Execute -> setResolvedDiscussionsRequirementForMerge
@@ -194,5 +194,5 @@ summarizeSingle project =
     sourceBranchDeletionEnabledDisabled = mkEnabledDisabledCount branchDeletionEnabled
     branchDeletionEnabled = or (removeSourceBranchAfterMerge project)
     noDefaultBranch = Count $ if isJust (defaultBranch project) then 0 else 1
-    successfulPipelineForMergeEnabledDisabled = mkEnabledDisabledCount $ onlyAllowMergeIfPipelineSucceeds project
-    allDiscussionsResolvedForMergeEnabledDisabled = mkEnabledDisabledCount $ onlyAllowMergeIfAllDiscussionsAreResolved project
+    successfulPipelineForMergeEnabledDisabled = mkEnabledDisabledCount $ or $ onlyAllowMergeIfPipelineSucceeds project
+    allDiscussionsResolvedForMergeEnabledDisabled = mkEnabledDisabledCount $ or $ onlyAllowMergeIfAllDiscussionsAreResolved project

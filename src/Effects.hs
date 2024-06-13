@@ -80,8 +80,8 @@ data Project = Project
     mergeRequestsEnabled :: Bool,
     defaultBranch :: Maybe Ref,
     removeSourceBranchAfterMerge :: Maybe Bool,
-    onlyAllowMergeIfPipelineSucceeds :: Bool,
-    onlyAllowMergeIfAllDiscussionsAreResolved :: Bool
+    onlyAllowMergeIfPipelineSucceeds :: Maybe Bool,
+    onlyAllowMergeIfAllDiscussionsAreResolved :: Maybe Bool
   }
 
 instance Show Project where
