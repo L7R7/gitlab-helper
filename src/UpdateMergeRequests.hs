@@ -40,7 +40,7 @@ updateMergeRequests gId action authorIs searchTerm execute = do
         Right _ -> pure ()
   where
     performAction pId mr = do
-      write $ "processing MR #" <> show (mergeRequestId mr)
+      write $ "processing MR #" <> show (mergeRequestId mr) <> " in Project #" <> show (mergeRequestProjectId mr) <> ": " <> mergeRequestTitle mr
       let f = case execute of
             DryRun -> performActionDry
             Execute -> performActionExecute

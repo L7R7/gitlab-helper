@@ -84,7 +84,7 @@ mergeRequestApiToIO baseUrl apiToken = interpret $ \case
         template
         ( mconcat
             [ [("groupId", (stringValue . show) group)],
-              foldMap (\(AuthorIs i) -> [("authorId", (stringValue . show) i)]) maybeAuthorIs,
+              foldMap (\(AuthorIs i) -> [("author_id", (stringValue . show) i)]) maybeAuthorIs,
               foldMap (\(SearchTerm s) -> [("search", stringValue s)]) maybeSearchTerm
             ]
         )
