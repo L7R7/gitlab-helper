@@ -26,7 +26,7 @@ parser =
     $ PartialConfig
       (option (Id <$> auto) (long "group-id" <> help "set the ID of the group to look at" <> metavar "ID"))
       (option (BaseUrl <$> eitherReader f) (long "base-url" <> help "Base URL of the Gitlab instance (e.g. `https://gitlab.com/`)" <> metavar "URL"))
-      (option (ApiToken <$> auto) (long "api-token" <> help "API Token to use for authorizing requests against the Gitlab API. `api` scope is required." <> metavar "TOKEN"))
+      (option (ApiToken <$> str) (long "api-token" <> help "API Token to use for authorizing requests against the Gitlab API. `api` scope is required." <> metavar "TOKEN"))
       (option (fmap Id <$> eitherReader g) (long "exclude-projects" <> help "set the list of projects to exclude as a comma-separated list of IDs" <> metavar "ID1,ID2,ID3"))
       commandParser
   where
