@@ -44,13 +44,13 @@ tableReport =
           (headed "ID" (show . projectId) <> headed "Name" (show . name) <> headed "default branch" (maybe "-" (\(Ref r) -> toString r) . defaultBranch)),
         cap
           "Merge Requests"
-          (headed "enabled" (show . mergeRequestsEnabled) <> headed "Remove source branch after merge" (maybe "unknown" show . removeSourceBranchAfterMerge)),
+          (headed "enabled" (show . mergeRequestsEnabled) <> headed "Remove source branch after merge" (maybe "unknown" show . removeSourceBranchAfterMerge) <> headed "merge method" (show . mergeMethod)),
         cap
           "Requirements for a merge request to be merged"
           (headed "successful pipeline" (maybe "unknown" show . onlyAllowMergeIfPipelineSucceeds) <> headed "all discussions resolved" (maybe "unknown" show . onlyAllowMergeIfAllDiscussionsAreResolved)),
         cap
           "Pipelines"
-          (headed "auto cancel pending" (show . autoCancelPendingPipelines) )
+          (headed "auto cancel pending" (show . autoCancelPendingPipelines))
       ]
 
 data Processor r = Processor
@@ -83,7 +83,7 @@ enableSuccessfulPipelineForMergeRequirement execution gId =
 
 projectHasCi :: (Member ProjectsApi r) => Either UpdateError Project -> Sem r (Either UpdateError Bool)
 projectHasCi (Left err) = pure $ Left err
-projectHasCi (Right (Project pId _ _ (Just ref) _ _ _ _)) = hasCi pId ref
+projectHasCi (Right (Project pId _ _ _ (Just ref) _ _ _ _)) = hasCi pId ref
 projectHasCi (Right _) = pure $ Right False -- no default branch, no CI
 
 configureOption :: (Member MergeRequestApi r, Member Writer r) => Execution -> ProjectId -> Either UpdateError Bool -> Sem r (Either UpdateError ())

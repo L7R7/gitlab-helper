@@ -49,7 +49,7 @@ module Effects
     ProjectName (..),
     CompactPipeline (..),
     Schedule (..),
-    EnabledDisabled(..),
+    EnabledDisabled (..),
   )
 where
 
@@ -78,6 +78,7 @@ data Project = Project
   { projectId :: ProjectId,
     name :: ProjectName,
     mergeRequestsEnabled :: Bool,
+    mergeMethod :: MergeMethod,
     defaultBranch :: Maybe Ref,
     removeSourceBranchAfterMerge :: Maybe Bool,
     onlyAllowMergeIfPipelineSucceeds :: Maybe Bool,
@@ -109,6 +110,7 @@ instance FromJSON Project where
     Project <$> (p .: "id")
       <*> (p .: "name")
       <*> (p .: "merge_requests_enabled")
+      <*> (p .: "merge_method")
       <*> (p .: "default_branch")
       <*> (p .: "remove_source_branch_after_merge")
       <*> (p .: "only_allow_merge_if_pipeline_succeeds")
@@ -125,6 +127,16 @@ instance FromJSON EnabledDisabled where
   parseJSON = withText "EnabledDisabled" $ \case
     "enabled" -> pure Enabled
     "disabled" -> pure Disabled
+    _ -> fail "bad value"
+
+data MergeMethod = Merge | RebaseMerge | FastForward
+  deriving stock (Show)
+
+instance FromJSON MergeMethod where
+  parseJSON = withText "MergeMethod" $ \case
+    "merge" -> pure Merge
+    "rebase_merge" -> pure RebaseMerge
+    "ff" -> pure FastForward
     _ -> fail "bad value"
 
 data MergeRequest = MergeRequest

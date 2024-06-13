@@ -29,8 +29,8 @@ showPipelineDurationsForProject pId = do
   project <- getProject pId
   case project of
     Left err -> write $ "something went wrong" <> show err
-    Right (Project _ _ _ Nothing _  _ _ _) -> write $ "Found project without default branch: " <> show pId
-    Right (Project _ _ _ (Just ref) _ _ _ _) -> do
+    Right (Project _ _ _ _ Nothing _ _ _ _) -> write $ "Found project without default branch: " <> show pId
+    Right (Project _ _ _ _ (Just ref) _ _ _ _) -> do
       results <- evaluateProject pId ref
       writeResult $ filter (\(PipelineWithDuration _ _ _ _ _ _ so) -> so /= SourceSchedule) $ sortOn (\(PipelineWithDuration _ _ _ _ ut _ _) -> ut) results
 
