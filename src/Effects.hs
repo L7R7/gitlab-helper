@@ -48,7 +48,7 @@ module Effects
     UpdateError (..),
     Branch (..),
     Project (..),
-    MergeMethod(..),
+    MergeMethod (..),
     MergeRequest (..),
     Duration (..),
     Sha (..),

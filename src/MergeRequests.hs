@@ -34,12 +34,12 @@ showMergeRequests gId = do
       write ""
       printProjectsWithMergeRequests mrEnabled
 
-printProjectsWithDisabledMergeRequests :: Member Writer r => [Project] -> Sem r ()
+printProjectsWithDisabledMergeRequests :: (Member Writer r) => [Project] -> Sem r ()
 printProjectsWithDisabledMergeRequests projects = do
   write "=== projects with disabled merge requests"
   printProjects projects
   where
-    printProjects :: Member Writer r => [Project] -> Sem r ()
+    printProjects :: (Member Writer r) => [Project] -> Sem r ()
     printProjects [] = write "There are no projects with disabled merge requests"
     printProjects ps = write $ T.intercalate ", " (show . name <$> ps)
 

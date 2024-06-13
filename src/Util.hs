@@ -12,10 +12,10 @@ import Effects (Timer (..), Writer (..))
 import Polysemy
 import Relude
 
-timerToIO :: Member (Embed IO) r => Sem (Timer ': r) a -> Sem r a
+timerToIO :: (Member (Embed IO) r) => Sem (Timer ': r) a -> Sem r a
 timerToIO = interpret $ \case
   GetCurrentTime -> embed getCurrentTime
 
-writerToIO :: Member (Embed IO) r => Sem (Writer ': r) a -> Sem r a
+writerToIO :: (Member (Embed IO) r) => Sem (Writer ': r) a -> Sem r a
 writerToIO = interpret $ \case
   Write msg -> embed $ putTextLn @IO msg

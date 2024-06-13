@@ -20,7 +20,7 @@ import System.Posix.Types (EpochTime)
 data WriteToFile m a where
   WriteResult :: [PipelineWithDuration] -> WriteToFile m ()
 
-writeResult :: Member WriteToFile r => [PipelineWithDuration] -> Sem r ()
+writeResult :: (Member WriteToFile r) => [PipelineWithDuration] -> Sem r ()
 writeResult x = send (WriteResult x :: WriteToFile (Sem r) ())
 
 showPipelineDurationsForProject :: (Member WriteToFile r, Member PipelinesApi r, Member ProjectsApi r, Member Writer r) => ProjectId -> Sem r ()

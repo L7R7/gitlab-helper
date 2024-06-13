@@ -35,7 +35,7 @@ showSchedulesForGroup gId = do
 getSchedulesForProject :: (Member SchedulesApi r) => Project -> Sem r (Project, Either UpdateError [Schedule])
 getSchedulesForProject p = (p,) <$> getSchedules (projectId p)
 
-printResults :: Member Writer r => (Project, Either UpdateError [Schedule]) -> Sem r ()
+printResults :: (Member Writer r) => (Project, Either UpdateError [Schedule]) -> Sem r ()
 printResults (project, Left err) = do
   write $ formatWith [bold] ("=== " <> show (name project))
   write $ "something went wrong: " <> show err
@@ -71,7 +71,7 @@ type ProjectsWithoutSchedule = Sum Int
 
 type ProjectsWithSchedules = Sum Int
 
-writeSummary :: Member Writer r => [(Project, Either UpdateError [Schedule])] -> Sem r ()
+writeSummary :: (Member Writer r) => [(Project, Either UpdateError [Schedule])] -> Sem r ()
 writeSummary results = do
   write ""
   write . showSummary $ summary results

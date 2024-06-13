@@ -12,7 +12,8 @@ module Projects
     showProjectsForGroup,
     enableSourceBranchDeletionAfterMerge,
     enableSuccessfulPipelineForMergeRequirement,
-    enableAllDiscussionsResolvedForMergeRequirement,setMergeMethodToFastForward,
+    enableAllDiscussionsResolvedForMergeRequirement,
+    setMergeMethodToFastForward,
     listProjectsMetaForGroup,
     countDeploymentsIn2022,
   )
@@ -53,7 +54,7 @@ showProjectsForGroup gId = do
       write . toText $ tableReport (sortOn (toLower . getProjectName . name) projects)
       writeSummary $ foldMap summarizeSingle projects
 
-tableReport :: Foldable f => f Project -> String
+tableReport :: (Foldable f) => f Project -> String
 tableReport =
   asciiCapped $
     mconcat
@@ -143,7 +144,7 @@ configureOption Execute pId (Right False) = unsetSuccessfulPipelineRequirementFo
 configureOption DryRun _ (Right True) = Right () <$ write "Dry Run. Pretending to set option for project"
 configureOption Execute pId (Right True) = setSuccessfulPipelineRequirementForMerge pId
 
-logUnset :: Member Writer r => Sem r (Either UpdateError ())
+logUnset :: (Member Writer r) => Sem r (Either UpdateError ())
 logUnset = write "Project doesn't have CI. Deactivated the option." $> Right ()
 
 enableAllDiscussionsResolvedForMergeRequirement :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => Execution -> GroupId -> Sem r ()

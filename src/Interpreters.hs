@@ -31,19 +31,19 @@ import Network.URI (URI)
 import Polysemy
 import Relude
 
-usersApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> InterpreterFor UsersApi r
+usersApiToIO :: (Member (Embed IO) r) => BaseUrl -> ApiToken -> InterpreterFor UsersApi r
 usersApiToIO baseUrl apiToken = interpret $ \case
   GetAllUsers -> do
     let template = [uriTemplate|/api/v4/users|]
     embed $ fetchDataPaginated apiToken baseUrl template []
 
-groupsApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> InterpreterFor GroupsApi r
+groupsApiToIO :: (Member (Embed IO) r) => BaseUrl -> ApiToken -> InterpreterFor GroupsApi r
 groupsApiToIO baseUrl apiToken = interpret $ \case
   GetAllGroups -> do
     let template = [uriTemplate|/api/v4/groups?all_available=true|]
     embed $ fetchDataPaginated apiToken baseUrl template []
 
-projectsApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> InterpreterFor ProjectsApi r
+projectsApiToIO :: (Member (Embed IO) r) => BaseUrl -> ApiToken -> InterpreterFor ProjectsApi r
 projectsApiToIO baseUrl apiToken = interpret $ \case
   GetProjectsForGroup gId -> do
     let template = [uriTemplate|/api/v4/groups/{groupId}/projects?include_subgroups=true&archived=false&with_shared=false|]
@@ -65,7 +65,7 @@ projectsApiToIO baseUrl apiToken = interpret $ \case
         toAPIValue FastForward = "ff"
     embed $ void <$> fetchData' @Project baseUrl apiToken (setRequestMethod "PUT") template [("projectId", (stringValue . show) project), ("merge_method", stringValue (toAPIValue mm))]
 
-mergeRequestApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> InterpreterFor MergeRequestApi r
+mergeRequestApiToIO :: (Member (Embed IO) r) => BaseUrl -> ApiToken -> InterpreterFor MergeRequestApi r
 mergeRequestApiToIO baseUrl apiToken = interpret $ \case
   GetOpenMergeRequests project -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}/merge_requests?state=opened|]
@@ -83,13 +83,13 @@ mergeRequestApiToIO baseUrl apiToken = interpret $ \case
     let template = [uriTemplate|/api/v4/projects/{projectId}?only_allow_merge_if_all_discussions_are_resolved=true|]
     embed $ void <$> fetchData' @Project baseUrl apiToken (setRequestMethod "PUT") template [("projectId", (stringValue . show) project)]
 
-branchesApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> InterpreterFor BranchesApi r
+branchesApiToIO :: (Member (Embed IO) r) => BaseUrl -> ApiToken -> InterpreterFor BranchesApi r
 branchesApiToIO baseUrl apiToken = interpret $ \case
   GetBranches project -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}/repository/branches|]
     embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) project)]
 
-pipelinesApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> InterpreterFor PipelinesApi r
+pipelinesApiToIO :: (Member (Embed IO) r) => BaseUrl -> ApiToken -> InterpreterFor PipelinesApi r
 pipelinesApiToIO baseUrl apiToken = interpret $ \case
   GetPipeline project pipeline -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines/{pipelineId}|]
@@ -101,7 +101,7 @@ pipelinesApiToIO baseUrl apiToken = interpret $ \case
     let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines?ref={ref}&status={status}&updated_after=2022-01-01T00:00:00Z&updated_before=2023-01-01T00:00:00Z&source=push|] -- todo: use the ref argument
     embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) pId), ("ref", (stringValue . toString) ref), ("status", stringValue "success")]
 
-schedulesApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> InterpreterFor SchedulesApi r
+schedulesApiToIO :: (Member (Embed IO) r) => BaseUrl -> ApiToken -> InterpreterFor SchedulesApi r
 schedulesApiToIO baseUrl apiToken = interpret $ \case
   GetSchedules project -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}/pipeline_schedules|]
