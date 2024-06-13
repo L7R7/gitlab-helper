@@ -24,7 +24,6 @@ import Data.Text (toLower)
 import Effects
 import Polysemy
 import Relude hiding (pi)
-import Relude.Extra (universe)
 
 showProjectsForGroup :: (Member ProjectsApi r, Member Writer r) => GroupId -> Sem r ()
 showProjectsForGroup gId = do

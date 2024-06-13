@@ -63,7 +63,6 @@ import Network.HTTP.Simple (JSONException)
 import Network.URI
 import Polysemy
 import Relude
-import Relude.Extra (inverseMap)
 import qualified Text.Show
 
 newtype ProjectId = ProjectId Int deriving newtype (FromJSON, Show)

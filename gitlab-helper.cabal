@@ -51,8 +51,7 @@ library
     , aeson
     , aeson-casing
     , barbies
-    , burrito
-    , bytestring
+    , burrito >= 2.0.1.0
     , colonnade
     , colourista
     , containers
@@ -67,8 +66,8 @@ library
     , lens
     , network-uri
     , optparse-applicative
-    , polysemy == 1.5.0.0
-    , polysemy-plugin == 0.3.0.0
+    , polysemy >= 1.5.0.0
+    , polysemy-plugin >= 0.3.0.0
     , relude
     , text
     , time
