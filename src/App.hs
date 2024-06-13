@@ -28,6 +28,7 @@ run = do
         (EnableAllDiscussionsMustBeResolvedForMergeRequirement execution) -> enableAllDiscussionsResolvedForMergeRequirement execution groupId
         (EnableSuccessfulPipelineForMergeRequirement execution) -> enableSuccessfulPipelineForMergeRequirement execution groupId
         CountSuccessfulDeploymentsIn2022 -> countDeploymentsIn2022 groupId
+        (SetMergeMethodToFastForward execution) -> setMergeMethodToFastForward execution groupId
   runM
     . timerToIO
     . writerToIO

@@ -30,6 +30,7 @@ module Effects
     getProjectsForUser,
     getProject,
     hasCi,
+    setMergeMethod,
     MergeRequestApi (..),
     getOpenMergeRequests,
     enableSourceBranchDeletionAfterMrMerge,
@@ -47,6 +48,7 @@ module Effects
     UpdateError (..),
     Branch (..),
     Project (..),
+    MergeMethod(..),
     MergeRequest (..),
     Duration (..),
     Sha (..),
@@ -329,6 +331,7 @@ data ProjectsApi m a where
   GetProjectsForUser :: UserId -> ProjectsApi m (Either UpdateError [Project])
   GetProject :: ProjectId -> ProjectsApi m (Either UpdateError Project)
   HasCi :: ProjectId -> Ref -> ProjectsApi m (Either UpdateError Bool)
+  SetMergeMethod :: ProjectId -> MergeMethod -> ProjectsApi m (Either UpdateError ())
 
 makeSem ''ProjectsApi
 

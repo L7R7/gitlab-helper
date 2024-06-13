@@ -66,6 +66,7 @@ data Command
   | ShowMergeRequests
   | EnableAllDiscussionsMustBeResolvedForMergeRequirement Execution
   | EnableSuccessfulPipelineForMergeRequirement Execution
+  | SetMergeMethodToFastForward Execution
   | CountSuccessfulDeploymentsIn2022
 
 data Execution = DryRun | Execute
@@ -90,7 +91,8 @@ parser =
         command "enable-successful-pipeline-for-merge-requirement" (info (EnableSuccessfulPipelineForMergeRequirement <$> executionParser) (progDesc "enable the requirement that there must be a successful pipeline for an MR to be merged for all projects. CAUTION: Use with care, might not do what you want in projects without pipelines")),
         command "show-schedules" (info (pure ShowSchedules) (progDesc "show schedules")),
         command "show-merge-requests" (info (pure ShowMergeRequests) (progDesc "show projects with and without enabled merge requests, list merge requests")),
-        command "count-deployments" (info (pure CountSuccessfulDeploymentsIn2022) (progDesc "count the number of successful deployments per project (a successful push pipeline on the master branch is counted as a deployment)"))
+        command "count-deployments" (info (pure CountSuccessfulDeploymentsIn2022) (progDesc "count the number of successful deployments per project (a successful push pipeline on the master branch is counted as a deployment)")),
+        command "set-merge-method-to-fast-forward" (info (SetMergeMethodToFastForward <$> executionParser) (progDesc "Set the merge method for all projects to \"Fast Forward\""))
       ]
 
 executionParser :: Parser Execution

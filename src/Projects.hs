@@ -12,7 +12,7 @@ module Projects
     showProjectsForGroup,
     enableSourceBranchDeletionAfterMerge,
     enableSuccessfulPipelineForMergeRequirement,
-    enableAllDiscussionsResolvedForMergeRequirement,
+    enableAllDiscussionsResolvedForMergeRequirement,setMergeMethodToFastForward,
     listProjectsMetaForGroup,
     countDeploymentsIn2022,
   )
@@ -156,6 +156,18 @@ enableAllDiscussionsResolvedForMergeRequirement execution gId =
       ( case execution of
           DryRun -> (\pId -> Right () <$ write ("Dry Run. Pretending to set option for Project " <> show pId))
           Execute -> setResolvedDiscussionsRequirementForMerge
+      )
+
+setMergeMethodToFastForward :: (Member ProjectsApi r, Member Writer r) => Execution -> GroupId -> Sem r ()
+setMergeMethodToFastForward execution gId =
+  runProcessor $
+    OptionSetter
+      gId
+      (\gi -> "Setting the merge method to \"Fast Forward\" for all projects in Group " <> show gi)
+      (\p -> mergeMethod p == FastForward)
+      ( case execution of
+          DryRun -> (\pId -> Right () <$ write ("Dry Run. Pretending to set merge method for Project " <> show pId))
+          Execute -> (`setMergeMethod` FastForward)
       )
 
 listProjectsMetaForGroup :: (Member ProjectsApi r, Member Writer r) => GroupId -> Sem r ()

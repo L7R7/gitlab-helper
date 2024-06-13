@@ -58,6 +58,12 @@ projectsApiToIO baseUrl apiToken = interpret $ \case
     let template = [uriTemplate|/api/v4/projects/{projectId}/repository/files/.gitlab-ci.yml?ref={ref}|]
     response <- embed $ headRequest baseUrl apiToken id template [("projectId", (stringValue . show) project), ("ref", (stringValue . (\(Ref txt) -> toString txt)) ref)]
     pure $ (200 ==) . statusCode <$> response
+  SetMergeMethod project mm -> do
+    let template = [uriTemplate|/api/v4/projects/{projectId}?merge_method={merge_method}|]
+        toAPIValue Merge = "merge"
+        toAPIValue RebaseMerge = "rebase_merge"
+        toAPIValue FastForward = "ff"
+    embed $ void <$> fetchData' @Project baseUrl apiToken (setRequestMethod "PUT") template [("projectId", (stringValue . show) project), ("merge_method", stringValue (toAPIValue mm))]
 
 mergeRequestApiToIO :: Member (Embed IO) r => BaseUrl -> ApiToken -> InterpreterFor MergeRequestApi r
 mergeRequestApiToIO baseUrl apiToken = interpret $ \case
