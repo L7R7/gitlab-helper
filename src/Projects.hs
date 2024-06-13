@@ -8,6 +8,8 @@
 module Projects
   ( showProjectsForGroup,
     enableSourceBranchDeletionAfterMerge,
+    enableSuccessfulPipelineForMergeRequirement,
+    enableAllDiscussionsResolvedForMergeRequirement,
   )
 where
 
@@ -43,19 +45,73 @@ enableSourceBranchDeletionAfterMerge gId = do
       let summary = foldl' (\m r -> M.insertWith (<>) r (Sum (1 :: Int)) m) (M.fromList $ (,mempty) <$> universe) res
       let summaryPrint = M.foldlWithKey' (\acc k (Sum c) -> (show k <> ": " <> show c) : acc) mempty summary
       traverse_ write summaryPrint
+  where
+    process :: (Member MergeRequestApi r, Member Writer r) => Project -> Sem r Result
+    process project = do
+      write ""
+      write $ formatWith [bold] ("=== " <> show (name project))
+      if Just True == removeSourceBranchAfterMerge project
+        then write "option is already enabled. Not doing anything" $> AlreadySet
+        else do
+          write "setting option"
+          res <- enableSourceBranchDeletionAfterMrMerge (projectId project)
+          case res of
+            Left err -> write ("something went wrong. " <> show err) $> Error
+            Right _ -> write "done" $> Set
 
-process :: (Member MergeRequestApi r, Member Writer r) => Project -> Sem r Result
-process project = do
-  write ""
-  write $ formatWith [bold] ("=== " <> show (name project))
-  if Just True == removeSourceBranchAfterMerge project
-    then write "option is already enabled. Not doing anything" $> AlreadySet
-    else do
-      write "setting option"
-      res <- enableSourceBranchDeletionAfterMrMerge (projectId project)
-      case res of
-        Left err -> write ("something went wrong. " <> show err) $> Error
-        Right _ -> write "done" $> Set
+enableSuccessfulPipelineForMergeRequirement :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => GroupId -> Sem r ()
+enableSuccessfulPipelineForMergeRequirement gId = do
+  write "=================================================="
+  write $ "Enabling the requirement that a successful pipeline is required for a MR to be merged for Group " <> show gId
+  getProjects gId >>= \case
+    Left err -> write $ show err
+    Right projects -> do
+      res <- traverse process projects
+      write ""
+      write "done: "
+      let summary = foldl' (\m r -> M.insertWith (<>) r (Sum (1 :: Int)) m) (M.fromList $ (,mempty) <$> universe) res
+      let summaryPrint = M.foldlWithKey' (\acc k (Sum c) -> (show k <> ": " <> show c) : acc) mempty summary
+      traverse_ write summaryPrint
+  where
+    process :: (Member MergeRequestApi r, Member Writer r) => Project -> Sem r Result
+    process project = do
+      write ""
+      write $ formatWith [bold] ("=== " <> show (name project))
+      if onlyAllowMergeIfPipelineSucceeds project
+        then write "option is already enabled. Not doing anything" $> AlreadySet
+        else do
+          write "setting option"
+          res <- setSuccessfulPipelineRequirementForMerge (projectId project)
+          case res of
+            Left err -> write ("something went wrong. " <> show err) $> Error
+            Right _ -> write "done" $> Set
+
+enableAllDiscussionsResolvedForMergeRequirement :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => GroupId -> Sem r ()
+enableAllDiscussionsResolvedForMergeRequirement gId = do
+  write "=================================================="
+  write $ "Enabling the requirement that all discussions must be resolved for a MR to be merged for Group " <> show gId
+  getProjects gId >>= \case
+    Left err -> write $ show err
+    Right projects -> do
+      res <- traverse process projects
+      write ""
+      write "done: "
+      let summary = foldl' (\m r -> M.insertWith (<>) r (Sum (1 :: Int)) m) (M.fromList $ (,mempty) <$> universe) res
+      let summaryPrint = M.foldlWithKey' (\acc k (Sum c) -> (show k <> ": " <> show c) : acc) mempty summary
+      traverse_ write summaryPrint
+  where
+    process :: (Member MergeRequestApi r, Member Writer r) => Project -> Sem r Result
+    process project = do
+      write ""
+      write $ formatWith [bold] ("=== " <> show (name project))
+      if onlyAllowMergeIfAllDiscussionsAreResolved project
+        then write "option is already enabled. Not doing anything" $> AlreadySet
+        else do
+          write "setting option"
+          res <- setResolvedDiscussionsRequirementForMerge (projectId project)
+          case res of
+            Left err -> write ("something went wrong. " <> show err) $> Error
+            Right _ -> write "done" $> Set
 
 data Result = AlreadySet | Set | Error deriving (Bounded, Enum, Eq, Ord, Show)
 

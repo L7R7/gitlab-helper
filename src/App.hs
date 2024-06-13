@@ -21,11 +21,13 @@ run = do
   command <- commandParser
   let action = case command of
         ShowBranches -> showBranchesForGroup groupId
-        EnableSourcBranchDeletionAfterMerge -> enableSourceBranchDeletionAfterMerge groupId
+        EnableSourceBranchDeletionAfterMerge -> enableSourceBranchDeletionAfterMerge groupId
         ShowProjects -> showProjectsForGroup groupId
         ShowSchedules -> showSchedulesForGroup groupId
         ShowPipelineDurations -> showPipelineDurationsForProject (ProjectId 720)
         ShowMergeRequests -> showMergeRequests groupId
+        EnableAllDiscussionsMustBeResolvedForMergeRequirement -> enableAllDiscussionsResolvedForMergeRequirement groupId
+        EnableSuccessfulPipelineForMergeRequirement -> enableSuccessfulPipelineForMergeRequirement groupId
   runM
     . timerToIO
     . writerToIO
