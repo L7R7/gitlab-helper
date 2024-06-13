@@ -74,6 +74,7 @@ mergeRequestUpdatActionParser =
     f "merge" = Right Merge
     f "draft" = Right SetToDraft
     f "ready" = Right MarkAsReady
+    f "list" = Right List
     f s = Left $ s <> " is not a valid MergeRequestUpdateAction"
 
 executionParser :: Parser Execution

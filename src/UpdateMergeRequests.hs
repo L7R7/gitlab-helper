@@ -59,7 +59,10 @@ updateMergeRequests gId projectExcludes action authorIs maybeSearchTerms execute
             Execute -> performActionExecute
       f pId mr
 
+    printMergeRequest _ = pure ()
+
     performActionExecute pId mr = case action of
+      List -> Right () <$ printMergeRequest mr
       Rebase -> rebaseMergeRequest pId (mergeRequestIid mr)
       Merge -> mergeMergeRequest pId (mergeRequestIid mr)
       SetToDraft ->
@@ -73,6 +76,7 @@ updateMergeRequests gId projectExcludes action authorIs maybeSearchTerms execute
 
     performActionDry _ mr =
       Right () <$ case action of
+        List -> printMergeRequest mr
         Rebase -> write "dry run. skipping rebase"
         Merge -> write "dry run. skipping merge"
         SetToDraft ->

@@ -68,7 +68,7 @@ data Command
 
 data Execution = DryRun | Execute deriving stock (Eq, Show)
 
-data MergeRequestUpdateAction = Rebase | Merge | SetToDraft | MarkAsReady deriving stock (Show)
+data MergeRequestUpdateAction = List | Rebase | Merge | SetToDraft | MarkAsReady deriving stock (Show)
 
 newtype AuthorIs = AuthorIs Int deriving stock (Show)
 
