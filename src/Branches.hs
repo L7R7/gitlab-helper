@@ -86,26 +86,50 @@ type BranchesCount = Sum Int
 
 type StaleBranchesCount = Sum Int
 
+type MergedBranchesCount = Sum Int
+
+type Summary = (ProjectCount, BranchesCount, StaleBranchesCount, MergedBranchesCount)
+
 writeSummary :: (Member Writer r, Member Timer r) => [(Project, Either UpdateError [Branch])] -> Sem r ()
 writeSummary results = do
   now <- getCurrentTime
   write ""
   write . showSummary $ summary now results
 
-summary :: UTCTime -> [(Project, Either UpdateError [Branch])] -> (ProjectCount, BranchesCount, StaleBranchesCount)
+summary :: UTCTime -> [(Project, Either UpdateError [Branch])] -> Summary
 summary now = foldMap (count now)
 
-showSummary :: (ProjectCount, BranchesCount, StaleBranchesCount) -> Text
-showSummary (projects, branches, stale) = formatWith [bold] $ unwords [" ▶", show . getSum $ branches, "branches in", show . getSum $ projects, "projects.", show . getSum $ stale, "of them " <> isAre stale <> " stale"]
+showSummary :: Summary -> Text
+showSummary (projects, branches, stale, merged) =
+  formatWith [bold] $
+    unwords
+      [ " ▶",
+        show . getSum $ branches,
+        "branches in",
+        show . getSum $ projects,
+        "projects.",
+        show . getSum $ stale,
+        "of them " <> isAre stale <> " stale,",
+        show . getSum $ merged,
+        "of them " <> isAre merged <> " merged."
+      ]
   where
     isAre (Sum 1) = "is"
     isAre _ = "are"
 
-count :: UTCTime -> (Project, Either UpdateError [Branch]) -> (ProjectCount, BranchesCount, StaleBranchesCount)
+count :: UTCTime -> (Project, Either UpdateError [Branch]) -> Summary
 count _ (_, Left _) = mempty
-count now (_, Right branches) = (hasBranches, notDefaultCount, stale)
+count now (_, Right branches) = (hasBranches, notDefaultCount, stale, merged)
   where
     notDefault = filter (not . branchDefault) branches
-    notDefaultCount = Sum $ length notDefault
     hasBranches = Sum $ if notDefaultCount /= 0 then 1 else 0
-    stale = Sum $ length $ filter (> 90) $ age now . branchCommittedDate <$> notDefault
+    (notDefaultCount, stale, merged) = foldMap (\b -> (countBranch b, isStale now b, isMerged b)) notDefault
+
+isStale :: UTCTime -> Branch -> StaleBranchesCount
+isStale now branch = Sum $ if age now (branchCommittedDate branch) > 90 then 1 else 0
+
+isMerged :: Branch -> MergedBranchesCount
+isMerged branch = Sum $ if branchMerged branch then 1 else 0
+
+countBranch :: Branch -> BranchesCount
+countBranch _ = Sum 1

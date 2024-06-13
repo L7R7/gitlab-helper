@@ -28,7 +28,7 @@ showProjectsForGroup gId = do
     Left err -> write $ show err
     Right projects -> do
       traverse_ (write . show) (sortOn (toLower . getProjectName . name) projects)
-      writeSummary $ summarize projects
+      writeSummary $ foldMap summarizeSingle projects
 
 enableSourceBranchDeletionAfterMerge :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => GroupId -> Sem r ()
 enableSourceBranchDeletionAfterMerge gId = do
@@ -85,9 +85,6 @@ writeSummary (ProjectCount numProjects, SourceBranchDeletionEnabled branchDeleti
   write $ "Projekte die 'remove_source_branch_after_merge' aktiviert haben: " <> show branchDeletionEnabled
   write $ "Projekte die 'remove_source_branch_after_merge' NICHT aktiviert haben: " <> show branchDeletionDisabled
   write $ "Projekte ohne default branch: " <> show hasNoDefaultBranch
-
-summarize :: [Project] -> Summary
-summarize = foldMap summarizeSingle
 
 summarizeSingle :: Project -> Summary
 summarizeSingle project = (ProjectCount 1, sourceBranchDeletionEnabled, sourceBranchDeletionDisabled, noDefaultBranch)
