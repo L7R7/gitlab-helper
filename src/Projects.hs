@@ -86,7 +86,7 @@ data Processor r
       -- ^ headline to be printed
       (Project -> Bool)
       -- ^ if this returns True, nothing will be done
-      (ProjectId -> Sem r (Either UpdateError (Sum Int)))
+      (Project -> Sem r (Either UpdateError (Sum Int)))
       -- ^ action to execute
 
 countDeploymentsIn2022 :: (Member ProjectsApi r, Member PipelinesApi r, Member Writer r) => GroupId -> Sem r ()
@@ -96,7 +96,12 @@ countDeploymentsIn2022 gId =
       gId
       (\gi -> "Listing the number of successful deployments in 2022 for all projects in Group " <> show gi)
       (\p -> projectId p `elem` excludes)
-      (\pi -> fmap (Sum . length) <$> getSuccessfulPushPipelinesIn2022 pi undefined)
+      (\p -> do
+        res <- case (defaultBranch p) of
+          Nothing -> Right [] <$ (write $ formatWith [bold] (show (name p) <> ": ") <> formatWith [red] "has no default branch")
+          Just ref -> getSuccessfulPushPipelinesIn2022 (projectId p) ref
+        pure $ fmap (Sum . length) res
+      )
   where
     excludes =
       ProjectId
@@ -199,14 +204,14 @@ process skipIf action project = do
         Left err -> write ("something went wrong. " <> show err) $> Error
         Right _ -> write "done" $> Set
 
-countSingle :: (Member Writer r) => (Project -> Bool) -> (ProjectId -> Sem r (Either UpdateError (Sum Int))) -> Project -> Sem r (Sum Int)
+countSingle :: (Member Writer r) => (Project -> Bool) -> (Project -> Sem r (Either UpdateError (Sum Int))) -> Project -> Sem r (Sum Int)
 countSingle skipIf action project = count >>= \(output, result) -> write (title <> output) $> result
   where
     count =
       if skipIf project
         then pure ("skipped", mempty)
         else do
-          res <- action (projectId project)
+          res <- action project
           case res of
             Left err -> pure (formatWith [red] "something went wrong: " <> show err, mempty)
             Right s -> pure (show (getSum s) <> " deployments", s)
