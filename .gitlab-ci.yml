@@ -13,4 +13,4 @@ cache:
 build:
   stage: build
   script:
-    - stack --system-ghc test
+    - stack ghc test
