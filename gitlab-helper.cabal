@@ -69,6 +69,7 @@ library
     , polysemy-plugin >=0.3.0.0
     , relude
     , scientific
+    , split
     , text
     , time
     , yaml

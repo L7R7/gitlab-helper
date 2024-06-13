@@ -1,7 +1,7 @@
 module Config.Env (parseFromEnv) where
 
 import Barbies (TraversableB (btraverse))
-import Config.Types (ApiToken (ApiToken), BaseUrl (BaseUrl), GroupId (GroupId), PartialConfig (PartialConfig))
+import Config.Types (ApiToken (ApiToken), BaseUrl (BaseUrl), GroupId (GroupId), PartialConfig (PartialConfig), ProjectId (ProjectId))
 import qualified Data.Semigroup as S (First (..))
 import qualified Env as E
 import Network.URI (URI, parseAbsoluteURI)
@@ -21,6 +21,7 @@ partialConfigParser =
       (GroupId <$> E.var E.auto "HB_GROUP_ID" (E.help "ID of the Gitlab group for which the hooks should be set"))
       (BaseUrl <$> E.var (absoluteURIFromEnv <=< E.nonempty) "HB_BASE_URL" (E.help "Base URL of the Gitlab instance (e.g. `https://gitlab.com/`)"))
       (ApiToken <$> E.var (E.str <=< E.nonempty) "HB_API_TOKEN" (E.help "API Token to use for authorizing requests against the Gitlab API. `api` scope is required."))
+      (fmap ProjectId <$> E.var (traverse E.auto <=< E.splitOn ',') "HB_EXCLUDE_PROJECTS" (E.help "List of projects to exclude"))
       empty
 
 maybeFirstParser :: E.Parser E.Error a -> E.Parser E.Error (Compose Maybe S.First a)

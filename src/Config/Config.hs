@@ -22,9 +22,12 @@ mkConfig :: [PartialConfig (Compose Maybe S.First)] -> Either (NonEmpty String) 
 mkConfig = mkConfig' . mconcat
 
 mkConfig' :: PartialConfig (Compose Maybe S.First) -> Either (NonEmpty String) Config
-mkConfig' = validationToEither . fmap partialConfigToConfig . bsequence' . bzipWith fieldValueOrMissing msgs
+mkConfig' inputs = validationToEither . fmap partialConfigToConfig . bsequence' . bzipWith fieldValueOrMissing msgs $ inputs <> defaultValues
   where
-    msgs = PartialConfig (Const "Group ID missing") (Const "Base URL missing") (Const "API-Token missing") (Const "Command misisng")
+    msgs = PartialConfig (Const "Group ID missing") (Const "Base URL missing") (Const "API-Token missing") (Const "Project exclude list missing") (Const "Command misisng")
     fieldValueOrMissing :: Const String a -> Compose Maybe S.First a -> Validation (NonEmpty String) a
     fieldValueOrMissing (Const err) (Compose Nothing) = Failure $ err :| []
     fieldValueOrMissing _ (Compose (Just (S.First a))) = Success a
+
+defaultValues :: PartialConfig (Compose Maybe S.First)
+defaultValues = PartialConfig mempty mempty mempty (pure []) mempty

@@ -59,7 +59,6 @@ module Effects
     Pipeline (..),
     PipelineId (..),
     Ref (..),
-    ProjectId (..),
     ProjectName (..),
     CompactPipeline (..),
     Schedule (..),
@@ -68,7 +67,7 @@ module Effects
 where
 
 import Autodocodec
-import Config.Types hiding (Merge, groupId)
+import Config.Types (AuthorIs, GroupId, ProjectId, SearchTerm, Year)
 import Data.Aeson (FromJSON (..), ToJSON)
 import Data.Scientific
 import qualified Data.Text as T hiding (partition)
@@ -79,13 +78,6 @@ import Network.URI
 import Polysemy
 import Relude
 import qualified Text.Show
-
-newtype ProjectId = ProjectId {getProjectId :: Int}
-  deriving newtype (Eq, Ord, Show)
-  deriving (FromJSON) via (Autodocodec ProjectId)
-
-instance HasCodec ProjectId where
-  codec = dimapCodec ProjectId getProjectId boundedIntegralCodec
 
 newtype ProjectName = ProjectName {getProjectName :: Text}
   deriving newtype (Eq, Ord)

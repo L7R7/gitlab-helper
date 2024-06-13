@@ -8,6 +8,7 @@ import Config.Config (parseConfigOrDie)
 import Config.Types
 import Interpreters
 import MergeRequests
+import qualified Polysemy.Reader as R
 import Projects
 import Relude
 import Schedules (showSchedulesForGroup)
@@ -16,7 +17,8 @@ import Util
 
 run :: IO ()
 run = do
-  Config {..} <- parseConfigOrDie
+  c@Config {..} <- parseConfigOrDie
+  putStrLn $ "running with config: " <> show c
   let program = case cmd of
         ShowBranches -> showBranchesForGroup groupId
         (EnableSourceBranchDeletionAfterMerge execution) -> enableSourceBranchDeletionAfterMerge execution groupId
@@ -33,6 +35,7 @@ run = do
   runM
     . timerToIO
     . writerToIO
+    . R.runReader c
     . branchesApiToIO baseUrl apiToken
     . usersApiToIO baseUrl apiToken
     . groupsApiToIO baseUrl apiToken

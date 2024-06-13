@@ -28,6 +28,7 @@ import Data.Text (toLower)
 import Effects
 import qualified Effects as G
 import Polysemy
+import qualified Polysemy.Reader as R
 import Relude hiding (pi)
 
 listAllProjectsMeta :: (Member UsersApi r, Member GroupsApi r, Member ProjectsApi r, Member Writer r) => Sem r ()
@@ -90,8 +91,9 @@ data Processor r
       -- | action to execute
       (Project -> Sem r (Either UpdateError (Sum Int)))
 
-countDeployments :: (Member ProjectsApi r, Member PipelinesApi r, Member Writer r) => GroupId -> Year -> Sem r ()
-countDeployments gId year@(Year y) =
+countDeployments :: (Member ProjectsApi r, Member PipelinesApi r, Member Writer r, Member (R.Reader Config) r) => GroupId -> Year -> Sem r ()
+countDeployments gId year@(Year y) = do
+  excludes <- R.asks projectsExcludeList
   runProcessor
     $ Counter
       gId
@@ -103,13 +105,6 @@ countDeployments gId year@(Year y) =
             Just ref -> getSuccessfulPushPipelines year (projectId p) ref
           pure $ fmap (Sum . length) res
       )
-  where
-    excludes =
-      ProjectId
-        <$> [94, 198, 509, 554, 572, 583, 587, 648, 663, 738]
-        ++ [1071, 1141, 1703, 1720, 1726, 1757, 1759, 1765, 1766, 1767, 1770, 1771, 1871]
-        ++ [2011, 2040, 2041, 2145, 2151, 2155, 2191, 2260, 2261, 2328, 2507, 2756, 2828, 2843, 2871, 2941]
-        ++ [3015, 3053]
 
 enableSourceBranchDeletionAfterMerge :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => Execution -> GroupId -> Sem r ()
 enableSourceBranchDeletionAfterMerge execution gId =

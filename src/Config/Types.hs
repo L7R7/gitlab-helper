@@ -7,6 +7,7 @@
 module Config.Types
   ( Config (..),
     GroupId (..),
+    ProjectId (..),
     BaseUrl (..),
     ApiToken (..),
     PartialConfig (..),
@@ -31,6 +32,7 @@ data Config = Config
   { groupId :: GroupId,
     baseUrl :: BaseUrl,
     apiToken :: ApiToken,
+    projectsExcludeList :: [ProjectId],
     cmd :: Command
   }
   deriving stock (Show)
@@ -39,6 +41,7 @@ data PartialConfig f = PartialConfig
   { pGroupId :: f GroupId,
     pBaseUrl :: f BaseUrl,
     pApiToken :: f ApiToken,
+    pProjectsExcludeList :: f [ProjectId],
     pCommand :: f Command
   }
   deriving stock (Generic)
@@ -56,6 +59,13 @@ newtype GroupId = GroupId Int
 
 instance HasCodec GroupId where
   codec = dimapCodec GroupId (\(GroupId i) -> i) codec
+
+newtype ProjectId = ProjectId {getProjectId :: Int}
+  deriving newtype (Eq, Ord, Show)
+  deriving (FromJSON) via (Autodocodec ProjectId)
+
+instance HasCodec ProjectId where
+  codec = dimapCodec ProjectId getProjectId boundedIntegralCodec
 
 newtype BaseUrl = BaseUrl URI deriving newtype (Show)
 
@@ -87,4 +97,4 @@ newtype SearchTerm = SearchTerm String deriving stock (Show)
 newtype Year = Year Int deriving stock (Show)
 
 partialConfigToConfig :: PartialConfig Identity -> Config
-partialConfigToConfig (PartialConfig (Identity groupId) (Identity baseUrl) (Identity apiToken) (Identity cmd)) = Config {..}
+partialConfigToConfig (PartialConfig (Identity groupId) (Identity baseUrl) (Identity apiToken) (Identity projectsExcludeList) (Identity cmd)) = Config {..}

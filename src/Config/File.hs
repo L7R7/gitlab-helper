@@ -21,6 +21,7 @@ instance FromJSON (PartialConfig Maybe) where
       pGroupId <- c .:? "groupId"
       pBaseUrl <- c .:? "baseUrl"
       pApiToken <- c .:? "apiToken"
+      pProjectsExcludeList <- c .:? "excludeProjects"
       let pCommand = Nothing
       pure $ PartialConfig {..}
 

@@ -8,6 +8,7 @@
 
 module Pipelines (showPipelineDurationsForProject, PipelineWithDuration (..), WriteToFile (..), writeResult, showPipelineWithDuration) where
 
+import Config.Types (ProjectId)
 import Data.Time (UTCTime)
 import Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds)
 import Effects
