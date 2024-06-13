@@ -36,7 +36,7 @@ readPartialOptionsFromLocalDir = getCurrentDirectory >>= readPartialOptionsFromD
 readPartialOptionsFromDir :: (Monoid a, FromJSON a) => FilePath -> IO a
 readPartialOptionsFromDir dir = do
   let configFilePath = dir <> "/.gitlab-helper.yml"
-  exists <- doesFileExist configFilePath
-  if exists
-    then fromRight mempty <$> decodeFileEither configFilePath
-    else pure mempty
+  ifM
+    (doesFileExist configFilePath)
+    (fromRight mempty <$> decodeFileEither configFilePath)
+    (pure mempty)
