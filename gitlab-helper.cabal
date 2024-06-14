@@ -35,7 +35,6 @@ library
       Effects
       GitlabUtils
       MergeRequests
-      Pipelines
       Projects
       Schedules
       UpdateMergeRequests

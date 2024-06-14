@@ -38,8 +38,6 @@ module Effects
     getBranches,
 
     -- * Pipelines
-    getPipeline,
-    getSuccessfulPipelines,
     getSuccessfulPushPipelines,
 
     -- * Schedules
@@ -327,16 +325,6 @@ instance HasCodec CompactPipeline where
       .= compactPipelineId
       <*> requiredField' "sha"
       .= compactPipelineSha
-
-getPipeline :: Id Project -> PipelineId -> ReaderT Config IO (Either UpdateError Pipeline)
-getPipeline project pipeline = do
-  let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines/{pipelineId}|]
-  fetchData template [("projectId", (stringValue . show) project), ("pipelineId", (stringValue . show) pipeline)]
-
-getSuccessfulPipelines :: Id Project -> Ref -> ReaderT Config IO (Either UpdateError [CompactPipeline])
-getSuccessfulPipelines pId (Ref ref) = do
-  let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines?ref={ref}&status={status}&updated_after=2021-01-06T00:00:00Z&source=push|]
-  fetchDataPaginated template [("projectId", (stringValue . show) pId), ("ref", (stringValue . toString) ref), ("status", stringValue "success")]
 
 getSuccessfulPushPipelines :: Year -> Id Project -> Ref -> ReaderT Config IO (Either UpdateError [CompactPipeline])
 getSuccessfulPushPipelines (Year year) pId (Ref ref) = do
