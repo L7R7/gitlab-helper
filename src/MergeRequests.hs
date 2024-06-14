@@ -16,21 +16,19 @@ module MergeRequests
   )
 where
 
+import Config.Types (Config (..))
 import Data.List (partition)
 import qualified Data.Text as T (intercalate)
 import Data.Time hiding (getCurrentTime)
 import Effects
 import Gitlab.Client (UpdateError)
-import Gitlab.Group (Group)
-import Gitlab.Lib (Id)
 import Gitlab.MergeRequest
 import Gitlab.Project
-import Polysemy
 import Relude
 
-showMergeRequests :: (Member ProjectsApi r, Member MergeRequestApi r, Member Timer r, Member Writer r) => Id Group -> Sem r ()
-showMergeRequests gId = do
-  getProjectsForGroup gId >>= \case
+showMergeRequests :: ReaderT Config IO ()
+showMergeRequests = do
+  getProjectsForGroup >>= \case
     Left err -> write $ show err
     Right projects -> do
       let (mrEnabled, mrDisabled) = partition projectMergeRequestsEnabled projects
@@ -38,21 +36,21 @@ showMergeRequests gId = do
       write ""
       printProjectsWithMergeRequests mrEnabled
 
-printProjectsWithDisabledMergeRequests :: (Member Writer r) => [Project] -> Sem r ()
+printProjectsWithDisabledMergeRequests :: [Project] -> ReaderT Config IO ()
 printProjectsWithDisabledMergeRequests projects = do
   write "=== projects with disabled merge requests"
   printProjects projects
   where
-    printProjects :: (Member Writer r) => [Project] -> Sem r ()
+    printProjects :: [Project] -> ReaderT Config IO ()
     printProjects [] = write "There are no projects with disabled merge requests"
     printProjects ps = write $ T.intercalate ", " (show . projectName <$> ps)
 
-printProjectsWithMergeRequests :: (Member MergeRequestApi r, Member Timer r, Member Writer r) => [Project] -> Sem r ()
+printProjectsWithMergeRequests :: [Project] -> ReaderT Config IO ()
 printProjectsWithMergeRequests projects = do
   write "=== projects with merge requests ( ⚬ = Draft)"
   printProjects projects
   where
-    printProjects :: (Member MergeRequestApi r, Member Timer r, Member Writer r) => [Project] -> Sem r ()
+    printProjects :: [Project] -> ReaderT Config IO ()
     printProjects [] = write "There are no projects with enabled merge requests"
     printProjects ps = do
       projectsWithMergeRequests <- traverse (\project -> (project,) <$> getOpenMergeRequests (projectId project) Nothing) ps
@@ -60,7 +58,7 @@ printProjectsWithMergeRequests projects = do
       mapM_ printProjectsWithMergeRequests' projectsWithOpenMergeRequests
     hasOpenMergeRequests (_, res) = (not . all null) res
 
-printProjectsWithMergeRequests' :: (Member Timer r, Member Writer r) => (Project, Either UpdateError [MergeRequest]) -> Sem r ()
+printProjectsWithMergeRequests' :: (Project, Either UpdateError [MergeRequest]) -> ReaderT Config IO ()
 printProjectsWithMergeRequests' (project, Left err) = write $ unwords ["Couldn't get open merge requests for", show project, "error was", show err]
 printProjectsWithMergeRequests' (project, Right mrs) = do
   now <- getCurrentTime

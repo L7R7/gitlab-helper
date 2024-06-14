@@ -16,19 +16,18 @@ module Branches
 where
 
 import Colourista.Pure
+import Config.Types (Config (..))
 import qualified Data.Text as T (intercalate)
 import Data.Time hiding (getCurrentTime)
 import Effects
 import Gitlab.Branch
 import Gitlab.Client (UpdateError)
-import Gitlab.Group
-import Gitlab.Lib (Id)
 import Gitlab.Project
-import Polysemy
 import Relude
 
-showBranchesForGroup :: (Member ProjectsApi r, Member BranchesApi r, Member Timer r, Member Writer r) => Id Group -> Sem r ()
-showBranchesForGroup gId = do
+showBranchesForGroup :: ReaderT Config IO ()
+showBranchesForGroup = do
+  gId <- asks groupId
   write "=================================================="
   write $ "Listing the projects' branches for Group " <> show gId
   write "Only those projects that have branches other than the default branch will be printed"
@@ -36,16 +35,16 @@ showBranchesForGroup gId = do
   write "  ✔ - the branch is merged"
   write "  ✗ - the branch is stale (older than 90 days)"
   write "  ⚬ - the branch is protected"
-  getProjectsForGroup gId >>= \case
+  getProjectsForGroup >>= \case
     Left err -> write $ show err
     Right projects -> do
       results <- traverse (getBranchesForProject >=> printResult) projects
       writeSummary results
 
-getBranchesForProject :: (Member BranchesApi r) => Project -> Sem r (Project, Either UpdateError [Branch])
+getBranchesForProject :: Project -> ReaderT Config IO (Project, Either UpdateError [Branch])
 getBranchesForProject p = (p,) <$> getBranches (projectId p)
 
-printResult :: (Member Writer r, Member Timer r) => (Project, Either UpdateError [Branch]) -> Sem r (Project, Either UpdateError [Branch])
+printResult :: (Project, Either UpdateError [Branch]) -> ReaderT Config IO (Project, Either UpdateError [Branch])
 printResult input@(project, Left err) = do
   write $ "=== " <> show (projectName project)
   write $ "something went wrong: " <> show err
@@ -94,7 +93,7 @@ type MergedBranchesCount = Sum Int
 
 type Summary = (ProjectCount, BranchesCount, StaleBranchesCount, MergedBranchesCount)
 
-writeSummary :: (Member Writer r, Member Timer r) => [(Project, Either UpdateError [Branch])] -> Sem r ()
+writeSummary :: [(Project, Either UpdateError [Branch])] -> ReaderT Config IO ()
 writeSummary results = do
   now <- getCurrentTime
   write ""

@@ -16,29 +16,29 @@ module Schedules
 where
 
 import Colourista.Pure
+import Config.Types (Config (..))
 import Effects
 import Gitlab.Client (UpdateError)
-import Gitlab.Group (Group)
-import Gitlab.Lib (Id, Name (..))
+import Gitlab.Lib (Name (..))
 import Gitlab.Project
-import Polysemy
 import Relude
 
-showSchedulesForGroup :: (Member ProjectsApi r, Member SchedulesApi r, Member Writer r) => Id Group -> Sem r ()
-showSchedulesForGroup gId = do
+showSchedulesForGroup :: ReaderT Config IO ()
+showSchedulesForGroup = do
+  gId <- asks groupId
   write "=================================================="
   write $ "Listing the projects' schedules for Group " <> show gId
-  getProjectsForGroup gId >>= \case
+  getProjectsForGroup >>= \case
     Left err -> write $ show err
     Right projects -> do
       results <- traverse getSchedulesForProject (sortOn (getName . projectName) projects)
       traverse_ printResults results
       writeSummary results
 
-getSchedulesForProject :: (Member SchedulesApi r) => Project -> Sem r (Project, Either UpdateError [Schedule])
+getSchedulesForProject :: Project -> ReaderT Config IO (Project, Either UpdateError [Schedule])
 getSchedulesForProject p = (p,) <$> getSchedules (projectId p)
 
-printResults :: (Member Writer r) => (Project, Either UpdateError [Schedule]) -> Sem r ()
+printResults :: (Project, Either UpdateError [Schedule]) -> ReaderT Config IO ()
 printResults (project, Left err) = do
   write $ formatWith [bold] ("=== " <> show (projectName project))
   write $ "something went wrong: " <> show err
@@ -74,7 +74,7 @@ type ProjectsWithoutSchedule = Sum Int
 
 type ProjectsWithSchedules = Sum Int
 
-writeSummary :: (Member Writer r) => [(Project, Either UpdateError [Schedule])] -> Sem r ()
+writeSummary :: [(Project, Either UpdateError [Schedule])] -> ReaderT Config IO ()
 writeSummary results = do
   write ""
   write . showSummary $ summary results

@@ -1,7 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 
 module App (run) where
 
@@ -10,14 +9,11 @@ import Config.Config (parseConfigOrDie)
 import Config.Types
 import Effects (write)
 import GitHash
-import Interpreters
 import MergeRequests
-import qualified Polysemy.Reader as R
 import Projects
 import Relude
 import Schedules (showSchedulesForGroup)
 import UpdateMergeRequests (updateMergeRequests)
-import Util
 
 run :: IO ()
 run = do
@@ -26,27 +22,16 @@ run = do
   -- putStrLn $ "running with config: " <> show c
   let program = case cmd of
         Version -> write gitCommit
-        ShowBranches -> showBranchesForGroup groupId
-        (EnableSourceBranchDeletionAfterMerge execution) -> enableSourceBranchDeletionAfterMerge execution groupId
-        ShowProjects -> showProjectsForGroup groupId
+        ShowBranches -> showBranchesForGroup
+        (EnableSourceBranchDeletionAfterMerge execution) -> enableSourceBranchDeletionAfterMerge execution
+        ShowProjects -> showProjectsForGroup
         ListAllProjectsMeta -> listAllProjectsMeta
-        ListProjectsMeta -> listProjectsMetaForGroup groupId
-        ShowSchedules -> showSchedulesForGroup groupId
-        ShowMergeRequests -> showMergeRequests groupId
-        (EnableAllDiscussionsMustBeResolvedForMergeRequirement execution) -> enableAllDiscussionsResolvedForMergeRequirement execution groupId
-        (EnableSuccessfulPipelineForMergeRequirement execution) -> enableSuccessfulPipelineForMergeRequirement execution groupId
-        (CountSuccessfulDeployments year) -> countDeployments groupId year
-        (SetMergeMethodToFastForward execution) -> setMergeMethodToFastForward execution groupId
-        (UpdateMergeRequests action authorIs searchTerm execution) -> updateMergeRequests groupId projectsExcludeList action authorIs searchTerm execution
-  runM
-    . timerToIO
-    . writerToIO
-    . R.runReader c
-    . branchesApiToIO baseUrl apiToken
-    . usersApiToIO baseUrl apiToken
-    . groupsApiToIO baseUrl apiToken
-    . projectsApiToIO baseUrl apiToken
-    . mergeRequestApiToIO baseUrl apiToken
-    . pipelinesApiToIO baseUrl apiToken
-    . schedulesApiToIO baseUrl apiToken
-    $ program
+        ListProjectsMeta -> listProjectsMetaForGroup
+        ShowSchedules -> showSchedulesForGroup
+        ShowMergeRequests -> showMergeRequests
+        (EnableAllDiscussionsMustBeResolvedForMergeRequirement execution) -> enableAllDiscussionsResolvedForMergeRequirement execution
+        (EnableSuccessfulPipelineForMergeRequirement execution) -> enableSuccessfulPipelineForMergeRequirement execution
+        (CountSuccessfulDeployments year) -> countDeployments year
+        (SetMergeMethodToFastForward execution) -> setMergeMethodToFastForward execution
+        (UpdateMergeRequests action authorIs searchTerm execution) -> updateMergeRequests projectsExcludeList action authorIs searchTerm execution
+  runReaderT program c
