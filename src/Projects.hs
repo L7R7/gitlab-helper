@@ -28,32 +28,30 @@ import Data.Text (toLower)
 import Effects
 import Gitlab.Client (UpdateError)
 import Gitlab.Group (Group)
-import qualified Gitlab.Group as G
 import Gitlab.Lib (EnabledDisabled (..), Id (..), Name (..), Ref (..))
 import Gitlab.Project
-import Polysemy
-import qualified Polysemy.Reader as R
 import Relude hiding (pi)
 
-listAllProjectsMeta :: (Member UsersApi r, Member GroupsApi r, Member ProjectsApi r, Member Writer r) => Sem r ()
+listAllProjectsMeta :: ReaderT Config IO ()
 listAllProjectsMeta = fetch >>= bitraverse_ (write . show) writeMetaFormat
   where
     fetch =
       runExceptT
         $ (<>)
-        <$> (getAllGroups' >>= fmap join . traverse (getProjectsForGroup' . G.groupId))
+        <$> (getAllGroups' >>= fmap join . traverse getProjectsForGroup')
         <*> (getAllUsers' >>= fmap join . traverse (getProjectsForUser' . userId))
 
     getAllGroups' = ExceptT getAllGroups
-    getProjectsForGroup' = ExceptT . getProjectsForGroup
+    getProjectsForGroup' = ExceptT . const getProjectsForGroup
     getProjectsForUser' = ExceptT . getProjectsForUser
     getAllUsers' = ExceptT getAllUsers
 
-showProjectsForGroup :: (Member ProjectsApi r, Member Writer r) => Id Group -> Sem r ()
-showProjectsForGroup gId = do
+showProjectsForGroup :: ReaderT Config IO ()
+showProjectsForGroup = do
+  gId <- asks groupId
   write "=================================================="
   write $ "Listing the projects for Group " <> show gId
-  getProjectsForGroup gId >>= \case
+  getProjectsForGroup >>= \case
     Left err -> write $ show err
     Right projects -> do
       write . toText $ tableReport (sortOn (toLower . getName . projectName) projects)
@@ -77,44 +75,40 @@ tableReport =
           (headed "auto cancel pending" (show . projectAutoCancelPendingPipelines))
       ]
 
-data Processor r
+data Processor
   = OptionSetter
-      (Id Group)
       -- | headline to be printed
       (Id Group -> Text)
       -- | if this returns True, nothing will be done
       (Project -> Bool)
       -- | action to execute
-      (Id Project -> Sem r (Either UpdateError ()))
+      (Id Project -> ReaderT Config IO (Either UpdateError ()))
   | Counter
-      (Id Group)
       -- | headline to be printed
       (Id Group -> Text)
       -- | if this returns True, nothing will be done
       (Project -> Bool)
       -- | action to execute
-      (Project -> Sem r (Either UpdateError (Sum Int)))
+      (Project -> ReaderT Config IO (Either UpdateError (Sum Int)))
 
-countDeployments :: (Member ProjectsApi r, Member PipelinesApi r, Member Writer r, Member (R.Reader Config) r) => Id Group -> Year -> Sem r ()
-countDeployments gId year@(Year y) = do
-  excludes <- R.asks projectsExcludeList
+countDeployments :: Year -> ReaderT Config IO ()
+countDeployments year@(Year y) = do
+  excludes <- asks projectsExcludeList
   runProcessor
     $ Counter
-      gId
       (\gi -> "Listing the number of successful deployments in " <> show y <> " for all projects in group " <> show gi)
       (\p -> projectId p `elem` excludes)
       ( \p -> do
           res <- case projectDefaultBranch p of
-            Nothing -> Right [] <$ write (formatWith [bold] (show (projectName p) <> ": ") <> formatWith [red] "has no default branch")
+            Nothing -> Right [] <$ write (formatWith [bold] (getName (projectName p) <> ": ") <> formatWith [red] "has no default branch")
             Just ref -> getSuccessfulPushPipelines year (projectId p) ref
           pure $ fmap (Sum . length) res
       )
 
-enableSourceBranchDeletionAfterMerge :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => Execution -> Id Group -> Sem r ()
-enableSourceBranchDeletionAfterMerge execution gId =
+enableSourceBranchDeletionAfterMerge :: Execution -> ReaderT Config IO ()
+enableSourceBranchDeletionAfterMerge execution =
   runProcessor
     $ OptionSetter
-      gId
       (\gi -> "Enabling automatic branch deletion after MR merge for Group " <> show gi)
       (\p -> Just True == projectRemoveSourceBranchAfterMerge p)
       ( \pi -> case execution of
@@ -122,35 +116,33 @@ enableSourceBranchDeletionAfterMerge execution gId =
           Execute -> enableSourceBranchDeletionAfterMrMerge pi
       )
 
-enableSuccessfulPipelineForMergeRequirement :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => Execution -> Id Group -> Sem r ()
-enableSuccessfulPipelineForMergeRequirement execution gId =
+enableSuccessfulPipelineForMergeRequirement :: Execution -> ReaderT Config IO ()
+enableSuccessfulPipelineForMergeRequirement execution =
   runProcessor
     $ OptionSetter
-      gId
       (\gi -> "Enabling the requirement that a successful pipeline is required for a MR to be merged for Group " <> show gi)
       (or . projectOnlyAllowMergeIfPipelineSucceeds)
       (\pId -> getProject pId >>= (projectHasCi >=> configureOption execution pId))
 
-projectHasCi :: (Member ProjectsApi r) => Either UpdateError Project -> Sem r (Either UpdateError Bool)
+projectHasCi :: Either UpdateError Project -> ReaderT Config IO (Either UpdateError Bool)
 projectHasCi (Left err) = pure $ Left err
 projectHasCi (Right (Project pId _ _ (Just ref) _ _ _ _ _ _ _ _)) = hasCi pId ref
 projectHasCi (Right _) = pure $ Right False -- no default branch, no CI
 
-configureOption :: (Member MergeRequestApi r, Member Writer r) => Execution -> Id Project -> Either UpdateError Bool -> Sem r (Either UpdateError ())
+configureOption :: Execution -> Id Project -> Either UpdateError Bool -> ReaderT Config IO (Either UpdateError ())
 configureOption _ _ (Left err) = pure $ Left err
 configureOption DryRun _ (Right False) = Right () <$ write "Dry Run. Pretending to unset option for project" >> logUnset
 configureOption Execute pId (Right False) = unsetSuccessfulPipelineRequirementForMerge pId >> logUnset
 configureOption DryRun _ (Right True) = Right () <$ write "Dry Run. Pretending to set option for project"
 configureOption Execute pId (Right True) = setSuccessfulPipelineRequirementForMerge pId
 
-logUnset :: (Member Writer r) => Sem r (Either UpdateError ())
+logUnset :: ReaderT Config IO (Either UpdateError ())
 logUnset = write "Project doesn't have CI. Deactivated the option." $> Right ()
 
-enableAllDiscussionsResolvedForMergeRequirement :: (Member ProjectsApi r, Member MergeRequestApi r, Member Writer r) => Execution -> Id Group -> Sem r ()
-enableAllDiscussionsResolvedForMergeRequirement execution gId =
+enableAllDiscussionsResolvedForMergeRequirement :: Execution -> ReaderT Config IO ()
+enableAllDiscussionsResolvedForMergeRequirement execution =
   runProcessor
     $ OptionSetter
-      gId
       (\gi -> "Enabling the requirement that all discussions must be resolved for a MR to be merged for Group " <> show gi)
       (or . projectOnlyAllowMergeIfAllDiscussionsAreResolved)
       ( case execution of
@@ -158,11 +150,10 @@ enableAllDiscussionsResolvedForMergeRequirement execution gId =
           Execute -> setResolvedDiscussionsRequirementForMerge
       )
 
-setMergeMethodToFastForward :: (Member ProjectsApi r, Member Writer r) => Execution -> Id Group -> Sem r ()
-setMergeMethodToFastForward execution gId =
+setMergeMethodToFastForward :: Execution -> ReaderT Config IO ()
+setMergeMethodToFastForward execution =
   runProcessor
     $ OptionSetter
-      gId
       (\gi -> "Setting the merge method to \"Fast Forward\" for all projects in group " <> show gi)
       (\p -> projectMergeMethod p == FastForward)
       ( case execution of
@@ -170,20 +161,21 @@ setMergeMethodToFastForward execution gId =
           Execute -> (`setMergeMethod` FastForward)
       )
 
-listProjectsMetaForGroup :: (Member ProjectsApi r, Member Writer r) => Id Group -> Sem r ()
-listProjectsMetaForGroup gId =
-  getProjectsForGroup gId >>= \case
+listProjectsMetaForGroup :: ReaderT Config IO ()
+listProjectsMetaForGroup = do
+  getProjectsForGroup >>= \case
     Left err -> write $ show err
     Right projects -> writeMetaFormat projects
 
-writeMetaFormat :: (Member Writer r) => [Project] -> Sem r ()
+writeMetaFormat :: [Project] -> ReaderT Config IO ()
 writeMetaFormat projects = write $ decodeUtf8 $ encode $ M.fromList $ (\p -> (projectPathWithNamespace p, projectSshUrlToRepo p)) <$> projects
 
-runProcessor :: (Member ProjectsApi r, Member Writer r) => Processor r -> Sem r ()
-runProcessor (OptionSetter gId title skipIf action) = do
+runProcessor :: Processor -> ReaderT Config IO ()
+runProcessor (OptionSetter title skipIf action) = do
+  gId <- asks groupId
   write "=================================================="
   write $ title gId
-  getProjectsForGroup gId >>= \case
+  getProjectsForGroup >>= \case
     Left err -> write $ show err
     Right projects -> do
       res <- traverse (process skipIf action) projects
@@ -192,18 +184,19 @@ runProcessor (OptionSetter gId title skipIf action) = do
       let summary = foldl' (\m r -> M.insertWith (<>) r (Sum (1 :: Int)) m) (M.fromList $ (,mempty) <$> universe) res
       let summaryPrint = M.foldlWithKey' (\acc k (Sum c) -> (show k <> ": " <> show c) : acc) mempty summary
       traverse_ write summaryPrint
-runProcessor (Counter gId title skipIf action) = do
+runProcessor (Counter title skipIf action) = do
+  gId <- asks groupId
   write "=================================================="
   write $ title gId
   write ""
-  getProjectsForGroup gId >>= \case
+  getProjectsForGroup >>= \case
     Left err -> write $ show err
     Right projects -> do
       res <- traverse (countSingle skipIf action) projects
       write ""
       write $ "done. Total: " <> show (getSum $ fold res) <> " deployments"
 
-process :: (Member Writer r) => (Project -> Bool) -> (Id Project -> Sem r (Either UpdateError ())) -> Project -> Sem r Result
+process :: (Project -> Bool) -> (Id Project -> ReaderT Config IO (Either UpdateError ())) -> Project -> ReaderT Config IO Result
 process skipIf action project = do
   write ""
   write $ formatWith [bold] ("=== " <> show (projectName project))
@@ -216,7 +209,7 @@ process skipIf action project = do
         Left err -> write ("something went wrong. " <> show err) $> Error
         Right _ -> write "done" $> Set
 
-countSingle :: (Member Writer r) => (Project -> Bool) -> (Project -> Sem r (Either UpdateError (Sum Int))) -> Project -> Sem r (Sum Int)
+countSingle :: (Project -> Bool) -> (Project -> ReaderT Config IO (Either UpdateError (Sum Int))) -> Project -> ReaderT Config IO (Sum Int)
 countSingle skipIf action project = count >>= \(output, result) -> write (title <> output) $> result
   where
     count =
@@ -268,7 +261,7 @@ type Summary =
     )
   )
 
-writeSummary :: (Member Writer r) => Summary -> Sem r ()
+writeSummary :: Summary -> ReaderT Config IO ()
 writeSummary
   ( Count numProjects,
     EnabledDisabledCount (Count branchDeletionEnabled, Count branchDeletionDisabled),

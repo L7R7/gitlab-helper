@@ -16,28 +16,23 @@ where
 import Config.Types
 import Data.Text (isInfixOf, strip, stripPrefix, toLower)
 import Effects
-import Gitlab.Group
 import Gitlab.Lib (Id)
 import Gitlab.MergeRequest
 import Gitlab.Project (Project)
-import Polysemy
 import Relude
 
 updateMergeRequests ::
-  forall r.
-  (Member MergeRequestApi r, Member Writer r) =>
-  Id Group ->
   [Id Project] ->
   MergeRequestUpdateAction ->
   Maybe AuthorIs ->
   Maybe (Either SearchTerm SearchTermTitle) ->
   Execution ->
-  Sem r ()
-updateMergeRequests _ _ (Merge _) _ Nothing Execute =
+  ReaderT Config IO ()
+updateMergeRequests _ (Merge _) _ Nothing Execute =
   write "I don't think you want to blindly merge all merge requests for this group. Consider adding a filter. Exiting now."
-updateMergeRequests gId projectExcludes action authorIs maybeSearchTerms execute = do
+updateMergeRequests projectExcludes action authorIs maybeSearchTerms execute = do
   let searchTerm' = either id (\(SearchTermTitle s) -> SearchTerm s) <$> maybeSearchTerms
-  getOpenMergeRequestsForGroup gId authorIs searchTerm' >>= \case
+  getOpenMergeRequestsForGroup authorIs searchTerm' >>= \case
     Left err -> write $ show err
     Right [] -> write "no MRs to process"
     Right allMergeRequests -> do
