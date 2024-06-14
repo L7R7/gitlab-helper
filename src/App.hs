@@ -18,7 +18,7 @@ import UpdateMergeRequests (updateMergeRequests)
 run :: IO ()
 run = do
   c@Config {..} <- parseConfigOrDie
-  let gitCommit = "Version: " <> fromString (giHash $$tGitInfoCwd)
+  let gitCommit = "Version: " <> fromString (giTag $$tGitInfoCwd)
   -- putStrLn $ "running with config: " <> show c
   let program = case cmd of
         Version -> write gitCommit
