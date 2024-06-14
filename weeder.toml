@@ -1,0 +1,2 @@
+roots = [ "^Main.main$", "^App.run$", "^Paths_gitlab_helper.*", "Spec.spec$" ]
+type-class-roots = true

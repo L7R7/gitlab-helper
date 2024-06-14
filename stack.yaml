@@ -11,3 +11,7 @@ extra-deps:
       - gitlab-api-types
 
 system-ghc: false
+
+ghc-options:
+  $everything: -split-sections
+  "$locals": -fwrite-ide-info
