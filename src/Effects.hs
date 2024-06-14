@@ -43,8 +43,6 @@ module Effects
     BranchesApi (..),
     getBranches,
     PipelinesApi (..),
-    getPipeline,
-    getSuccessfulPipelines,
     getSuccessfulPushPipelines,
     SchedulesApi (..),
     getSchedules,
@@ -264,8 +262,6 @@ instance HasCodec CompactPipeline where
       .= compactPipelineSha
 
 data PipelinesApi m a where
-  GetPipeline :: Id Project -> PipelineId -> PipelinesApi m (Either UpdateError Pipeline)
-  GetSuccessfulPipelines :: Id Project -> Ref -> PipelinesApi m (Either UpdateError [CompactPipeline])
   GetSuccessfulPushPipelines :: Year -> Id Project -> Ref -> PipelinesApi m (Either UpdateError [CompactPipeline])
 
 makeSem ''PipelinesApi

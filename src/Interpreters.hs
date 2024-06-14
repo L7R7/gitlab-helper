@@ -118,12 +118,6 @@ branchesApiToIO baseUrl apiToken = interpret $ \case
 
 pipelinesApiToIO :: (Member (Embed IO) r) => BaseUrl -> ApiToken -> InterpreterFor PipelinesApi r
 pipelinesApiToIO baseUrl apiToken = interpret $ \case
-  GetPipeline project pipeline -> do
-    let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines/{pipelineId}|]
-    embed $ fetchData baseUrl apiToken template [("projectId", (stringValue . show) project), ("pipelineId", (stringValue . show) pipeline)]
-  GetSuccessfulPipelines pId (Ref ref) -> do
-    let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines?ref={ref}&status={status}&updated_after=2021-01-06T00:00:00Z&source=push|]
-    embed $ fetchDataPaginated apiToken baseUrl template [("projectId", (stringValue . show) pId), ("ref", (stringValue . toString) ref), ("status", stringValue "success")]
   GetSuccessfulPushPipelines (Year year) pId (Ref ref) -> do
     let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines?ref={ref}&status={status}&updated_after={year0}-01-01T00:00:00Z&updated_before={year1}-01-01T00:00:00Z&source=push|]
     embed
