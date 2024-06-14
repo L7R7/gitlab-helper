@@ -86,9 +86,16 @@ There are a couple of interesting details to this option:
 
 ## Running
 
+### Using pre-built binaries
+
+There are pre-built binaries for most of the current platforms as part of the [releases](https://github.com/L7R7/gitlab-helper/releases/latest).
+The fastest way to install the tool is downloading it from there.
+
+### Building from Source
+
 If you don't have a working Haskell toolchain on your machine yet, I recommend using [https://www.haskell.org/ghcup/](https://www.haskell.org/ghcup/) to install a recent version of `stack` (which solves similar problems like `sbt` does for Scala, or Maven for Java).
 
-### Install
+#### Install
 
 To build the executable and make it available on your path:
 
