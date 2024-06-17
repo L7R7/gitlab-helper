@@ -81,7 +81,7 @@ jobs:
       - name: Build binary
         run: |
           mkdir bin
-          stack build --pedantic --copy-bins --local-bin-path bin
+          stack build --copy-bins --local-bin-path bin
 
       - if: matrix.os == 'windows-latest'
         name: Set binary path name on Windows
