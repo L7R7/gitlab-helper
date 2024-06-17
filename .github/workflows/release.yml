@@ -74,9 +74,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.stack
-          key: ${{ runner.os }}-9.6.5-${{ hashFiles('**/stack.yaml.lock','**/gitlab-helper.cabal') }}-v2
+          key: ${{ runner.os }}-9.6.5-${{ matrix.target }}-${{ hashFiles('**/stack.yaml.lock','**/gitlab-helper.cabal') }}-v2
           restore-keys: |
-            ${{ runner.os }}-9.6.5-
+            ${{ runner.os }}-${{ matrix.target }}-9.6.5-
 
       - name: Build binary
         run: |
