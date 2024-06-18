@@ -76,8 +76,7 @@ mergeRequestUpdateCommandParser =
   UpdateMergeRequests
     <$> mergeRequestUpdateActionParser
     <*> optional
-      ( option (AuthorIs <$> auto) (short 'u' <> long "user-id" <> help "only MRs opened by the user with this ID are taken into account" <> metavar "ID")
-      )
+      (option (AuthorIs <$> auto) (short 'u' <> long "user-id" <> help "only MRs opened by the user with this ID are taken into account" <> metavar "ID"))
     <*> optional
       ( (Left . SearchTerm <$> strOption (short 's' <> long "search" <> help "Optional. a string that must appear in the MR description or title. Mutually exclusive with --search-title" <> metavar "TXT"))
           <|> Right
