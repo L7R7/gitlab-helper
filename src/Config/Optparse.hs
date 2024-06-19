@@ -1,4 +1,4 @@
-module Config.Optparse (parseConfigFromOptions, parserInfo) where
+module Config.Optparse (parseConfigFromOptions, parserPrefs, parserInfo) where
 
 import Barbies (bsequence, bzipWith)
 import Config.Types
@@ -11,7 +11,10 @@ import Options.Applicative
 import Relude
 
 parseConfigFromOptions :: IO (PartialConfig (Compose Maybe S.First))
-parseConfigFromOptions = execParser parserInfo
+parseConfigFromOptions = customExecParser parserPrefs parserInfo
+
+parserPrefs :: ParserPrefs
+parserPrefs = prefs showHelpOnEmpty
 
 parserInfo :: ParserInfo (PartialConfig (Compose Maybe S.First))
 parserInfo =
