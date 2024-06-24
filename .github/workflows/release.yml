@@ -43,18 +43,20 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            arch: aarch64
+          # - os: ubuntu-latest
+          #   arch: aarch64
           - os: ubuntu-latest
             arch: x86_64
           - os: macOS-latest
             arch: aarch64
           - os: macOS-latest
+            arch: arm64
+          - os: macOS-latest
             arch: x86_64
           - os: windows-latest
             arch: x86_64
-          - os: windows-latest
-            arch: aarch64
+          # - os: windows-latest
+          #   arch: aarch64
 
     steps:
       - name: Check out code
