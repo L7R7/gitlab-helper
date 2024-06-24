@@ -1,6 +1,9 @@
 # Inspired by https://github.com/kowainik/stan/blob/30ae41dccde49feefe19913039014f3612e5d44c/.github/workflows/release.yml
 name: Release
 
+permissions:
+  contents: write
+
 on:
   push:
     tags:
