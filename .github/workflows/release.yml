@@ -47,10 +47,8 @@ jobs:
           #   arch: aarch64
           - os: ubuntu-latest
             arch: x86_64
-          - os: macOS-latest
-            arch: aarch64
           - os: macOS-13 # macOS-latest does something weird I don't understand
-            arch: arm64
+            arch: aarch64
           - os: macOS-13 # macOS-latest does something weird I don't understand
             arch: x86_64
           - os: windows-latest
