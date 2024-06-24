@@ -49,8 +49,8 @@ jobs:
             arch: x86_64
           - os: macOS-13 # macOS-latest does something weird I don't understand
             arch: aarch64
-          - os: macOS-13 # macOS-latest does something weird I don't understand
-            arch: x86_64
+          # - os: macOS-13 # macOS-latest does something weird I don't understand
+          #   arch: x86_64
           - os: windows-latest
             arch: x86_64
           # - os: windows-latest
@@ -85,7 +85,7 @@ jobs:
       - name: Build binary
         run: |
           mkdir bin
-          stack build --copy-bins --local-bin-path bin --arch ${{ matrix.arch }}
+          stack build --copy-bins --local-bin-path bin
 
       - if: matrix.os == 'windows-latest'
         name: Set binary path name on Windows
@@ -124,5 +124,5 @@ jobs:
         with:
           upload_url: ${{ env.upload_url }}
           asset_path: ${{ env.BINARY_PATH }}
-          asset_name: gitlab-helper-${{ steps.tag.outputs.tag }}-${{ runner.os }}-${{ matrix.arch }}${{ env.EXT }}
+          asset_name: gitlab-helper-${{ steps.tag.outputs.tag }}-${{ runner.os }}${{ env.EXT }}
           asset_content_type: application/octet-stream
