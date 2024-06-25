@@ -112,13 +112,11 @@ jobs:
       - if: matrix.os == 'windows-latest'
         name: Set zip file path name on Windows
         run: |
-          mv ./bin/gitlab-helper-exe.exe ./bin/gitlab-helper.exe
           echo "ZIP_PATH=./bin/gitlab-helper.zip" >> $env:GITHUB_ENV
 
       - if: matrix.os != 'windows-latest'
         name: Set zip file path name not on Windows
         run: |
-          mv ./bin/gitlab-helper-exe ./bin/gitlab-helper
           echo "ZIP_PATH=./bin/gitlab-helper.zip" >> "$GITHUB_ENV"
 
       - name: Load Release URL File from release job
