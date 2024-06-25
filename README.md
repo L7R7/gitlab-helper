@@ -59,10 +59,10 @@ For the available command-line options, use `--help` to get the full list.
 
 The available environmnent variables are:
 
-* `HB_BASE_URL`: Base URL of the Gitlab instance you're working with
-* `HB_GROUP_ID`: ID of the group you're interested in
-* `HB_API_TOKEN`: API Token to use for authorizing requests against the Gitlab API. `api` scope is required.
-* `HB_EXCLUDE_PROJECTS`: Lists of projects to exclude
+* `GLH_BASE_URL`: Base URL of the Gitlab instance you're working with
+* `GLH_GROUP_ID`: ID of the group you're interested in
+* `GLH_API_TOKEN`: API Token to use for authorizing requests against the Gitlab API. `api` scope is required.
+* `GLH_EXCLUDE_PROJECTS`: Lists of projects to exclude
 
 The structure of the configuration files looks like this:
 
