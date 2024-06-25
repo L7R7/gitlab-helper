@@ -16,7 +16,7 @@ module MergeRequests
   )
 where
 
-import Config.Types (Config (..))
+import Config.Types (Config (..), WithArchivedProjects (SkipArchivedProjects))
 import Data.List (partition)
 import qualified Data.Text as T (intercalate)
 import Data.Time hiding (getCurrentTime)
@@ -28,7 +28,7 @@ import Relude
 
 showMergeRequests :: ReaderT Config IO ()
 showMergeRequests = do
-  getProjectsForGroup >>= \case
+  getProjectsForGroup SkipArchivedProjects >>= \case
     Left err -> write $ show err
     Right projects -> do
       let (mrEnabled, mrDisabled) = partition projectMergeRequestsEnabled projects

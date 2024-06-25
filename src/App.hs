@@ -31,7 +31,7 @@ run = do
         ShowMergeRequests -> showMergeRequests
         (EnableAllDiscussionsMustBeResolvedForMergeRequirement execution) -> enableAllDiscussionsResolvedForMergeRequirement execution
         (EnableSuccessfulPipelineForMergeRequirement execution) -> enableSuccessfulPipelineForMergeRequirement execution
-        (CountSuccessfulDeployments year) -> countDeployments year
+        (CountSuccessfulDeployments year withArchivedProjects) -> countDeployments year withArchivedProjects
         (SetMergeMethodToFastForward execution) -> setMergeMethodToFastForward execution
         (UpdateMergeRequests action authorIs searchTerm execution) -> updateMergeRequests projectsExcludeList action authorIs searchTerm execution
   runReaderT program c
