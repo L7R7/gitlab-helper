@@ -116,8 +116,7 @@ jobs:
 
       - name: Create zip file
         run: |
-          cd ./bin
-          7z a -l ${{ env.ZIP_PATH }} .
+          7z a -l ${{ env.ZIP_PATH }} ${{ env.BINARY_PATH }}
 
       - name: Load Release URL File from release job
         uses: actions/download-artifact@v4
