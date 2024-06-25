@@ -10,7 +10,7 @@ extra-deps:
       - gitlab-api-http-client
       - gitlab-api-types
 
-system-ghc: false
+system-ghc: true
 
 ghc-options:
   $everything: -split-sections
