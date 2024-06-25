@@ -104,11 +104,6 @@ jobs:
         with:
           file: ${{ env.BINARY_PATH }}
 
-      - name: Create zip file
-        run: |
-          cd ./bin
-          7z a -l ${{ github.workspace }}/gitlab-helper.zip .
-
       - if: matrix.os == 'windows-latest'
         name: Set zip file path name on Windows
         run: |
@@ -118,6 +113,11 @@ jobs:
         name: Set zip file path name not on Windows
         run: |
           echo "ZIP_PATH=./bin/gitlab-helper.zip" >> "$GITHUB_ENV"
+
+      - name: Create zip file
+        run: |
+          cd ./bin
+          7z a -l ${{ env.ZIP_PATH }} .
 
       - name: Load Release URL File from release job
         uses: actions/download-artifact@v4
