@@ -89,16 +89,37 @@ jobs:
 
       - if: matrix.os == 'windows-latest'
         name: Set binary path name on Windows
-        run: echo "BINARY_PATH=./bin/gitlab-helper-exe.exe" >> $env:GITHUB_ENV
+        run: |
+          mv ./bin/gitlab-helper-exe.exe ./bin/gitlab-helper.exe
+          echo "BINARY_PATH=./bin/gitlab-helper-exe.exe" >> $env:GITHUB_ENV
 
       - if: matrix.os != 'windows-latest'
         name: Set binary path name not on Windows
-        run: echo "BINARY_PATH=./bin/gitlab-helper-exe" >> "$GITHUB_ENV"
+        run: |
+          mv ./bin/gitlab-helper-exe ./bin/gitlab-helper
+          echo "BINARY_PATH=./bin/gitlab-helper" >> "$GITHUB_ENV"
 
       - name: Compress binary
         uses: svenstaro/upx-action@2.4.1
         with:
           file: ${{ env.BINARY_PATH }}
+
+      - name: Create zip file
+        run: |
+          cd ./bin
+          7z a -l ${{ github.workspace }}/gitlab-helper.zip .
+
+      - if: matrix.os == 'windows-latest'
+        name: Set zip file path name on Windows
+        run: |
+          mv ./bin/gitlab-helper-exe.exe ./bin/gitlab-helper.exe
+          echo "ZIP_PATH=./bin/gitlab-helper.zip" >> $env:GITHUB_ENV
+
+      - if: matrix.os != 'windows-latest'
+        name: Set zip file path name not on Windows
+        run: |
+          mv ./bin/gitlab-helper-exe ./bin/gitlab-helper
+          echo "ZIP_PATH=./bin/gitlab-helper.zip" >> "$GITHUB_ENV"
 
       - name: Load Release URL File from release job
         uses: actions/download-artifact@v4
@@ -123,6 +144,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ env.upload_url }}
-          asset_path: ${{ env.BINARY_PATH }}
-          asset_name: gitlab-helper-${{ steps.tag.outputs.tag }}-${{ runner.os }}${{ env.EXT }}
-          asset_content_type: application/octet-stream
+          asset_path: ${{ env.ZIP_PATH }}
+          asset_name: gitlab-helper-${{ steps.tag.outputs.tag }}-${{ runner.os }}.zip
+          asset_content_type: application/zip
