@@ -42,7 +42,7 @@ listAllProjectsMeta = fetch >>= bitraverse_ (write . show) writeMetaFormat
         <*> (getAllUsers' >>= fmap join . traverse (getProjectsForUser' . userId))
 
     getAllGroups' = ExceptT getAllGroups
-    getProjectsForGroup' = ExceptT . const getProjectsForGroup
+    getProjectsForGroup' = ExceptT . const (getProjectsForGroup SkipArchivedProjects)
     getProjectsForUser' = ExceptT . getProjectsForUser
     getAllUsers' = ExceptT getAllUsers
 
@@ -51,7 +51,7 @@ showProjectsForGroup = do
   gId <- asks groupId
   write "=================================================="
   write $ "Listing the projects for Group " <> show gId
-  getProjectsForGroup >>= \case
+  getProjectsForGroup SkipArchivedProjects >>= \case
     Left err -> write $ show err
     Right projects -> do
       write . toText $ tableReport (sortOn (toLower . getName . projectName) projects)
@@ -77,6 +77,8 @@ tableReport =
 
 data Processor
   = OptionSetter
+      -- | Include or skip archived projects
+      WithArchivedProjects
       -- | headline to be printed
       (Id Group -> Text)
       -- | if this returns True, nothing will be done
@@ -84,6 +86,8 @@ data Processor
       -- | action to execute
       (Id Project -> ReaderT Config IO (Either UpdateError ()))
   | Counter
+      -- | Include or skip archived projects
+      WithArchivedProjects
       -- | headline to be printed
       (Id Group -> Text)
       -- | if this returns True, nothing will be done
@@ -91,12 +95,16 @@ data Processor
       -- | action to execute
       (Project -> ReaderT Config IO (Either UpdateError (Sum Int)))
 
-countDeployments :: Year -> ReaderT Config IO ()
-countDeployments year@(Year y) = do
+countDeployments :: Year -> WithArchivedProjects -> ReaderT Config IO ()
+countDeployments year@(Year y) withArchivedProjects = do
   excludes <- asks projectsExcludeList
+  let archivedProjectsTitle = case withArchivedProjects of
+        IncludeArchivedProjects -> "including"
+        SkipArchivedProjects -> "excluding"
   runProcessor
     $ Counter
-      (\gi -> "Listing the number of successful deployments in " <> show y <> " for all projects in group " <> show gi)
+      withArchivedProjects
+      (\gi -> "Listing the number of successful deployments in " <> show y <> " for all projects in group " <> show gi <> " " <> archivedProjectsTitle <> " archived projects")
       (\p -> projectId p `elem` excludes)
       ( \p -> do
           res <- case projectDefaultBranch p of
@@ -109,6 +117,7 @@ enableSourceBranchDeletionAfterMerge :: Execution -> ReaderT Config IO ()
 enableSourceBranchDeletionAfterMerge execution =
   runProcessor
     $ OptionSetter
+      SkipArchivedProjects
       (\gi -> "Enabling automatic branch deletion after MR merge for Group " <> show gi)
       (\p -> Just True == projectRemoveSourceBranchAfterMerge p)
       ( \pi -> case execution of
@@ -120,6 +129,7 @@ enableSuccessfulPipelineForMergeRequirement :: Execution -> ReaderT Config IO ()
 enableSuccessfulPipelineForMergeRequirement execution =
   runProcessor
     $ OptionSetter
+      SkipArchivedProjects
       (\gi -> "Enabling the requirement that a successful pipeline is required for a MR to be merged for Group " <> show gi)
       (or . projectOnlyAllowMergeIfPipelineSucceeds)
       (\pId -> getProject pId >>= (projectHasCi >=> configureOption execution pId))
@@ -143,6 +153,7 @@ enableAllDiscussionsResolvedForMergeRequirement :: Execution -> ReaderT Config I
 enableAllDiscussionsResolvedForMergeRequirement execution =
   runProcessor
     $ OptionSetter
+      SkipArchivedProjects
       (\gi -> "Enabling the requirement that all discussions must be resolved for a MR to be merged for Group " <> show gi)
       (or . projectOnlyAllowMergeIfAllDiscussionsAreResolved)
       ( case execution of
@@ -154,6 +165,7 @@ setMergeMethodToFastForward :: Execution -> ReaderT Config IO ()
 setMergeMethodToFastForward execution =
   runProcessor
     $ OptionSetter
+      SkipArchivedProjects
       (\gi -> "Setting the merge method to \"Fast Forward\" for all projects in group " <> show gi)
       (\p -> projectMergeMethod p == FastForward)
       ( case execution of
@@ -163,7 +175,7 @@ setMergeMethodToFastForward execution =
 
 listProjectsMetaForGroup :: ReaderT Config IO ()
 listProjectsMetaForGroup = do
-  getProjectsForGroup >>= \case
+  getProjectsForGroup SkipArchivedProjects >>= \case
     Left err -> write $ show err
     Right projects -> writeMetaFormat projects
 
@@ -171,11 +183,11 @@ writeMetaFormat :: [Project] -> ReaderT Config IO ()
 writeMetaFormat projects = write $ decodeUtf8 $ encode $ M.fromList $ (\p -> (projectPathWithNamespace p, projectSshUrlToRepo p)) <$> projects
 
 runProcessor :: Processor -> ReaderT Config IO ()
-runProcessor (OptionSetter title skipIf action) = do
+runProcessor (OptionSetter withArchivedProjects title skipIf action) = do
   gId <- asks groupId
   write "=================================================="
   write $ title gId
-  getProjectsForGroup >>= \case
+  getProjectsForGroup withArchivedProjects >>= \case
     Left err -> write $ show err
     Right projects -> do
       res <- traverse (process skipIf action) projects
@@ -184,12 +196,12 @@ runProcessor (OptionSetter title skipIf action) = do
       let summary = foldl' (\m r -> M.insertWith (<>) r (Sum (1 :: Int)) m) (M.fromList $ (,mempty) <$> universe) res
       let summaryPrint = M.foldlWithKey' (\acc k (Sum c) -> (show k <> ": " <> show c) : acc) mempty summary
       traverse_ write summaryPrint
-runProcessor (Counter title skipIf action) = do
+runProcessor (Counter withArchivedProjects title skipIf action) = do
   gId <- asks groupId
   write "=================================================="
   write $ title gId
   write ""
-  getProjectsForGroup >>= \case
+  getProjectsForGroup withArchivedProjects >>= \case
     Left err -> write $ show err
     Right projects -> do
       res <- traverse (countSingle skipIf action) projects

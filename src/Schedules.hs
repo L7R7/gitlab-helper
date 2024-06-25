@@ -16,7 +16,7 @@ module Schedules
 where
 
 import Colourista.Pure
-import Config.Types (Config (..))
+import Config.Types (Config (..), WithArchivedProjects (SkipArchivedProjects))
 import Effects
 import Gitlab.Client (UpdateError)
 import Gitlab.Lib (Name (..))
@@ -28,7 +28,7 @@ showSchedulesForGroup = do
   gId <- asks groupId
   write "=================================================="
   write $ "Listing the projects' schedules for Group " <> show gId
-  getProjectsForGroup >>= \case
+  getProjectsForGroup SkipArchivedProjects >>= \case
     Left err -> write $ show err
     Right projects -> do
       results <- traverse getSchedulesForProject (sortOn (getName . projectName) projects)

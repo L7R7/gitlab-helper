@@ -41,7 +41,7 @@ Available commands:
   show-merge-requests      show projects with and without enabled merge
                            requests, list merge requests
   count-deployments        count the number of successful deployments per
-                           project (a successful push pipeline on the master
+                           project (a successful push pipeline on the default
                            branch is counted as a deployment)
   set-merge-method-to-fast-forward
                            Set the merge method for all projects to "Fast

@@ -56,7 +56,7 @@ where
 
 import Autodocodec
 import Burrito
-import Config.Types (AuthorIs (..), Config (..), MergeCiOption (..), SearchTerm (..), Year (..))
+import Config.Types (AuthorIs (..), Config (..), MergeCiOption (..), SearchTerm (..), WithArchivedProjects (..), Year (..))
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Aeson.Types (Object)
 import Data.Scientific
@@ -136,10 +136,13 @@ getAllUsers = fetchDataPaginated [uriTemplate|/api/v4/users|] []
 getAllGroups :: ReaderT Config IO (Either UpdateError [Group])
 getAllGroups = fetchDataPaginated [uriTemplate|/api/v4/groups?all_available=true|] []
 
-getProjectsForGroup :: ReaderT Config IO (Either UpdateError [Project])
-getProjectsForGroup = do
+getProjectsForGroup :: WithArchivedProjects -> ReaderT Config IO (Either UpdateError [Project])
+getProjectsForGroup withArchivedProjects = do
   gId <- asks groupId
-  let template = [uriTemplate|/api/v4/groups/{groupId}/projects?include_subgroups=true&archived=false&with_shared=false|]
+  -- todo: there must be a way to do that with a single uri template
+  let template = case withArchivedProjects of
+        SkipArchivedProjects -> [uriTemplate|/api/v4/groups/{groupId}/projects?include_subgroups=true&archived=false&with_shared=false|]
+        IncludeArchivedProjects -> [uriTemplate|/api/v4/groups/{groupId}/projects?include_subgroups=true&with_shared=false|]
   fetchDataPaginated template [("groupId", (stringValue . show) gId)]
 
 getProjectsForUser :: UserId -> ReaderT Config IO (Either UpdateError [Project])
