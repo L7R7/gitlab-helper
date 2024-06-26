@@ -16,7 +16,7 @@ module MergeRequests
   )
 where
 
-import Config.App (App)
+import App (App)
 import Config.Types (WithArchivedProjects (SkipArchivedProjects))
 import Data.List (partition)
 import qualified Data.Text as T (intercalate)

@@ -54,9 +54,9 @@ module Effects
   )
 where
 
+import App
 import Autodocodec
 import Burrito
-import Config.App
 import Config.Types (AuthorIs (..), Config (..), MergeCiOption (..), SearchTerm (..), WithArchivedProjects (..), Year (..))
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Aeson.Types (Object)

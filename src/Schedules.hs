@@ -15,8 +15,8 @@ module Schedules
   )
 where
 
+import App (App)
 import Colourista.Pure
-import Config.App (App)
 import Config.Types (Config (..), WithArchivedProjects (SkipArchivedProjects))
 import Effects
 import Gitlab.Client.MTL (UpdateError)
