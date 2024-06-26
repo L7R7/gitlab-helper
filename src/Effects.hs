@@ -56,6 +56,7 @@ where
 
 import Autodocodec
 import Burrito
+import Config.App
 import Config.Types (AuthorIs (..), Config (..), MergeCiOption (..), SearchTerm (..), WithArchivedProjects (..), Year (..))
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Aeson.Types (Object)
@@ -64,11 +65,11 @@ import qualified Data.Text as T hiding (partition)
 import Data.Time (UTCTime)
 import qualified Data.Time
 import Gitlab.Branch
+import Gitlab.Client.MTL
 import Gitlab.Group hiding (groupId)
 import Gitlab.Lib (Id (..), Ref (..))
 import Gitlab.MergeRequest
 import Gitlab.Project
-import GitlabUtils
 import Network.HTTP.Client.Conduit (RequestBody (..))
 import Network.HTTP.Simple (setRequestBody, setRequestHeader, setRequestMethod)
 import Network.HTTP.Types (Status (..), hContentType)
@@ -109,10 +110,10 @@ newtype Owner = Owner {ownerName :: Text}
 instance HasCodec Owner where
   codec = object "Owner" $ Owner <$> requiredField' "name" .= ownerName
 
-write :: Text -> ReaderT Config IO ()
+write :: Text -> App ()
 write = putStrLn . toString
 
-getCurrentTime :: ReaderT Config IO UTCTime
+getCurrentTime :: App UTCTime
 getCurrentTime = liftIO Data.Time.getCurrentTime
 
 newtype UserId = UserId Int
@@ -130,13 +131,13 @@ newtype User = User
 instance HasCodec User where
   codec = object "User" $ User <$> requiredField' "id" .= userId
 
-getAllUsers :: ReaderT Config IO (Either UpdateError [User])
-getAllUsers = fetchDataPaginated [uriTemplate|/api/v4/users|] []
+getAllUsers :: App (Either UpdateError [User])
+getAllUsers = fetchDataPaginated @User @App [uriTemplate|/api/v4/users|] []
 
-getAllGroups :: ReaderT Config IO (Either UpdateError [Group])
+getAllGroups :: App (Either UpdateError [Group])
 getAllGroups = fetchDataPaginated [uriTemplate|/api/v4/groups?all_available=true|] []
 
-getProjectsForGroup :: WithArchivedProjects -> ReaderT Config IO (Either UpdateError [Project])
+getProjectsForGroup :: WithArchivedProjects -> App (Either UpdateError [Project])
 getProjectsForGroup withArchivedProjects = do
   gId <- asks groupId
   -- todo: there must be a way to do that with a single uri template
@@ -145,19 +146,19 @@ getProjectsForGroup withArchivedProjects = do
         IncludeArchivedProjects -> [uriTemplate|/api/v4/groups/{groupId}/projects?include_subgroups=true&with_shared=false|]
   fetchDataPaginated template [("groupId", (stringValue . show) gId)]
 
-getProjectsForUser :: UserId -> ReaderT Config IO (Either UpdateError [Project])
+getProjectsForUser :: UserId -> App (Either UpdateError [Project])
 getProjectsForUser uId = fetchDataPaginated [uriTemplate|/api/v4/users/{userId}/projects?archived=false|] [("userId", (stringValue . show) uId)]
 
-getProject :: Id Project -> ReaderT Config IO (Either UpdateError Project)
+getProject :: Id Project -> App (Either UpdateError Project)
 getProject project = fetchData [uriTemplate|/api/v4/projects/{projectId}|] [("projectId", (stringValue . show) project)]
 
-hasCi :: Id Project -> Ref -> ReaderT Config IO (Either UpdateError Bool)
+hasCi :: Id Project -> Ref -> App (Either UpdateError Bool)
 hasCi project ref = do
   let template = [uriTemplate|/api/v4/projects/{projectId}/repository/files/.gitlab-ci.yml?ref={ref}|]
   response <- headRequest id template [("projectId", (stringValue . show) project), ("ref", (stringValue . (\(Ref txt) -> toString txt)) ref)]
   pure $ (200 ==) . statusCode <$> response
 
-setMergeMethod :: Id Project -> MergeMethod -> ReaderT Config IO (Either UpdateError ())
+setMergeMethod :: Id Project -> MergeMethod -> App (Either UpdateError ())
 setMergeMethod project mm = do
   let template = [uriTemplate|/api/v4/projects/{projectId}?merge_method={merge_method}|]
       toAPIValue Merge = "merge"
@@ -165,7 +166,7 @@ setMergeMethod project mm = do
       toAPIValue FastForward = "ff"
   void <$> fetchData' @Project (setRequestMethod "PUT") template [("projectId", (stringValue . show) project), ("merge_method", stringValue (toAPIValue mm))]
 
-getOpenMergeRequests :: Id Project -> Maybe AuthorIs -> ReaderT Config IO (Either UpdateError [MergeRequest])
+getOpenMergeRequests :: Id Project -> Maybe AuthorIs -> App (Either UpdateError [MergeRequest])
 getOpenMergeRequests project maybeAuthorIs = do
   case maybeAuthorIs of
     Nothing -> do
@@ -175,7 +176,7 @@ getOpenMergeRequests project maybeAuthorIs = do
       let template = [uriTemplate|/api/v4/projects/{projectId}/merge_requests?state=opened&author_id={authorId}|]
       fetchDataPaginated template [("projectId", (stringValue . show) project), ("authorId", (stringValue . show) i)]
 
-getOpenMergeRequestsForGroup :: Maybe AuthorIs -> Maybe SearchTerm -> ReaderT Config IO (Either UpdateError [MergeRequest])
+getOpenMergeRequestsForGroup :: Maybe AuthorIs -> Maybe SearchTerm -> App (Either UpdateError [MergeRequest])
 getOpenMergeRequestsForGroup maybeAuthorIs maybeSearchTerm = do
   grp <- asks groupId
   let template = [uriTemplate|/api/v4/groups/{groupId}/merge_requests?state=opened{&author_id,search}|]
@@ -188,19 +189,19 @@ getOpenMergeRequestsForGroup maybeAuthorIs maybeSearchTerm = do
         ]
     )
 
-enableSourceBranchDeletionAfterMrMerge :: Id Project -> ReaderT Config IO (Either UpdateError ())
+enableSourceBranchDeletionAfterMrMerge :: Id Project -> App (Either UpdateError ())
 enableSourceBranchDeletionAfterMrMerge project =
   void <$> fetchData' @Project (setRequestMethod "PUT") [uriTemplate|/api/v4/projects/{projectId}?remove_source_branch_after_merge=true|] [("projectId", (stringValue . show) project)]
 
-setSuccessfulPipelineRequirementForMerge :: Id Project -> ReaderT Config IO (Either UpdateError ())
+setSuccessfulPipelineRequirementForMerge :: Id Project -> App (Either UpdateError ())
 setSuccessfulPipelineRequirementForMerge project =
   void <$> fetchData' @Project (setRequestMethod "PUT") [uriTemplate|/api/v4/projects/{projectId}?only_allow_merge_if_pipeline_succeeds=true|] [("projectId", (stringValue . show) project)]
 
-unsetSuccessfulPipelineRequirementForMerge :: Id Project -> ReaderT Config IO (Either UpdateError ())
+unsetSuccessfulPipelineRequirementForMerge :: Id Project -> App (Either UpdateError ())
 unsetSuccessfulPipelineRequirementForMerge project =
   void <$> fetchData' @Project (setRequestMethod "PUT") [uriTemplate|/api/v4/projects/{projectId}?only_allow_merge_if_pipeline_succeeds=false|] [("projectId", (stringValue . show) project)]
 
-setResolvedDiscussionsRequirementForMerge :: Id Project -> ReaderT Config IO (Either UpdateError ())
+setResolvedDiscussionsRequirementForMerge :: Id Project -> App (Either UpdateError ())
 setResolvedDiscussionsRequirementForMerge project =
   void
     <$> fetchData' @Project
@@ -208,7 +209,7 @@ setResolvedDiscussionsRequirementForMerge project =
       [uriTemplate|/api/v4/projects/{projectId}?only_allow_merge_if_all_discussions_are_resolved=true|]
       [("projectId", (stringValue . show) project)]
 
-mergeMergeRequest :: Id Project -> Id MergeRequest -> MergeCiOption -> ReaderT Config IO (Either UpdateError ())
+mergeMergeRequest :: Id Project -> Id MergeRequest -> MergeCiOption -> App (Either UpdateError ())
 mergeMergeRequest project mrId skipCiOption = do
   let skipCiOptionToParam PipelineMustSucceed = "true"
       skipCiOptionToParam SkipCi = "false"
@@ -218,7 +219,7 @@ mergeMergeRequest project mrId skipCiOption = do
       [uriTemplate|/api/v4/projects/{projectId}/merge_requests/{mergeRequestId}/merge?should_remove_source_branch=true&merge_when_pipeline_succeeds={pipelineMustSucceed}|]
       [("projectId", (stringValue . show) project), ("mergeRequestId", (stringValue . show) mrId), ("pipelineMustSucceed", stringValue $ skipCiOptionToParam skipCiOption)]
 
-rebaseMergeRequest :: Id Project -> Id MergeRequest -> ReaderT Config IO (Either UpdateError ())
+rebaseMergeRequest :: Id Project -> Id MergeRequest -> App (Either UpdateError ())
 rebaseMergeRequest project mrId =
   -- Right (fromList [("rebase_in_progress",Bool True)])
   void
@@ -227,13 +228,13 @@ rebaseMergeRequest project mrId =
       [uriTemplate|/api/v4/projects/{projectId}/merge_requests/{mergeRequestId}/rebase|]
       [("projectId", (stringValue . show) project), ("mergeRequestId", (stringValue . show) mrId)]
 
-setMergeRequestTitle :: Id Project -> Id MergeRequest -> Text -> ReaderT Config IO (Either UpdateError ())
+setMergeRequestTitle :: Id Project -> Id MergeRequest -> Text -> App (Either UpdateError ())
 setMergeRequestTitle project mrId newTitle = do
   let template = [uriTemplate|/api/v4/projects/{projectId}/merge_requests/{mergeRequestId}|]
       setTitle = setRequestHeader hContentType ["application/x-www-form-urlencoded"] . setRequestBody (RequestBodyBS (encodeUtf8 $ "title=" <> newTitle))
   void <$> fetchData' @Object (setTitle . setRequestMethod "PUT") template [("projectId", (stringValue . show) project), ("mergeRequestId", (stringValue . show) mrId)]
 
-getBranches :: Id Project -> ReaderT Config IO (Either UpdateError [Branch])
+getBranches :: Id Project -> App (Either UpdateError [Branch])
 getBranches project = fetchDataPaginated [uriTemplate|/api/v4/projects/{projectId}/repository/branches|] [("projectId", (stringValue . show) project)]
 
 newtype PipelineId = PipelineId {getPipelineId :: Int}
@@ -329,7 +330,7 @@ instance HasCodec CompactPipeline where
       <*> requiredField' "sha"
       .= compactPipelineSha
 
-getSuccessfulPushPipelines :: Year -> Id Project -> Ref -> ReaderT Config IO (Either UpdateError [CompactPipeline])
+getSuccessfulPushPipelines :: Year -> Id Project -> Ref -> App (Either UpdateError [CompactPipeline])
 getSuccessfulPushPipelines (Year year) pId (Ref ref) = do
   let template = [uriTemplate|/api/v4/projects/{projectId}/pipelines?ref={ref}&status={status}&updated_after={year0}-01-01T00:00:00Z&updated_before={year1}-01-01T00:00:00Z&source=push|]
   fetchDataPaginated
@@ -341,5 +342,5 @@ getSuccessfulPushPipelines (Year year) pId (Ref ref) = do
       ("year1", (stringValue . show) (year + 1))
     ]
 
-getSchedules :: Id Project -> ReaderT Config IO (Either UpdateError [Schedule])
+getSchedules :: Id Project -> App (Either UpdateError [Schedule])
 getSchedules project = fetchDataPaginated [uriTemplate|/api/v4/projects/{projectId}/pipeline_schedules|] [("projectId", (stringValue . show) project)]

@@ -13,6 +13,7 @@ module UpdateMergeRequests
   )
 where
 
+import Config.App (App)
 import Config.Types
 import Data.Text (isInfixOf, strip, stripPrefix, toLower)
 import Effects
@@ -27,7 +28,7 @@ updateMergeRequests ::
   Maybe AuthorIs ->
   Maybe (Either SearchTerm SearchTermTitle) ->
   Execution ->
-  ReaderT Config IO ()
+  App ()
 updateMergeRequests _ (Merge _) _ Nothing Execute =
   write "I don't think you want to blindly merge all merge requests for this group. Consider adding a filter. Exiting now."
 updateMergeRequests projectExcludes action authorIs maybeSearchTerms execute = do

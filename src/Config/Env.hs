@@ -4,7 +4,7 @@ import Barbies (TraversableB (btraverse))
 import Config.Types (PartialConfig (PartialConfig))
 import qualified Data.Semigroup as S (First (..))
 import qualified Env as E
-import Gitlab.Client (ApiToken (ApiToken), BaseUrl (BaseUrl))
+import Gitlab.Client.MTL (ApiToken (ApiToken), BaseUrl (BaseUrl))
 import Gitlab.Lib (Id (..))
 import Network.URI (URI, parseAbsoluteURI)
 import Relude hiding (Reader)

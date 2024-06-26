@@ -21,18 +21,19 @@ where
 
 import Colonnade (asciiCapped, cap, headed)
 import Colourista (bold, formatWith, red)
+import Config.App (App)
 import Config.Types
 import Data.Aeson (encode)
 import qualified Data.Map as M
 import Data.Text (toLower)
 import Effects
-import Gitlab.Client (UpdateError)
+import Gitlab.Client.MTL (UpdateError)
 import Gitlab.Group (Group)
 import Gitlab.Lib (EnabledDisabled (..), Id (..), Name (..), Ref (..))
 import Gitlab.Project
 import Relude hiding (pi)
 
-listAllProjectsMeta :: ReaderT Config IO ()
+listAllProjectsMeta :: App ()
 listAllProjectsMeta = fetch >>= bitraverse_ (write . show) writeMetaFormat
   where
     fetch =
@@ -46,7 +47,7 @@ listAllProjectsMeta = fetch >>= bitraverse_ (write . show) writeMetaFormat
     getProjectsForUser' = ExceptT . getProjectsForUser
     getAllUsers' = ExceptT getAllUsers
 
-showProjectsForGroup :: ReaderT Config IO ()
+showProjectsForGroup :: App ()
 showProjectsForGroup = do
   gId <- asks groupId
   write "=================================================="
@@ -84,7 +85,7 @@ data Processor
       -- | if this returns True, nothing will be done
       (Project -> Bool)
       -- | action to execute
-      (Id Project -> ReaderT Config IO (Either UpdateError ()))
+      (Id Project -> App (Either UpdateError ()))
   | Counter
       -- | Include or skip archived projects
       WithArchivedProjects
@@ -93,9 +94,9 @@ data Processor
       -- | if this returns True, nothing will be done
       (Project -> Bool)
       -- | action to execute
-      (Project -> ReaderT Config IO (Either UpdateError (Sum Int)))
+      (Project -> App (Either UpdateError (Sum Int)))
 
-countDeployments :: Year -> WithArchivedProjects -> ReaderT Config IO ()
+countDeployments :: Year -> WithArchivedProjects -> App ()
 countDeployments year@(Year y) withArchivedProjects = do
   excludes <- asks projectsExcludeList
   let archivedProjectsTitle = case withArchivedProjects of
@@ -113,7 +114,7 @@ countDeployments year@(Year y) withArchivedProjects = do
           pure $ fmap (Sum . length) res
       )
 
-enableSourceBranchDeletionAfterMerge :: Execution -> ReaderT Config IO ()
+enableSourceBranchDeletionAfterMerge :: Execution -> App ()
 enableSourceBranchDeletionAfterMerge execution =
   runProcessor
     $ OptionSetter
@@ -125,7 +126,7 @@ enableSourceBranchDeletionAfterMerge execution =
           Execute -> enableSourceBranchDeletionAfterMrMerge pi
       )
 
-enableSuccessfulPipelineForMergeRequirement :: Execution -> ReaderT Config IO ()
+enableSuccessfulPipelineForMergeRequirement :: Execution -> App ()
 enableSuccessfulPipelineForMergeRequirement execution =
   runProcessor
     $ OptionSetter
@@ -134,22 +135,22 @@ enableSuccessfulPipelineForMergeRequirement execution =
       (or . projectOnlyAllowMergeIfPipelineSucceeds)
       (\pId -> getProject pId >>= (projectHasCi >=> configureOption execution pId))
 
-projectHasCi :: Either UpdateError Project -> ReaderT Config IO (Either UpdateError Bool)
+projectHasCi :: Either UpdateError Project -> App (Either UpdateError Bool)
 projectHasCi (Left err) = pure $ Left err
-projectHasCi (Right (Project pId _ _ (Just ref) _ _ _ _ _ _ _ _)) = hasCi pId ref
+projectHasCi (Right (Project pId _ _ (Just ref) _ _ _ _ _ _ _ _ _)) = hasCi pId ref
 projectHasCi (Right _) = pure $ Right False -- no default branch, no CI
 
-configureOption :: Execution -> Id Project -> Either UpdateError Bool -> ReaderT Config IO (Either UpdateError ())
+configureOption :: Execution -> Id Project -> Either UpdateError Bool -> App (Either UpdateError ())
 configureOption _ _ (Left err) = pure $ Left err
 configureOption DryRun _ (Right False) = Right () <$ write "Dry Run. Pretending to unset option for project" >> logUnset
 configureOption Execute pId (Right False) = unsetSuccessfulPipelineRequirementForMerge pId >> logUnset
 configureOption DryRun _ (Right True) = Right () <$ write "Dry Run. Pretending to set option for project"
 configureOption Execute pId (Right True) = setSuccessfulPipelineRequirementForMerge pId
 
-logUnset :: ReaderT Config IO (Either UpdateError ())
+logUnset :: App (Either UpdateError ())
 logUnset = write "Project doesn't have CI. Deactivated the option." $> Right ()
 
-enableAllDiscussionsResolvedForMergeRequirement :: Execution -> ReaderT Config IO ()
+enableAllDiscussionsResolvedForMergeRequirement :: Execution -> App ()
 enableAllDiscussionsResolvedForMergeRequirement execution =
   runProcessor
     $ OptionSetter
@@ -161,7 +162,7 @@ enableAllDiscussionsResolvedForMergeRequirement execution =
           Execute -> setResolvedDiscussionsRequirementForMerge
       )
 
-setMergeMethodToFastForward :: Execution -> ReaderT Config IO ()
+setMergeMethodToFastForward :: Execution -> App ()
 setMergeMethodToFastForward execution =
   runProcessor
     $ OptionSetter
@@ -173,16 +174,16 @@ setMergeMethodToFastForward execution =
           Execute -> (`setMergeMethod` FastForward)
       )
 
-listProjectsMetaForGroup :: ReaderT Config IO ()
+listProjectsMetaForGroup :: App ()
 listProjectsMetaForGroup = do
   getProjectsForGroup SkipArchivedProjects >>= \case
     Left err -> write $ show err
     Right projects -> writeMetaFormat projects
 
-writeMetaFormat :: [Project] -> ReaderT Config IO ()
+writeMetaFormat :: [Project] -> App ()
 writeMetaFormat projects = write $ decodeUtf8 $ encode $ M.fromList $ (\p -> (projectPathWithNamespace p, projectSshUrlToRepo p)) <$> projects
 
-runProcessor :: Processor -> ReaderT Config IO ()
+runProcessor :: Processor -> App ()
 runProcessor (OptionSetter withArchivedProjects title skipIf action) = do
   gId <- asks groupId
   write "=================================================="
@@ -208,7 +209,7 @@ runProcessor (Counter withArchivedProjects title skipIf action) = do
       write ""
       write $ "done. Total: " <> show (getSum $ fold res) <> " deployments"
 
-process :: (Project -> Bool) -> (Id Project -> ReaderT Config IO (Either UpdateError ())) -> Project -> ReaderT Config IO Result
+process :: (Project -> Bool) -> (Id Project -> App (Either UpdateError ())) -> Project -> App Result
 process skipIf action project = do
   write ""
   write $ formatWith [bold] ("=== " <> show (projectName project))
@@ -221,7 +222,7 @@ process skipIf action project = do
         Left err -> write ("something went wrong. " <> show err) $> Error
         Right _ -> write "done" $> Set
 
-countSingle :: (Project -> Bool) -> (Project -> ReaderT Config IO (Either UpdateError (Sum Int))) -> Project -> ReaderT Config IO (Sum Int)
+countSingle :: (Project -> Bool) -> (Project -> App (Either UpdateError (Sum Int))) -> Project -> App (Sum Int)
 countSingle skipIf action project = count >>= \(output, result) -> write (title <> output) $> result
   where
     count =
@@ -273,7 +274,7 @@ type Summary =
     )
   )
 
-writeSummary :: Summary -> ReaderT Config IO ()
+writeSummary :: Summary -> App ()
 writeSummary
   ( Count numProjects,
     EnabledDisabledCount (Count branchDeletionEnabled, Count branchDeletionDisabled),

@@ -16,14 +16,15 @@ module Schedules
 where
 
 import Colourista.Pure
+import Config.App (App)
 import Config.Types (Config (..), WithArchivedProjects (SkipArchivedProjects))
 import Effects
-import Gitlab.Client (UpdateError)
+import Gitlab.Client.MTL (UpdateError)
 import Gitlab.Lib (Name (..))
 import Gitlab.Project
 import Relude
 
-showSchedulesForGroup :: ReaderT Config IO ()
+showSchedulesForGroup :: App ()
 showSchedulesForGroup = do
   gId <- asks groupId
   write "=================================================="
@@ -35,10 +36,10 @@ showSchedulesForGroup = do
       traverse_ printResults results
       writeSummary results
 
-getSchedulesForProject :: Project -> ReaderT Config IO (Project, Either UpdateError [Schedule])
+getSchedulesForProject :: Project -> App (Project, Either UpdateError [Schedule])
 getSchedulesForProject p = (p,) <$> getSchedules (projectId p)
 
-printResults :: (Project, Either UpdateError [Schedule]) -> ReaderT Config IO ()
+printResults :: (Project, Either UpdateError [Schedule]) -> App ()
 printResults (project, Left err) = do
   write $ formatWith [bold] ("=== " <> show (projectName project))
   write $ "something went wrong: " <> show err
@@ -74,7 +75,7 @@ type ProjectsWithoutSchedule = Sum Int
 
 type ProjectsWithSchedules = Sum Int
 
-writeSummary :: [(Project, Either UpdateError [Schedule])] -> ReaderT Config IO ()
+writeSummary :: [(Project, Either UpdateError [Schedule])] -> App ()
 writeSummary results = do
   write ""
   write . showSummary $ summary results

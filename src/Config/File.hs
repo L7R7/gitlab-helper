@@ -14,7 +14,7 @@ import Config.Types
 import Data.Aeson
 import qualified Data.Semigroup as S
 import Data.Yaml
-import Gitlab.Client (BaseUrl (..))
+import Gitlab.Client.MTL (BaseUrl (..))
 import Gitlab.Lib (Id)
 import Network.URI (parseURI)
 import Relude

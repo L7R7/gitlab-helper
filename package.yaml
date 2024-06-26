@@ -62,7 +62,7 @@ library:
     - githash
     - http-conduit
     - http-types
-    - gitlab-api-http-client
+    - gitlab-api-http-client-mtl
     - gitlab-api-types
     - network-uri
     - optparse-applicative
