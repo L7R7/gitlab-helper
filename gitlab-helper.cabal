@@ -27,7 +27,6 @@ library
   exposed-modules:
       App
       Branches
-      Config.App
       Config.Config
       Config.Env
       Config.File
@@ -35,6 +34,7 @@ library
       Config.Types
       Effects
       MergeRequests
+      Program
       Projects
       Schedules
       UpdateMergeRequests

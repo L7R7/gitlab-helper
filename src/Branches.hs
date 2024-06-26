@@ -15,8 +15,8 @@ module Branches
   )
 where
 
+import App
 import Colourista.Pure
-import Config.App
 import Config.Types (Config (..), WithArchivedProjects (SkipArchivedProjects))
 import qualified Data.Text as T (intercalate)
 import Data.Time hiding (getCurrentTime)

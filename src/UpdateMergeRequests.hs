@@ -13,7 +13,7 @@ module UpdateMergeRequests
   )
 where
 
-import Config.App (App)
+import App (App)
 import Config.Types
 import Data.Text (isInfixOf, strip, stripPrefix, toLower)
 import Effects

@@ -1,6 +1,6 @@
 module Main where
 
-import App
+import Program
 import Relude
 
 main :: IO ()

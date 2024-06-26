@@ -1,38 +1,25 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
-module App (run) where
+module App (App (..)) where
 
-import Branches (showBranchesForGroup)
-import Config.App
-import Config.Config (parseConfigOrDie)
 import Config.Types
-import Effects (write)
-import GitHash
-import MergeRequests
-import Projects
+import Gitlab.Client.MTL (HasApiToken (..), HasBaseUrl (..))
 import Relude
-import Schedules (showSchedulesForGroup)
-import UpdateMergeRequests (updateMergeRequests)
 
-run :: IO ()
-run = do
-  c@Config {..} <- parseConfigOrDie
-  let gitCommit = "Version: " <> fromString (giTag $$tGitInfoCwd)
-  -- putStrLn $ "running with config: " <> show c
-  let program = case cmd of
-        Version -> write gitCommit
-        ShowBranches -> showBranchesForGroup
-        (EnableSourceBranchDeletionAfterMerge execution) -> enableSourceBranchDeletionAfterMerge execution
-        ShowProjects -> showProjectsForGroup
-        ListAllProjectsMeta -> listAllProjectsMeta
-        ListProjectsMeta -> listProjectsMetaForGroup
-        ShowSchedules -> showSchedulesForGroup
-        ShowMergeRequests -> showMergeRequests
-        (EnableAllDiscussionsMustBeResolvedForMergeRequirement execution) -> enableAllDiscussionsResolvedForMergeRequirement execution
-        (EnableSuccessfulPipelineForMergeRequirement execution) -> enableSuccessfulPipelineForMergeRequirement execution
-        (CountSuccessfulDeployments year withArchivedProjects) -> countDeployments year withArchivedProjects
-        (SetMergeMethodToFastForward execution) -> setMergeMethodToFastForward execution
-        (UpdateMergeRequests action authorIs searchTerm execution) -> updateMergeRequests projectsExcludeList action authorIs searchTerm execution
-  runReaderT (unApp program) c
+newtype App a = App {unApp :: ReaderT Config IO a}
+  deriving newtype
+    ( Functor,
+      Applicative,
+      Monad,
+      MonadIO,
+      MonadReader Config
+    )
+
+instance HasApiToken App where
+  getApiToken = App $ asks apiToken
+
+instance HasBaseUrl App where
+  getBaseUrl = App $ asks baseUrl

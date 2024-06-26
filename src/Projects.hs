@@ -19,9 +19,9 @@ module Projects
   )
 where
 
+import App (App)
 import Colonnade (asciiCapped, cap, headed)
 import Colourista (bold, formatWith, red)
-import Config.App (App)
 import Config.Types
 import Data.Aeson (encode)
 import qualified Data.Map as M
