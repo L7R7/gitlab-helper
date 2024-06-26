@@ -16,16 +16,17 @@ module Branches
 where
 
 import Colourista.Pure
+import Config.App
 import Config.Types (Config (..), WithArchivedProjects (SkipArchivedProjects))
 import qualified Data.Text as T (intercalate)
 import Data.Time hiding (getCurrentTime)
 import Effects
 import Gitlab.Branch
-import Gitlab.Client (UpdateError)
+import Gitlab.Client.MTL (UpdateError)
 import Gitlab.Project
 import Relude
 
-showBranchesForGroup :: ReaderT Config IO ()
+showBranchesForGroup :: App ()
 showBranchesForGroup = do
   gId <- asks groupId
   write "=================================================="
@@ -41,10 +42,10 @@ showBranchesForGroup = do
       results <- traverse (getBranchesForProject >=> printResult) projects
       writeSummary results
 
-getBranchesForProject :: Project -> ReaderT Config IO (Project, Either UpdateError [Branch])
+getBranchesForProject :: Project -> App (Project, Either UpdateError [Branch])
 getBranchesForProject p = (p,) <$> getBranches (projectId p)
 
-printResult :: (Project, Either UpdateError [Branch]) -> ReaderT Config IO (Project, Either UpdateError [Branch])
+printResult :: (Project, Either UpdateError [Branch]) -> App (Project, Either UpdateError [Branch])
 printResult input@(project, Left err) = do
   write $ "=== " <> show (projectName project)
   write $ "something went wrong: " <> show err
@@ -93,7 +94,7 @@ type MergedBranchesCount = Sum Int
 
 type Summary = (ProjectCount, BranchesCount, StaleBranchesCount, MergedBranchesCount)
 
-writeSummary :: [(Project, Either UpdateError [Branch])] -> ReaderT Config IO ()
+writeSummary :: [(Project, Either UpdateError [Branch])] -> App ()
 writeSummary results = do
   now <- getCurrentTime
   write ""

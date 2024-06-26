@@ -5,6 +5,7 @@
 module App (run) where
 
 import Branches (showBranchesForGroup)
+import Config.App
 import Config.Config (parseConfigOrDie)
 import Config.Types
 import Effects (write)
@@ -34,4 +35,4 @@ run = do
         (CountSuccessfulDeployments year withArchivedProjects) -> countDeployments year withArchivedProjects
         (SetMergeMethodToFastForward execution) -> setMergeMethodToFastForward execution
         (UpdateMergeRequests action authorIs searchTerm execution) -> updateMergeRequests projectsExcludeList action authorIs searchTerm execution
-  runReaderT program c
+  runReaderT (unApp program) c

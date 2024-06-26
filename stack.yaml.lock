@@ -7,29 +7,42 @@ packages:
 - completed:
     name: gitlab-api-http-client
     pantry-tree:
-      sha256: 0d3e7a84a29168f9bf26a703df609f1fbab6e24cb41bc91e19a92639201507a8
+      sha256: 266e29c3606b7396e293cde1709dd5c87fb615be548397e2bb69c82eb8165900
       size: 187
-    sha256: 6125316a65ba9477973582d1d50759fa43ca61718d85da9f5398d0d21185b37c
-    size: 20930
+    sha256: d9f5773d618ea4aa62d1dadf05ccb0294d51efdf60e25057d8d6ea5bad6ef70b
+    size: 21230
     subdir: gitlab-api-http-client
-    url: https://github.com/L7R7/gitlab-api/archive/cdc01c1ff03f550c250acd2cb2f2a127de8158c1.tar.gz
+    url: https://github.com/L7R7/gitlab-api/archive/0e3080a4fbc2d3f244d7b644537982da10f86489.tar.gz
     version: 0.0.0.1
   original:
     subdir: gitlab-api-http-client
-    url: https://github.com/L7R7/gitlab-api/archive/cdc01c1ff03f550c250acd2cb2f2a127de8158c1.tar.gz
+    url: https://github.com/L7R7/gitlab-api/archive/0e3080a4fbc2d3f244d7b644537982da10f86489.tar.gz
+- completed:
+    name: gitlab-api-http-client-mtl
+    pantry-tree:
+      sha256: 53276b1a09464341b714332da01fd85548634091dd48b3de58beafe40f542a56
+      size: 195
+    sha256: d9f5773d618ea4aa62d1dadf05ccb0294d51efdf60e25057d8d6ea5bad6ef70b
+    size: 21230
+    subdir: gitlab-api-http-client-mtl
+    url: https://github.com/L7R7/gitlab-api/archive/0e3080a4fbc2d3f244d7b644537982da10f86489.tar.gz
+    version: 0.0.0.1
+  original:
+    subdir: gitlab-api-http-client-mtl
+    url: https://github.com/L7R7/gitlab-api/archive/0e3080a4fbc2d3f244d7b644537982da10f86489.tar.gz
 - completed:
     name: gitlab-api-types
     pantry-tree:
-      sha256: f2eef205898c7aeffce385a7108a70cc928714e52c25f3b17084e28e6ec148bf
+      sha256: 0cc3127892ec882e3e2a5f6becce9c60148c5289b619f323547b26ea30a6ce5c
       size: 725
-    sha256: 6125316a65ba9477973582d1d50759fa43ca61718d85da9f5398d0d21185b37c
-    size: 20930
+    sha256: d9f5773d618ea4aa62d1dadf05ccb0294d51efdf60e25057d8d6ea5bad6ef70b
+    size: 21230
     subdir: gitlab-api-types
-    url: https://github.com/L7R7/gitlab-api/archive/cdc01c1ff03f550c250acd2cb2f2a127de8158c1.tar.gz
+    url: https://github.com/L7R7/gitlab-api/archive/0e3080a4fbc2d3f244d7b644537982da10f86489.tar.gz
     version: 0.0.0.1
   original:
     subdir: gitlab-api-types
-    url: https://github.com/L7R7/gitlab-api/archive/cdc01c1ff03f550c250acd2cb2f2a127de8158c1.tar.gz
+    url: https://github.com/L7R7/gitlab-api/archive/0e3080a4fbc2d3f244d7b644537982da10f86489.tar.gz
 snapshots:
 - completed:
     sha256: 4be1ca5d31689b524a7f0f17a439bbe9136465213edc498e9a395899a670f2aa

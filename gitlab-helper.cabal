@@ -27,13 +27,13 @@ library
   exposed-modules:
       App
       Branches
+      Config.App
       Config.Config
       Config.Env
       Config.File
       Config.Optparse
       Config.Types
       Effects
-      GitlabUtils
       MergeRequests
       Projects
       Schedules
@@ -58,7 +58,7 @@ library
     , either
     , envparse
     , githash
-    , gitlab-api-http-client
+    , gitlab-api-http-client-mtl
     , gitlab-api-types
     , http-conduit
     , http-types

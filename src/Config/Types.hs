@@ -20,7 +20,7 @@ module Config.Types
 where
 
 import Barbies
-import Gitlab.Client (ApiToken, BaseUrl)
+import Gitlab.Client.MTL (ApiToken, BaseUrl)
 import Gitlab.Group (Group)
 import Gitlab.Lib (Id (..))
 import Gitlab.Project (Project)
