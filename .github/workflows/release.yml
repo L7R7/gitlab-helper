@@ -122,7 +122,7 @@ jobs:
       - if: matrix.os == 'windows-latest'
         name: Create zip file on windows
         run: |
-          7z a l ${{ env.ZIP_PATH }} ${{ env.BINARY_PATH }}
+          7z a ${{ env.ZIP_PATH }} ${{ env.BINARY_PATH }}
 
       - name: Load Release URL File from release job
         uses: actions/download-artifact@v4
