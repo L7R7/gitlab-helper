@@ -57,7 +57,7 @@ where
 import App
 import Autodocodec
 import Burrito
-import Config.Types (AuthorIs (..), Config (..), MergeCiOption (..), SearchTerm (..), WithArchivedProjects (..), Year (..))
+import Config.Types (AuthorIs (..), Config (..), MergeCiOption (..), MergeStatusRecheck (..), SearchTerm (..), WithArchivedProjects (..), Year (..))
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Aeson.Types (Object)
 import Data.Scientific
@@ -166,28 +166,33 @@ setMergeMethod project mm = do
       toAPIValue FastForward = "ff"
   void <$> fetchData' @Project (setRequestMethod "PUT") template [("projectId", (stringValue . show) project), ("merge_method", stringValue (toAPIValue mm))]
 
-getOpenMergeRequests :: Id Project -> Maybe AuthorIs -> App (Either UpdateError [MergeRequest])
-getOpenMergeRequests project maybeAuthorIs = do
+getOpenMergeRequests :: Id Project -> Maybe AuthorIs -> MergeStatusRecheck -> App (Either UpdateError [MergeRequest])
+getOpenMergeRequests project maybeAuthorIs recheckMergeStatus = do
   case maybeAuthorIs of
     Nothing -> do
-      let template = [uriTemplate|/api/v4/projects/{projectId}/merge_requests?state=opened|]
-      fetchDataPaginated template [("projectId", (stringValue . show) project)]
+      let template = [uriTemplate|/api/v4/projects/{projectId}/merge_requests?state=opened&with_merge_status_recheck={recheckMergeStatus}|]
+      fetchDataPaginated template [("projectId", (stringValue . show) project), ("recheckMergeStatus", recheckMergeStatusToBooleanValue recheckMergeStatus)]
     Just (AuthorIs i) -> do
-      let template = [uriTemplate|/api/v4/projects/{projectId}/merge_requests?state=opened&author_id={authorId}|]
-      fetchDataPaginated template [("projectId", (stringValue . show) project), ("authorId", (stringValue . show) i)]
+      let template = [uriTemplate|/api/v4/projects/{projectId}/merge_requests?state=opened&author_id={authorId}&with_merge_status_recheck={recheckMergeStatus}|]
+      fetchDataPaginated template [("projectId", (stringValue . show) project), ("authorId", (stringValue . show) i), ("recheckMergeStatus", recheckMergeStatusToBooleanValue recheckMergeStatus)]
 
-getOpenMergeRequestsForGroup :: Maybe AuthorIs -> Maybe SearchTerm -> App (Either UpdateError [MergeRequest])
-getOpenMergeRequestsForGroup maybeAuthorIs maybeSearchTerm = do
+getOpenMergeRequestsForGroup :: Maybe AuthorIs -> Maybe SearchTerm -> MergeStatusRecheck -> App (Either UpdateError [MergeRequest])
+getOpenMergeRequestsForGroup maybeAuthorIs maybeSearchTerm recheckMergeStatus = do
   grp <- asks groupId
-  let template = [uriTemplate|/api/v4/groups/{groupId}/merge_requests?state=opened{&author_id,search}|]
+  let template = [uriTemplate|/api/v4/groups/{groupId}/merge_requests?state=opened{&author_id,search,with_merge_status_recheck}|]
   fetchDataPaginated
     template
     ( mconcat
         [ [("groupId", (stringValue . show) grp)],
           foldMap (\(AuthorIs i) -> [("author_id", (stringValue . show) i)]) maybeAuthorIs,
-          foldMap (\(SearchTerm s) -> [("search", stringValue s)]) maybeSearchTerm
+          foldMap (\(SearchTerm s) -> [("search", stringValue s)]) maybeSearchTerm,
+          [("with_merge_status_recheck", recheckMergeStatusToBooleanValue recheckMergeStatus)]
         ]
     )
+
+recheckMergeStatusToBooleanValue :: MergeStatusRecheck -> Value
+recheckMergeStatusToBooleanValue RecheckMergeStatus = stringValue "true"
+recheckMergeStatusToBooleanValue NoRecheckMergeStatus = stringValue "false"
 
 enableSourceBranchDeletionAfterMrMerge :: Id Project -> App (Either UpdateError ())
 enableSourceBranchDeletionAfterMrMerge project =

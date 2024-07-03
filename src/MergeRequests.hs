@@ -17,7 +17,7 @@ module MergeRequests
 where
 
 import App (App)
-import Config.Types (WithArchivedProjects (SkipArchivedProjects))
+import Config.Types (MergeStatusRecheck, WithArchivedProjects (SkipArchivedProjects))
 import Data.List (partition)
 import qualified Data.Text as T (intercalate)
 import Data.Time hiding (getCurrentTime)
@@ -27,15 +27,15 @@ import Gitlab.MergeRequest
 import Gitlab.Project
 import Relude
 
-showMergeRequests :: App ()
-showMergeRequests = do
+showMergeRequests :: MergeStatusRecheck -> App ()
+showMergeRequests recheckMergeStatus = do
   getProjectsForGroup SkipArchivedProjects >>= \case
     Left err -> write $ show err
     Right projects -> do
       let (mrEnabled, mrDisabled) = partition projectMergeRequestsEnabled projects
       printProjectsWithDisabledMergeRequests mrDisabled
       write ""
-      printProjectsWithMergeRequests mrEnabled
+      printProjectsWithMergeRequests recheckMergeStatus mrEnabled
 
 printProjectsWithDisabledMergeRequests :: [Project] -> App ()
 printProjectsWithDisabledMergeRequests projects = do
@@ -46,15 +46,15 @@ printProjectsWithDisabledMergeRequests projects = do
     printProjects [] = write "There are no projects with disabled merge requests"
     printProjects ps = write $ T.intercalate ", " (show . projectName <$> ps)
 
-printProjectsWithMergeRequests :: [Project] -> App ()
-printProjectsWithMergeRequests projects = do
+printProjectsWithMergeRequests :: MergeStatusRecheck -> [Project] -> App ()
+printProjectsWithMergeRequests recheckMergeStatus projects = do
   write "=== projects with merge requests ( ⚬ = Draft)"
   printProjects projects
   where
     printProjects :: [Project] -> App ()
     printProjects [] = write "There are no projects with enabled merge requests"
     printProjects ps = do
-      projectsWithMergeRequests <- traverse (\project -> (project,) <$> getOpenMergeRequests (projectId project) Nothing) ps
+      projectsWithMergeRequests <- traverse (\project -> (project,) <$> getOpenMergeRequests (projectId project) Nothing recheckMergeStatus) ps
       let projectsWithOpenMergeRequests = filter hasOpenMergeRequests projectsWithMergeRequests
       mapM_ printProjectsWithMergeRequests' projectsWithOpenMergeRequests
     hasOpenMergeRequests (_, res) = (not . all null) res

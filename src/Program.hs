@@ -29,10 +29,10 @@ run = do
         ListAllProjectsMeta -> listAllProjectsMeta
         ListProjectsMeta -> listProjectsMetaForGroup
         ShowSchedules -> showSchedulesForGroup
-        ShowMergeRequests -> showMergeRequests
+        (ShowMergeRequests recheckMergeStatus) -> showMergeRequests recheckMergeStatus
         (EnableAllDiscussionsMustBeResolvedForMergeRequirement execution) -> enableAllDiscussionsResolvedForMergeRequirement execution
         (EnableSuccessfulPipelineForMergeRequirement execution) -> enableSuccessfulPipelineForMergeRequirement execution
         (CountSuccessfulDeployments year withArchivedProjects) -> countDeployments year withArchivedProjects
         (SetMergeMethodToFastForward execution) -> setMergeMethodToFastForward execution
-        (UpdateMergeRequests action authorIs searchTerm execution) -> updateMergeRequests projectsExcludeList action authorIs searchTerm execution
+        (UpdateMergeRequests action authorIs searchTerm recheckMergeStatus execution) -> updateMergeRequests projectsExcludeList action authorIs searchTerm recheckMergeStatus execution
   runReaderT (unApp program) c

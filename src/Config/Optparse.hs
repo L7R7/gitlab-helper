@@ -68,7 +68,7 @@ commandParser =
         command "enable-all-discussions-must-be-resolved-for-merge-requirement" (info (EnableAllDiscussionsMustBeResolvedForMergeRequirement <$> executionParser) (progDesc "enable the requirement that all discussions must be resolved for an MR to be merged for all projects")),
         command "enable-successful-pipeline-for-merge-requirement" (info (EnableSuccessfulPipelineForMergeRequirement <$> executionParser) (progDesc "enable the requirement that there must be a successful pipeline for an MR to be merged for all projects. CAUTION: Use with care, might not do what you want in projects without pipelines")),
         command "show-schedules" (info (pure ShowSchedules) (progDesc "show schedules")),
-        command "show-merge-requests" (info (pure ShowMergeRequests) (progDesc "show projects with and without enabled merge requests, list merge requests")),
+        command "show-merge-requests" (info (ShowMergeRequests <$> recheckMergeStatusParser) (progDesc "show projects with and without enabled merge requests, list merge requests")),
         command "count-deployments" (info (CountSuccessfulDeployments <$> argument (Year <$> auto) (metavar "YEAR") <*> withArchivedProjectsParser) (progDesc "count the number of successful deployments per project (a successful push pipeline on the default branch is counted as a deployment)")),
         command "set-merge-method-to-fast-forward" (info (SetMergeMethodToFastForward <$> executionParser) (progDesc "Set the merge method for all projects to \"Fast Forward\"")),
         command "update-merge-requests" (info mergeRequestUpdateCommandParser (progDesc "Update all MRs from a given user that match a given condition with a given command"))
@@ -86,6 +86,7 @@ mergeRequestUpdateCommandParser =
           . SearchTermTitle
           <$> strOption (long "search-title" <> help "Optional. a string that must appear in the MR title. Mutually exclusive with --search" <> metavar "TXT")
       )
+    <*> recheckMergeStatusParser
     <*> executionParser
   where
     mergeRequestUpdateActionParser :: Parser MergeRequestUpdateAction
@@ -109,3 +110,6 @@ executionParser =
 
 withArchivedProjectsParser :: Parser WithArchivedProjects
 withArchivedProjectsParser = flag SkipArchivedProjects IncludeArchivedProjects (long "include-archived" <> help "Include archived projects")
+
+recheckMergeStatusParser :: Parser MergeStatusRecheck
+recheckMergeStatusParser = flag NoRecheckMergeStatus RecheckMergeStatus (long "recheck-merge-status" <> help "Trigger a recheck of the merge status of the merge requests. This is done on the Gitlab server and might have a performance impact so it's not done by default")
