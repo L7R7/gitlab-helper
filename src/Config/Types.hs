@@ -14,6 +14,7 @@ module Config.Types
     SearchTermTitle (..),
     Year (..),
     WithArchivedProjects (..),
+    MergeStatusRecheck (..),
     Execution (..),
     partialConfigToConfig,
   )
@@ -60,12 +61,12 @@ data Command
   | ListAllProjectsMeta
   | ListProjectsMeta
   | ShowSchedules
-  | ShowMergeRequests
+  | ShowMergeRequests MergeStatusRecheck
   | EnableAllDiscussionsMustBeResolvedForMergeRequirement Execution
   | EnableSuccessfulPipelineForMergeRequirement Execution
   | SetMergeMethodToFastForward Execution
   | CountSuccessfulDeployments Year WithArchivedProjects
-  | UpdateMergeRequests MergeRequestUpdateAction (Maybe AuthorIs) (Maybe (Either SearchTerm SearchTermTitle)) Execution
+  | UpdateMergeRequests MergeRequestUpdateAction (Maybe AuthorIs) (Maybe (Either SearchTerm SearchTermTitle)) MergeStatusRecheck Execution
   deriving stock (Show)
 
 data Execution = DryRun | Execute deriving stock (Eq, Show)
@@ -83,6 +84,9 @@ newtype SearchTermTitle = SearchTermTitle String deriving stock (Show)
 newtype Year = Year Int deriving stock (Show)
 
 data WithArchivedProjects = IncludeArchivedProjects | SkipArchivedProjects deriving stock (Show)
+
+data MergeStatusRecheck = RecheckMergeStatus | NoRecheckMergeStatus
+  deriving stock (Show)
 
 partialConfigToConfig :: PartialConfig Identity -> Config
 partialConfigToConfig (PartialConfig (Identity groupId) (Identity baseUrl) (Identity apiToken) (Identity projectsExcludeList) (Identity cmd)) = Config {..}

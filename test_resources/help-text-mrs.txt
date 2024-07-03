@@ -1,6 +1,6 @@
 Usage: gitlab-helper update-merge-requests 
          COMMAND [-u|--user-id ID] [(-s|--search TXT) | --search-title TXT] 
-         [-x|--execute]
+         [--recheck-merge-status] [-x|--execute]
 
   Update all MRs from a given user that match a given condition with a given
   command
@@ -13,6 +13,9 @@ Available options:
                            --search-title
   --search-title TXT       Optional. a string that must appear in the MR title.
                            Mutually exclusive with --search
+  --recheck-merge-status   Trigger a recheck of the merge status of the merge
+                           requests. This is done on the Gitlab server and might
+                           have a performance impact so it's not done by default
   -x,--execute             whether to actually change the world via the API. By
                            default, only a dry run will be performed
   -h,--help                Show this help text

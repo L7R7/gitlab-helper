@@ -27,13 +27,14 @@ updateMergeRequests ::
   MergeRequestUpdateAction ->
   Maybe AuthorIs ->
   Maybe (Either SearchTerm SearchTermTitle) ->
+  MergeStatusRecheck ->
   Execution ->
   App ()
-updateMergeRequests _ (Merge _) _ Nothing Execute =
+updateMergeRequests _ (Merge _) _ Nothing _ Execute =
   write "I don't think you want to blindly merge all merge requests for this group. Consider adding a filter. Exiting now."
-updateMergeRequests projectExcludes action authorIs maybeSearchTerms execute = do
+updateMergeRequests projectExcludes action authorIs maybeSearchTerms recheckMergeStatus execute = do
   let searchTerm' = either id (\(SearchTermTitle s) -> SearchTerm s) <$> maybeSearchTerms
-  getOpenMergeRequestsForGroup authorIs searchTerm' >>= \case
+  getOpenMergeRequestsForGroup authorIs searchTerm' recheckMergeStatus >>= \case
     Left err -> write $ show err
     Right [] -> write "no MRs to process"
     Right allMergeRequests -> do
@@ -49,7 +50,7 @@ updateMergeRequests projectExcludes action authorIs maybeSearchTerms execute = d
             Right _ -> pure ()
   where
     performAction pId mr = do
-      write $ "processing MR #" <> show (mergeRequestIid mr) <> " in Project #" <> show (mergeRequestProjectId mr) <> ": " <> mergeRequestTitle mr
+      write $ "processing MR #" <> show (mergeRequestIid mr) <> " in Project #" <> show (mergeRequestProjectId mr) <> " with state " <> show (mergeRequestDetailedMergeStatus mr) <> ": " <> mergeRequestTitle mr
       let f = case execute of
             DryRun -> performActionDry
             Execute -> performActionExecute
