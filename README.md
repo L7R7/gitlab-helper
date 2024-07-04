@@ -68,7 +68,7 @@ The structure of the configuration files looks like this:
 
 ```yaml
 config:
-  baseUrl: 'https://gitlab.breuni.de'
+  baseUrl: 'https://my.gitlab.com'
   apiToken: 'apitoken'
   groupId: 123
   excludeProjects: []
