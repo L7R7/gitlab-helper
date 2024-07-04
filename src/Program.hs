@@ -1,16 +1,13 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TemplateHaskell #-}
 
 module Program (run) where
 
 import App
 import Branches (showBranchesForGroup)
-import Config.Config (parseConfigOrDie)
-import Config.Types
-import Effects (write)
-import GitHash
+import Config
 import MergeRequests
+import OptEnvConf
+import Paths_gitlab_helper (version)
 import Projects
 import Relude
 import Schedules (showSchedulesForGroup)
@@ -18,11 +15,9 @@ import UpdateMergeRequests (updateMergeRequests)
 
 run :: IO ()
 run = do
-  c@Config {..} <- parseConfigOrDie
-  let gitCommit = "Version: " <> fromString (giTag $$tGitInfoCwd)
+  c@Config {..} <- runSettingsParser version "Some utilities for working with GitLab to make your life easier."
   -- putStrLn $ "running with config: " <> show c
   let program = case cmd of
-        Version -> write gitCommit
         ShowBranches -> showBranchesForGroup
         (EnableSourceBranchDeletionAfterMerge execution) -> enableSourceBranchDeletionAfterMerge execution
         ShowProjects -> showProjectsForGroup

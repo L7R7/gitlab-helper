@@ -5,7 +5,7 @@
 
 module App (App (..)) where
 
-import Config.Types
+import Config
 import Gitlab.Client.MTL (HasApiToken (..), HasBaseUrl (..), HasUserAgent (..))
 import Relude
 
