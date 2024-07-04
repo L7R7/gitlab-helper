@@ -45,71 +45,47 @@ updateMergeRequests projectExcludes action authorIs maybeSearchTerms recheckMerg
       case filteredMergeRequests of
         [] -> write "no MRs to process after applying filters"
         mergeRequests -> forM_ mergeRequests $ \mr -> do
-          performAction (mergeRequestProjectId mr) mr >>= \case
+          write $ "processing MR #" <> show (mergeRequestIid mr) <> " in Project #" <> show (mergeRequestProjectId mr) <> " with state " <> show (mergeRequestDetailedMergeStatus mr) <> ": " <> mergeRequestTitle mr
+          res <- performAction mr
+          case res of
             Left err -> write $ "failed to update merge request: " <> show err
             Right _ -> pure ()
   where
-    performAction pId mr = do
-      write $ "processing MR #" <> show (mergeRequestIid mr) <> " in Project #" <> show (mergeRequestProjectId mr) <> " with state " <> show (mergeRequestDetailedMergeStatus mr) <> ": " <> mergeRequestTitle mr
-      let f = case execute of
-            DryRun -> performActionDry
-            Execute -> performActionExecute
-      f pId mr
+    performAction mr =
+      let pId = mergeRequestProjectId mr
+       in case action of
+            List -> pure $ Right ()
+            Rebase -> rebaseAction pId (mergeRequestIid mr)
+            (Merge mergeCiOption) -> case detailedMergeStatusToDecision (mergeRequestDetailedMergeStatus mr) of
+              MergeShouldWork -> mergeAction pId (mergeRequestIid mr) mergeCiOption
+              MergeMayWork -> mergeAttemptAction pId (mergeRequestIid mr) mergeCiOption
+              MergeWontWork -> mergeWontWorkAction (mergeRequestDetailedMergeStatus mr)
+            SetToDraft ->
+              if mergeRequestWip mr
+                then Right () <$ write "merge request is already in state \"Draft\""
+                else setToDraftAction pId (mergeRequestIid mr) (mergeRequestTitle mr)
+            MarkAsReady ->
+              if mergeRequestWip mr
+                then markAsReadyAction pId (mergeRequestIid mr) (mergeRequestTitle mr)
+                else Right () <$ write "merge request is already marked as ready"
 
-    printMergeRequest _ = pure ()
-
-    performActionExecute pId mr = case action of
-      List -> Right () <$ printMergeRequest mr
-      Rebase -> rebaseMergeRequest pId (mergeRequestIid mr)
-      -- todo: get rid of the code duplication for finding the MergeDecision?
-      (Merge mergeCiOption) -> case detailedMergeStatusToDecision (mergeRequestDetailedMergeStatus mr) of
-        MergeShouldWork -> mergeMergeRequest pId (mergeRequestIid mr) mergeCiOption
-        MergeMayWork -> mergeMergeRequest pId (mergeRequestIid mr) mergeCiOption
-        MergeWontWork -> Right () <$ write ("The merge status is " <> show (mergeRequestDetailedMergeStatus mr) <> ", skipping the merge as it wouldn't succeed")
-      SetToDraft ->
-        if mergeRequestWip mr
-          then Right () <$ write "merge request is already in state \"Draft\""
-          else setMergeRequestTitle pId (mergeRequestIid mr) ("Draft: " <> mergeRequestTitle mr)
-      MarkAsReady ->
-        if mergeRequestWip mr
-          then setMergeRequestTitle pId (mergeRequestIid mr) (strip $ fromMaybe (mergeRequestTitle mr) (stripPrefix "Draft:" (mergeRequestTitle mr)))
-          else Right () <$ write "merge request is already marked as ready"
-
-    performActionDry _ mr =
-      Right () <$ case action of
-        List -> printMergeRequest mr
-        Rebase -> write "dry run. skipping rebase"
-        -- todo: get rid of the code duplication for finding the MergeDecision?
-        (Merge _) -> case detailedMergeStatusToDecision (mergeRequestDetailedMergeStatus mr) of
-          MergeShouldWork -> write "dry run. skipping merge"
-          MergeMayWork -> write "dry run. skipping merge attempt"
-          MergeWontWork -> write ("The merge status is " <> show (mergeRequestDetailedMergeStatus mr) <> ", skipping the merge as it wouldn't succeed")
-        SetToDraft ->
-          if mergeRequestWip mr
-            then write "merge request is already in state \"Draft\""
-            else write "dry run. skipping draft toggle"
-        MarkAsReady ->
-          if mergeRequestWip mr
-            then write "dry run. skipping draft toggle"
-            else write "merge request is already marked as ready"
-
-    detailedMergeStatusToDecision :: DetailedMergeStatus -> MergeDecision
-    detailedMergeStatusToDecision ApprovalsSyncing = MergeMayWork
-    detailedMergeStatusToDecision BlockedStatus = MergeWontWork
-    detailedMergeStatusToDecision Checking = MergeMayWork
-    detailedMergeStatusToDecision CIMustPass = MergeWontWork
-    detailedMergeStatusToDecision CIStillRunning = MergeMayWork
-    detailedMergeStatusToDecision Conflict = MergeWontWork
-    detailedMergeStatusToDecision DiscussionsNotResolved = MergeWontWork
-    detailedMergeStatusToDecision DraftStatus = MergeWontWork
-    detailedMergeStatusToDecision ExternalStatusChecks = MergeWontWork
-    detailedMergeStatusToDecision JiraAssociationMissing = MergeWontWork
-    detailedMergeStatusToDecision Mergeable = MergeShouldWork
-    detailedMergeStatusToDecision NeedRebase = MergeWontWork
-    detailedMergeStatusToDecision NotApproved = MergeWontWork
-    detailedMergeStatusToDecision NotOpen = MergeWontWork
-    detailedMergeStatusToDecision RequestedChanges = MergeWontWork
-    detailedMergeStatusToDecision Unchecked = MergeMayWork
+    (rebaseAction, mergeAction, mergeAttemptAction, mergeWontWorkAction, setToDraftAction, markAsReadyAction) = case execute of
+      Execute ->
+        ( rebaseMergeRequest,
+          mergeMergeRequest,
+          mergeMergeRequest,
+          \detailedStatus -> Right () <$ write ("The merge status is " <> show detailedStatus <> ", skipping the merge as it wouldn't succeed"),
+          \pId mrIid mrTitle -> setMergeRequestTitle pId mrIid ("Draft: " <> mrTitle),
+          \pId mrIid mrTitle -> setMergeRequestTitle pId mrIid (strip $ fromMaybe mrTitle (stripPrefix "Draft:" mrTitle))
+        )
+      DryRun ->
+        ( \_ _ -> Right () <$ write "dry run. skipping rebase",
+          \_ _ _ -> Right () <$ write "dry run. skipping merge",
+          \_ _ _ -> Right () <$ write "dry run. skipping merge attempt",
+          \detailedStatus -> Right () <$ write ("The merge status is " <> show detailedStatus <> ", skipping the merge as it wouldn't succeed"),
+          \_ _ _ -> Right () <$ write "dry run. skipping draft toggle",
+          \_ _ _ -> Right () <$ write "dry run. skipping draft toggle"
+        )
 
 -- | Depending on the merge status of a merge request, trying a merge may or may not make sense.
 -- There are cases where a merge will very likely be successful, others where it maybe will work, and others where it definitely won't work.
@@ -118,3 +94,21 @@ updateMergeRequests projectExcludes action authorIs maybeSearchTerms recheckMerg
 --
 -- This type represents these different cases.
 data MergeDecision = MergeShouldWork | MergeMayWork | MergeWontWork
+
+detailedMergeStatusToDecision :: DetailedMergeStatus -> MergeDecision
+detailedMergeStatusToDecision ApprovalsSyncing = MergeMayWork
+detailedMergeStatusToDecision BlockedStatus = MergeWontWork
+detailedMergeStatusToDecision Checking = MergeMayWork
+detailedMergeStatusToDecision CIMustPass = MergeWontWork
+detailedMergeStatusToDecision CIStillRunning = MergeMayWork
+detailedMergeStatusToDecision Conflict = MergeWontWork
+detailedMergeStatusToDecision DiscussionsNotResolved = MergeWontWork
+detailedMergeStatusToDecision DraftStatus = MergeWontWork
+detailedMergeStatusToDecision ExternalStatusChecks = MergeWontWork
+detailedMergeStatusToDecision JiraAssociationMissing = MergeWontWork
+detailedMergeStatusToDecision Mergeable = MergeShouldWork
+detailedMergeStatusToDecision NeedRebase = MergeWontWork
+detailedMergeStatusToDecision NotApproved = MergeWontWork
+detailedMergeStatusToDecision NotOpen = MergeWontWork
+detailedMergeStatusToDecision RequestedChanges = MergeWontWork
+detailedMergeStatusToDecision Unchecked = MergeMayWork
