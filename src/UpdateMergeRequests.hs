@@ -7,7 +7,7 @@ module UpdateMergeRequests
 where
 
 import App (App)
-import Config.Types
+import Config
 import Data.Text (isInfixOf, strip, stripPrefix, toLower)
 import Effects
 import Gitlab.Lib (Id)

@@ -21,7 +21,7 @@ where
 import App (App)
 import Colonnade (asciiCapped, cap, headed)
 import Colourista (bold, formatWith, red)
-import Config.Types
+import Config
 import Data.Aeson (encode)
 import qualified Data.Map as M
 import Data.Text (toLower)

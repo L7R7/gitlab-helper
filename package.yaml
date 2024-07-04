@@ -14,10 +14,8 @@ description: Please see the README on GitHub at <https://github.com/L7R7/gitlab-
 
 dependencies:
   - base >= 4.7 && < 5
-  - relude
 
-default-extensions:
-  - NoImplicitPrelude
+default-extensions: []
 
 ghc-options:
   - -fwrite-ide-info
@@ -41,29 +39,27 @@ library:
     - -flate-specialise
     - -fspecialise-aggressively
     - -Wmissing-export-lists
+  default-extensions:
+    - NoImplicitPrelude
   dependencies:
     - aeson
     - autodocodec
-    - barbies
     - burrito >= 2.0.1.0
     - colonnade
     - colourista
     - containers
-    - directory
-    - either
-    - envparse
-    - githash
     - http-conduit
     - http-types
     - gitlab-api-http-client-mtl
     - gitlab-api-types
     - network-uri
-    - optparse-applicative
+    - opt-env-conf
+    - path
+    - path-io
+    - relude
     - scientific
-    - split
     - text
     - time
-    - yaml
 
 executables:
   gitlab-helper:
@@ -87,5 +83,5 @@ tests:
       - -with-rtsopts=-N
     dependencies:
       - gitlab-helper
-      - optparse-applicative
+      - opt-env-conf-test
       - sydtest
