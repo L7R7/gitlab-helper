@@ -57,7 +57,7 @@ where
 import App
 import Autodocodec
 import Burrito
-import Config.Types (AuthorIs (..), Config (..), MergeCiOption (..), MergeStatusRecheck (..), SearchTerm (..), WithArchivedProjects (..), Year (..))
+import Config (AuthorIs (..), Config (..), MergeCiOption (..), MergeStatusRecheck (..), SearchTerm (..), WithArchivedProjects (..), Year (..))
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Aeson.Types (Object)
 import Data.Scientific

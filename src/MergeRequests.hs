@@ -17,7 +17,7 @@ module MergeRequests
 where
 
 import App (App)
-import Config.Types (MergeStatusRecheck, WithArchivedProjects (SkipArchivedProjects))
+import Config (MergeStatusRecheck, WithArchivedProjects (SkipArchivedProjects))
 import Data.List (partition)
 import qualified Data.Text as T (intercalate)
 import Data.Time hiding (getCurrentTime)
