@@ -85,8 +85,7 @@ newtype Year = Year Int deriving stock (Show)
 
 data WithArchivedProjects = IncludeArchivedProjects | SkipArchivedProjects deriving stock (Show)
 
-data MergeStatusRecheck = RecheckMergeStatus | NoRecheckMergeStatus
-  deriving stock (Show)
+data MergeStatusRecheck = RecheckMergeStatus | NoRecheckMergeStatus deriving stock (Show)
 
 partialConfigToConfig :: PartialConfig Identity -> Config
 partialConfigToConfig (PartialConfig (Identity groupId) (Identity baseUrl) (Identity apiToken) (Identity projectsExcludeList) (Identity cmd)) = Config {..}

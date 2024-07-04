@@ -96,19 +96,6 @@ updateMergeRequests projectExcludes action authorIs maybeSearchTerms recheckMerg
 data MergeDecision = MergeShouldWork | MergeMayWork | MergeWontWork
 
 detailedMergeStatusToDecision :: DetailedMergeStatus -> MergeDecision
-detailedMergeStatusToDecision ApprovalsSyncing = MergeMayWork
-detailedMergeStatusToDecision BlockedStatus = MergeWontWork
-detailedMergeStatusToDecision Checking = MergeMayWork
-detailedMergeStatusToDecision CIMustPass = MergeWontWork
-detailedMergeStatusToDecision CIStillRunning = MergeMayWork
-detailedMergeStatusToDecision Conflict = MergeWontWork
-detailedMergeStatusToDecision DiscussionsNotResolved = MergeWontWork
-detailedMergeStatusToDecision DraftStatus = MergeWontWork
-detailedMergeStatusToDecision ExternalStatusChecks = MergeWontWork
-detailedMergeStatusToDecision JiraAssociationMissing = MergeWontWork
 detailedMergeStatusToDecision Mergeable = MergeShouldWork
-detailedMergeStatusToDecision NeedRebase = MergeWontWork
-detailedMergeStatusToDecision NotApproved = MergeWontWork
-detailedMergeStatusToDecision NotOpen = MergeWontWork
-detailedMergeStatusToDecision RequestedChanges = MergeWontWork
-detailedMergeStatusToDecision Unchecked = MergeMayWork
+detailedMergeStatusToDecision dms | dms `elem` [ApprovalsSyncing, Checking, CIStillRunning, Unchecked] = MergeMayWork
+detailedMergeStatusToDecision _ = MergeWontWork
