@@ -38,10 +38,10 @@ data Config = Config
   deriving stock (Show)
 
 homeDirConfig :: Parser FilePath
-homeDirConfig = mapIO (\homeIO -> homeIO >>= \home -> toFilePath <$> resolveFile home ".gitlab-helper.yml") (pure getHomeDir)
+homeDirConfig = runIO (getHomeDir >>= \home -> toFilePath <$> resolveFile home ".gitlab-helper.yml")
 
 localConfig :: Parser FilePath
-localConfig = mapIO id (pure (toFilePath <$> resolveFile' ".gitlab-helper.yml"))
+localConfig = runIO (toFilePath <$> resolveFile' ".gitlab-helper.yml")
 
 instance HasParser Config where
   settingsParser =
