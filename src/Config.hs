@@ -1,5 +1,4 @@
-{-# LANGUAGE DerivingVia #-}
-{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module Config
@@ -37,15 +36,16 @@ data Config = Config
   }
   deriving stock (Show)
 
-homeDirConfig :: Parser FilePath
-homeDirConfig = runIO (getHomeDir >>= \home -> toFilePath <$> resolveFile home ".gitlab-helper.yml")
-
-localConfig :: Parser FilePath
-localConfig = runIO (toFilePath <$> resolveFile' ".gitlab-helper.yml")
+configFiles :: Parser [FilePath]
+configFiles =
+  sequenceA
+    [ runIO (getHomeDir >>= \home -> toFilePath <$> resolveFile home ".gitlab-helper.yml"),
+      runIO (toFilePath <$> resolveFile' ".gitlab-helper.yml")
+    ]
 
 instance HasParser Config where
   settingsParser =
-    withCombinedYamlConfigs ((\l h -> [l, h]) <$> localConfig <*> homeDirConfig)
+    withCombinedYamlConfigs configFiles
       $ subConfig "config"
       $ subEnv_ "GLH"
       $ Config
@@ -95,7 +95,7 @@ instance HasCodec ApiToken where
   codec = dimapCodec ApiToken (\(ApiToken txt) -> txt) textCodec
 
 positiveIntReader :: Reader Int
-positiveIntReader = maybeReader (find (> 0) <$> (readMaybe @Int))
+positiveIntReader = maybeReader (find (> 0) <$> readMaybe)
 
 data Command
   = ShowBranches
@@ -115,37 +115,67 @@ data Command
 instance HasParser Command where
   settingsParser =
     commands
-      [ command "show-branches" "Show branches" $ pure ShowBranches,
-        command "show-projects" "Show projects" $ pure ShowProjects,
-        command "list-all-projects-meta" "List all the projects for all groups that are visible for the provided API token in (almost) meta compatible JSON format" $ pure ListAllProjectsMeta,
-        command "list-projects-meta" "List the projects for the given group in (almost) meta compatible JSON format" $ pure ListProjectsMeta,
-        command "enable-source-branch-deletion" "Enable source branch deletion after merge for all projects in the group" $ EnableSourceBranchDeletionAfterMerge <$> settingsParser,
-        command "enable-all-discussions-must-be-resolved-for-merge-requirement" "Enable the requirement that all discussions must be resolved for an MR to be merged for all projects" $ EnableAllDiscussionsMustBeResolvedForMergeRequirement <$> settingsParser,
-        command "enable-successful-pipeline-for-merge-requirement" "Enable the requirement that there must be a successful pipeline for an MR to be merged for all projects. CAUTION: Use with care, might not do what you want in projects without pipelines" $ EnableSuccessfulPipelineForMergeRequirement <$> settingsParser,
-        command "show-schedules" "Show Pipeline Schedules" $ pure ShowSchedules,
-        command "show-merge-requests" "Show projects with and without enabled merge requests, list open merge requests" $ ShowMergeRequests <$> settingsParser,
-        command "count-deployments" "Count the number of successful deployments per project (a successful push pipeline on the default branch is counted as a deployment)" $ CountSuccessfulDeployments <$> settingsParser <*> settingsParser,
-        command "set-merge-method-to-fast-forward" "Set the merge method for all projects to \"Fast Forward\"" $ SetMergeMethodToFastForward <$> settingsParser,
-        command "update-merge-requests" "Update all MRs from a given user that match a given condition with a given command" mergeRequestUpdateCommandParser
+      [ command
+          "show-branches"
+          "Show branches"
+          (pure ShowBranches),
+        command
+          "show-projects"
+          "Show projects"
+          (pure ShowProjects),
+        command
+          "list-all-projects-meta"
+          "List all the projects for all groups that are visible for the provided API token in (almost) meta compatible JSON format"
+          (pure ListAllProjectsMeta),
+        command
+          "list-projects-meta"
+          "List the projects for the given group in (almost) meta compatible JSON format"
+          (pure ListProjectsMeta),
+        command
+          "enable-source-branch-deletion"
+          "Enable source branch deletion after merge for all projects in the group"
+          (EnableSourceBranchDeletionAfterMerge <$> settingsParser),
+        command
+          "enable-all-discussions-must-be-resolved-for-merge-requirement"
+          "Enable the requirement that all discussions must be resolved for an MR to be merged for all projects"
+          (EnableAllDiscussionsMustBeResolvedForMergeRequirement <$> settingsParser),
+        command
+          "enable-successful-pipeline-for-merge-requirement"
+          "Enable the requirement that there must be a successful pipeline for an MR to be merged for all projects. CAUTION: Use with care, might not do what you want in projects without pipelines"
+          (EnableSuccessfulPipelineForMergeRequirement <$> settingsParser),
+        command
+          "show-schedules"
+          "Show Pipeline Schedules"
+          (pure ShowSchedules),
+        command
+          "show-merge-requests"
+          "Show projects with and without enabled merge requests, list open merge requests"
+          (ShowMergeRequests <$> settingsParser),
+        command
+          "count-deployments"
+          "Count the number of successful deployments per project (a successful push pipeline on the default branch is counted as a deployment)"
+          (CountSuccessfulDeployments <$> settingsParser <*> settingsParser),
+        command
+          "set-merge-method-to-fast-forward"
+          "Set the merge method for all projects to \"Fast Forward\""
+          (SetMergeMethodToFastForward <$> settingsParser),
+        command
+          "update-merge-requests"
+          "Update all MRs from a given user that match a given condition with a given command"
+          mergeRequestUpdateCommandParser
       ]
 
 mergeRequestUpdateCommandParser :: Parser Command
 mergeRequestUpdateCommandParser =
   UpdateMergeRequests
     <$> settingsParser
-    <*> optional
-      ( setting
-          [ help "only MRs opened by the user with this ID are taken into account",
-            reader (AuthorIs <$> positiveIntReader),
-            option,
-            short 'u',
-            long "user-id",
-            metavar "USER_ID"
-          ]
-      )
-    <*> optional (Right <$> settingsParser <|> Left <$> settingsParser)
+    <*> optional settingsParser
+    <*> optional rightOrLeft
     <*> settingsParser
     <*> settingsParser
+
+rightOrLeft :: (HasParser a, HasParser b) => Parser (Either a b)
+rightOrLeft = Right <$> settingsParser <|> Left <$> settingsParser
 
 data Execution = DryRun | Execute deriving stock (Eq, Show)
 
@@ -184,6 +214,17 @@ instance HasParser MergeCiOption where
 
 newtype AuthorIs = AuthorIs Int deriving stock (Show)
 
+instance HasParser AuthorIs where
+  settingsParser =
+    setting
+      [ help "only MRs opened by the user with this ID are taken into account",
+        reader (AuthorIs <$> positiveIntReader),
+        option,
+        short 'u',
+        long "user-id",
+        metavar "USER_ID"
+      ]
+
 newtype SearchTerm = SearchTerm String deriving stock (Show)
 
 instance HasParser SearchTerm where
@@ -212,12 +253,25 @@ instance HasParser SearchTermTitle where
 newtype Year = Year Int deriving stock (Show)
 
 instance HasParser Year where
-  settingsParser = setting [help "Set the year", option, reader (Year <$> positiveIntReader), long "year", metavar "YEAR"]
+  settingsParser =
+    setting
+      [ help "Set the year",
+        option,
+        reader (Year <$> positiveIntReader),
+        long "year",
+        metavar "YEAR"
+      ]
 
 data WithArchivedProjects = IncludeArchivedProjects | SkipArchivedProjects deriving stock (Show)
 
 instance HasParser WithArchivedProjects where
-  settingsParser = (\b -> if b then IncludeArchivedProjects else SkipArchivedProjects) <$> yesNoSwitch False [help "Include or skip archived projects", long "include-archived-projects"]
+  settingsParser =
+    (\b -> if b then IncludeArchivedProjects else SkipArchivedProjects)
+      <$> yesNoSwitch
+        False
+        [ help "Include or skip archived projects",
+          long "include-archived-projects"
+        ]
 
 data MergeStatusRecheck = RecheckMergeStatus | NoRecheckMergeStatus deriving stock (Show)
 
