@@ -15,7 +15,7 @@ import UpdateMergeRequests (updateMergeRequests)
 
 run :: IO ()
 run = do
-  c@Config {..} <- runSettingsParser version
+  c@Config {..} <- runSettingsParser version "Some utilities for working with GitLab to make your life easier."
   -- putStrLn $ "running with config: " <> show c
   let program = case cmd of
         ShowBranches -> showBranchesForGroup

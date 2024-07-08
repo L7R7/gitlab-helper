@@ -36,11 +36,11 @@ data Config = Config
   }
   deriving stock (Show)
 
-configFiles :: Parser [FilePath]
+configFiles :: Parser [Path Abs File]
 configFiles =
   sequenceA
-    [ runIO (getHomeDir >>= \home -> toFilePath <$> resolveFile home ".gitlab-helper.yml"),
-      runIO (toFilePath <$> resolveFile' ".gitlab-helper.yml")
+    [ runIO (getHomeDir >>= \home -> resolveFile home ".gitlab-helper.yml"),
+      runIO (resolveFile' ".gitlab-helper.yml")
     ]
 
 instance HasParser Config where
