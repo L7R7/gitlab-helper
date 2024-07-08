@@ -39,8 +39,8 @@ data Config = Config
 configFiles :: Parser [Path Abs File]
 configFiles =
   sequenceA
-    [ runIO (getHomeDir >>= \home -> resolveFile home ".gitlab-helper.yml"),
-      runIO (resolveFile' ".gitlab-helper.yml")
+    [ runIO (resolveFile' ".gitlab-helper.yml"),
+      runIO (getHomeDir >>= \home -> resolveFile home ".gitlab-helper.yml")
     ]
 
 instance HasParser Config where
@@ -81,7 +81,7 @@ instance HasParser Config where
           reader (commaSeparatedList (Id <$> positiveIntReader)),
           long "exclude-projects",
           option,
-          conf "exclude-projects",
+          conf "excludeProjects",
           env "EXCLUDE_PROJECTS",
           metavar "ID1,ID2,ID3",
           value []
@@ -194,11 +194,26 @@ data MergeRequestUpdateAction = List | Rebase | Merge MergeCiOption | SetToDraft
 instance HasParser MergeRequestUpdateAction where
   settingsParser =
     commands
-      [ command "rebase" "rebase the merge requests" $ pure Rebase,
-        command "merge" "merge the merge requests" $ Merge <$> settingsParser,
-        command "draft" "set the merge requests to `draft`" $ pure SetToDraft,
-        command "ready" "mark the merge requests as ready" $ pure MarkAsReady,
-        command "list" "list the merge requests" $ pure List
+      [ command
+          "rebase"
+          "rebase the merge requests"
+          (pure Rebase),
+        command
+          "merge"
+          "merge the merge requests"
+          (Merge <$> settingsParser),
+        command
+          "draft"
+          "set the merge requests to `draft`"
+          (pure SetToDraft),
+        command
+          "ready"
+          "mark the merge requests as ready"
+          (pure MarkAsReady),
+        command
+          "list"
+          "list the merge requests"
+          (pure List)
       ]
 
 data MergeCiOption = PipelineMustSucceed | SkipCi deriving stock (Show)
