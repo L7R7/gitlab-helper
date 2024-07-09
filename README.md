@@ -66,6 +66,7 @@ The app will look at several places for your configuration, in the following ord
 
 1. command-line arguments
 1. environment variables
+1. A config file at the file path provided in the `CONFIG_FILE` environment variable or the `--config-file` option
 1. `${PWD}/.gitlab-helper.yml` (the directory in which the executable is started)
 1. `~/.gitlab-helper.yml`
 
