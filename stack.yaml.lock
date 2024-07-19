@@ -46,68 +46,68 @@ packages:
 - completed:
     name: opt-env-conf
     pantry-tree:
-      sha256: 4fe4672d95a0e968ee49224b333b36f834685aec40169d1945781f006ff892b3
+      sha256: 03f9880ab25d4866b655a7541539ceeb757c5e25a56a44f96a6d962be1c749c6
       size: 1169
-    sha256: c8f9cf7fcf57a8bc3c5769c9d988ae0000b50b4744489968298f88ecbc6d842e
-    size: 68515
+    sha256: 90de231dc25bab297a4cc0de892ebc6c3975111b095619ae4bb5ae97a991eb48
+    size: 69042
     subdir: opt-env-conf
-    url: https://github.com/NorfairKing/opt-env-conf/archive/26ead952ae4390e7c1592d62e4a36bcece367213.tar.gz
+    url: https://github.com/L7R7/opt-env-conf/archive/28ca5e35b2d437cfd30f91fb3a466855b77b595b.tar.gz
     version: 0.0.0.0
   original:
     subdir: opt-env-conf
-    url: https://github.com/NorfairKing/opt-env-conf/archive/26ead952ae4390e7c1592d62e4a36bcece367213.tar.gz
+    url: https://github.com/L7R7/opt-env-conf/archive/28ca5e35b2d437cfd30f91fb3a466855b77b595b.tar.gz
 - completed:
     name: opt-env-conf-test
     pantry-tree:
-      sha256: 1ca73561f2ba10528b55831c6e5cc579d9d7a710bc8f678b2b87e166c8963f52
-      size: 15919
-    sha256: c8f9cf7fcf57a8bc3c5769c9d988ae0000b50b4744489968298f88ecbc6d842e
-    size: 68515
+      sha256: 3b6e681355d0aee52f7c1671f213786631bfaca578af32cfc9e26be154a84a3c
+      size: 15918
+    sha256: 90de231dc25bab297a4cc0de892ebc6c3975111b095619ae4bb5ae97a991eb48
+    size: 69042
     subdir: opt-env-conf-test
-    url: https://github.com/NorfairKing/opt-env-conf/archive/26ead952ae4390e7c1592d62e4a36bcece367213.tar.gz
+    url: https://github.com/L7R7/opt-env-conf/archive/28ca5e35b2d437cfd30f91fb3a466855b77b595b.tar.gz
     version: 0.0.0.0
   original:
     subdir: opt-env-conf-test
-    url: https://github.com/NorfairKing/opt-env-conf/archive/26ead952ae4390e7c1592d62e4a36bcece367213.tar.gz
+    url: https://github.com/L7R7/opt-env-conf/archive/28ca5e35b2d437cfd30f91fb3a466855b77b595b.tar.gz
 - completed:
     name: safe-coloured-text
     pantry-tree:
       sha256: e570533758692db38e3765ba8e961d550351dcc7159bed9206b4f8ab8dfe78fb
       size: 530
-    sha256: a4b0b46f0f8d823e4fc5fb95698833380852fc5bc9cce7fbfbcb8206d2007e1a
-    size: 39320
+    sha256: 667c82881ffa8f2e96a9ae5e440500b37d9b77a57a7fde7cdce2c2e14512a458
+    size: 39438
     subdir: safe-coloured-text
-    url: https://github.com/NorfairKing/safe-coloured-text/archive/61f14d21b7399fe97da24e484c2f9fedaf532bb8.tar.gz
+    url: https://github.com/NorfairKing/safe-coloured-text/archive/a58b782acc873a40a0eeb20eb4dc22c6df9c9dee.tar.gz
     version: 0.3.0.2
   original:
     subdir: safe-coloured-text
-    url: https://github.com/NorfairKing/safe-coloured-text/archive/61f14d21b7399fe97da24e484c2f9fedaf532bb8.tar.gz
+    url: https://github.com/NorfairKing/safe-coloured-text/archive/a58b782acc873a40a0eeb20eb4dc22c6df9c9dee.tar.gz
 - completed:
     name: safe-coloured-text-layout
     pantry-tree:
-      sha256: 0c66e2fe83ccbb7dea2e31f48af8ae95772358ce0076f17655d67bdcf21c2564
+      sha256: 85a95d47e433c3e4fdd4007a616954826531a191273d9de6759e2bde0be37c65
       size: 918
-    sha256: a4b0b46f0f8d823e4fc5fb95698833380852fc5bc9cce7fbfbcb8206d2007e1a
-    size: 39320
+    sha256: 667c82881ffa8f2e96a9ae5e440500b37d9b77a57a7fde7cdce2c2e14512a458
+    size: 39438
     subdir: safe-coloured-text-layout
-    url: https://github.com/NorfairKing/safe-coloured-text/archive/61f14d21b7399fe97da24e484c2f9fedaf532bb8.tar.gz
+    url: https://github.com/NorfairKing/safe-coloured-text/archive/a58b782acc873a40a0eeb20eb4dc22c6df9c9dee.tar.gz
     version: 0.2.0.0
   original:
     subdir: safe-coloured-text-layout
-    url: https://github.com/NorfairKing/safe-coloured-text/archive/61f14d21b7399fe97da24e484c2f9fedaf532bb8.tar.gz
+    url: https://github.com/NorfairKing/safe-coloured-text/archive/a58b782acc873a40a0eeb20eb4dc22c6df9c9dee.tar.gz
 - completed:
     name: safe-coloured-text-gen
     pantry-tree:
       sha256: 478208926c26ea2faf9a76b3df284fc3964babf4123260d4099a1a80f3bc0b6e
       size: 8960
-    sha256: a4b0b46f0f8d823e4fc5fb95698833380852fc5bc9cce7fbfbcb8206d2007e1a
-    size: 39320
+    sha256: 667c82881ffa8f2e96a9ae5e440500b37d9b77a57a7fde7cdce2c2e14512a458
+    size: 39438
     subdir: safe-coloured-text-gen
-    url: https://github.com/NorfairKing/safe-coloured-text/archive/61f14d21b7399fe97da24e484c2f9fedaf532bb8.tar.gz
+    url: https://github.com/NorfairKing/safe-coloured-text/archive/a58b782acc873a40a0eeb20eb4dc22c6df9c9dee.tar.gz
     version: 0.0.0.3
   original:
     subdir: safe-coloured-text-gen
-    url: https://github.com/NorfairKing/safe-coloured-text/archive/61f14d21b7399fe97da24e484c2f9fedaf532bb8.tar.gz
+    url: https://github.com/NorfairKing/safe-coloured-text/archive/a58b782acc873a40a0eeb20eb4dc22c6df9c9dee.tar.gz
 - completed:
     name: autodocodec
     pantry-tree:

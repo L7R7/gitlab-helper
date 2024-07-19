@@ -1,4 +1,4 @@
-[36mUsage: [m[33mgitlab-helper[m [37m--config-file[m [33mFILE_PATH[m [37m--group-id[m [33mGROUP_ID[m [37m--base-url[m [33mURL[m [37m--api-token[m [33mTOKEN[m [37m--exclude-projects[m [33mID1,ID2,ID3[m [35mshow-branches[m [36m|[m [35mshow-projects[m [36m|[m [35mlist-all-projects-meta[m [36m|[m [35mlist-projects-meta[m [36m|[m [35menable-source-branch-deletion[m [37m--execute[m[36m|[m[37m-x[m [36m|[m [35menable-all-discussions-must-be-resolved-for-merge-requirement[m [37m--execute[m[36m|[m[37m-x[m [36m|[m [35menable-successful-pipeline-for-merge-requirement[m [37m--execute[m[36m|[m[37m-x[m [36m|[m [35mshow-schedules[m [36m|[m [35mshow-merge-requests[m [37m--[no-]recheck-merge-status[m [36m|[m [35mcount-deployments[m [37m--year[m [33mYEAR[m [37m--[no-]include-archived-projects[m [36m|[m [35mset-merge-method-to-fast-forward[m [37m--execute[m[36m|[m[37m-x[m [36m|[m [35mupdate-merge-requests[m [35mrebase[m [36m|[m [35mmerge[m [37m--skip-ci[m [36m|[m [35mdraft[m [36m|[m [35mready[m [36m|[m [35mlist[m [37m-u[m[36m|[m[37m--user-id[m [33mUSER_ID[m [36m([m[37m--search-title[m [33mTXT[m[36m)[m [36m|[m [36m([m[37m-s[m[36m|[m[37m--search[m [33mTXT[m[36m)[m [37m--[no-]recheck-merge-status[m [37m--execute[m[36m|[m[37m-x[m
+[36mUsage: [m[33mgitlab-helper[m [37m--config-file[m [33mFILE_PATH[m [37m--group-id[m [33mGROUP_ID[m [37m--base-url[m [33mURL[m [37m--api-token[m [33mTOKEN[m [37m--exclude-projects[m [33mID1,ID2,ID3[m COMMAND
 
 [36mAll settings[m:
   [34mPath to the configuration file[m
@@ -33,6 +33,8 @@
     [37mconfig.excludeProjects[m: # [32mor null[m
       - [33m<number>[m # [32m64 bit signed integer[m
   
+
+[36mAll commands[m:
   [34mShow branches[m
   command: [35mshow-branches[m
   
