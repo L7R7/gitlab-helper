@@ -149,4 +149,4 @@ jobs:
 
       - name: smoke test
         run: |
-          ./gitlab-helper --version
+          ./gitlab-helper version
