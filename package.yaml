@@ -1,7 +1,7 @@
 name: gitlab-helper
 version: 0.1.0.0
 github: "L7R7/gitlab-helper"
-license: BSD3
+license: Apache-2.0
 author: "Leonhard Riedißer"
 maintainer: "leo008180@googlemail.com"
 copyright: "2020 Leonhard Riedißer"
