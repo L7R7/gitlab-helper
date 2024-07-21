@@ -1,22 +1,15 @@
 name: gitlab-helper
-version: 0.1.0.0
+version: 1.0.0
 github: "L7R7/gitlab-helper"
 license: BSD3
 author: "Leonhard Riedißer"
 maintainer: "leo008180@googlemail.com"
-copyright: "2020 Leonhard Riedißer"
+copyright: "2024 Leonhard Riedißer"
 
 extra-source-files:
   - README.md
   - ChangeLog.md
 
-# Metadata used when publishing your package
-# synopsis:            Short description of your package
-# category:            Web
-
-# To avoid duplicated efforts in documentation and dealing with the
-# complications of embedding Haddock markup inside cabal files, it is
-# common to point users to the README.md file.
 description: Please see the README on GitHub at <https://github.com/L7R7/gitlab-helper#readme>
 
 dependencies:
