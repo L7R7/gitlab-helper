@@ -149,4 +149,4 @@ jobs:
 
       - name: smoke test
         run: |
-          ./gitlab-helper version
+          ./gitlab-helper --api-token "dummy" --group-id 123 --base-url "https://gitlab.example.com" version
