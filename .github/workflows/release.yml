@@ -83,10 +83,11 @@ jobs:
           mv ./bin/gitlab-helper-exe ./bin/gitlab-helper
           echo "BINARY_PATH=./bin/gitlab-helper" >> "$GITHUB_ENV"
 
-      - name: Compress binary
+      - if: matrix.os != 'macOS-13'
+        name: Compress binary
         uses: svenstaro/upx-action@2.4.1
         with:
-          file: ${{ env.BINARY_PATH }}
+          files: ${{ env.BINARY_PATH }}
 
       - if: matrix.os == 'windows-latest'
         name: Set zip file path name on Windows
