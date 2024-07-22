@@ -26,8 +26,7 @@ run = do
         ShowBranches -> showBranchesForGroup
         (EnableSourceBranchDeletionAfterMerge execution) -> enableSourceBranchDeletionAfterMerge execution
         ShowProjects -> showProjectsForGroup
-        ListAllProjectsMeta -> listAllProjectsMeta
-        ListProjectsMeta -> listProjectsMetaForGroup
+        ListProjectsMeta scope -> listProjectsMeta scope
         ShowSchedules -> showSchedulesForGroup
         (ShowMergeRequests recheckMergeStatus) -> showMergeRequests recheckMergeStatus
         (EnableAllDiscussionsMustBeResolvedForMergeRequirement execution) -> enableAllDiscussionsResolvedForMergeRequirement execution

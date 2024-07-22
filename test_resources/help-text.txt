@@ -21,11 +21,8 @@ Available commands:
   version                  print program version
   show-branches            show branches
   show-projects            show projects
-  list-all-projects-meta   list all the projects for all groups that are visible
-                           for the provided API token in (almost) meta
-                           compatible JSON format
-  list-projects-meta       list the projects for the given group in (almost)
-                           meta compatible JSON format
+  list-projects-meta       list the projects in (almost) meta compatible JSON
+                           format
   enable-source-branch-deletion
                            enable source branch deletion after merge for all
                            projects
