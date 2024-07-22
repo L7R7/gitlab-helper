@@ -4,7 +4,7 @@ Some utilities for working with GitLab to make your life easier.
 
 ## Features
 
-For a full, up to date list of features [see the help text for the program here](test_resources/help-text.txt).
+All the features are built for a GitLab user in mind that works in one single group in Gitlab at the time, while the number of projects in the group is high enough that it's hard to keep track of things and/or tedious to repeat the same action over and over again.
 
 ### Working with bulks of merge requests (aka "the million dollar feature" of this tool)
 
@@ -40,7 +40,25 @@ gitlab-helper-exe update-merge-requests --user-id <user-id> rebase --execute
 After that, continue with the next bunch of similar MRs.
 Or with some other meaningful work.
 
-If you want to see the full list of possibilities, the [help text](test_resources/help-text-mrs.txt) (`gitlab-helper-exe update-merge-requests --help`) is your friend.
+### Showing information
+
+* `show-branches` lists all branches for all projects in the group, grouped by their project. It will also show whether a branch is stale, merged, or has conflicts with the default branch.
+* `show-projects` lists all projects in the group, alongside some configuration details like default branch name, merge method, and merge request settings.
+* `show-schedules` lists all the pipeline schedules for all projects in the group.
+* `show-merge-requests` lists all the merge requests for all projects in the group.
+* `list-projects-meta` lists all projects in a format that's compatible to [meta](https://github.com/mateodelnorte/meta). There's an argument to decide whether only the projects of the current group or all projects visible with the configured API token should be included.
+* `count-deployments` counts all the deployments for all projects in the group. This assumes that you are doing continuous deployment, i.e. each pipeline that runs on the default branch and is successful can be considered a successful deployment to production. The project exclude list applies here, use this if you want to exclude projects you're not interested in.
+
+### Setting options to all projects in the group
+
+The following features can be used to change the project settings in bulk, so use it with care.
+All of these features are also opinionated and try to do "the right thing".  
+Ideally, you don't need these because you can set the correct defaults on group level, but if you happen to work with projects in a group that don't have the right settings, changing the settings on group level won't be enough.
+
+* `enable-source-branch-deletion` sets the option that the source branch of a merge request is deleted after the merge request is merged
+* `enable-all-discussions-must-be-resolved-for-merge-requirement` sets the option that all discussions must be resolved for a merge request to be merged
+* `enable-successful-pipeline-for-merge-requirement` sets the option that a merge request requires a successful pipeline to be merged. Note that this means that merge requests in projects with no CI on branches other than the default branch can't be merged at all anymore.
+* `set-merge-method-to-fast-forward` sets the merge method to "Fast-Forward"
 
 ## Configuration
 
