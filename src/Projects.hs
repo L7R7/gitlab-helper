@@ -8,13 +8,12 @@
 {-# LANGUAGE TupleSections #-}
 
 module Projects
-  ( listAllProjectsMeta,
+  ( listProjectsMeta,
     showProjectsForGroup,
     enableSourceBranchDeletionAfterMerge,
     enableSuccessfulPipelineForMergeRequirement,
     enableAllDiscussionsResolvedForMergeRequirement,
     setMergeMethodToFastForward,
-    listProjectsMetaForGroup,
     countDeployments,
   )
 where
@@ -32,6 +31,10 @@ import Gitlab.Group (Group)
 import Gitlab.Lib (EnabledDisabled (..), Id (..), Name (..), Ref (..))
 import Gitlab.Project
 import Relude hiding (pi)
+
+listProjectsMeta :: MetaScope -> App ()
+listProjectsMeta MetaScopeAll = listAllProjectsMeta
+listProjectsMeta MetaScopeGroup = listProjectsMetaForGroup
 
 listAllProjectsMeta :: App ()
 listAllProjectsMeta = fetch >>= bitraverse_ (write . show) writeMetaFormat

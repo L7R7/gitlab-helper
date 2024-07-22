@@ -62,8 +62,7 @@ commandParser =
       [ command "version" (info (pure Version) (progDesc "print program version")),
         command "show-branches" (info (pure ShowBranches) (progDesc "show branches")),
         command "show-projects" (info (pure ShowProjects) (progDesc "show projects")),
-        command "list-all-projects-meta" (info (pure ListAllProjectsMeta) (progDesc "list all the projects for all groups that are visible for the provided API token in (almost) meta compatible JSON format")),
-        command "list-projects-meta" (info (pure ListProjectsMeta) (progDesc "list the projects for the given group in (almost) meta compatible JSON format")),
+        command "list-projects-meta" (info (ListProjectsMeta <$> metaScopeParser) (progDesc "list the projects in (almost) meta compatible JSON format")),
         command "enable-source-branch-deletion" (info (EnableSourceBranchDeletionAfterMerge <$> executionParser) (progDesc "enable source branch deletion after merge for all projects")),
         command "enable-all-discussions-must-be-resolved-for-merge-requirement" (info (EnableAllDiscussionsMustBeResolvedForMergeRequirement <$> executionParser) (progDesc "enable the requirement that all discussions must be resolved for an MR to be merged for all projects")),
         command "enable-successful-pipeline-for-merge-requirement" (info (EnableSuccessfulPipelineForMergeRequirement <$> executionParser) (progDesc "enable the requirement that there must be a successful pipeline for an MR to be merged for all projects. CAUTION: Use with care, might not do what you want in projects without pipelines")),
@@ -103,6 +102,14 @@ mergeRequestUpdateCommandParser =
     mergeCiOptionParser :: Parser MergeCiOption
     mergeCiOptionParser =
       flag PipelineMustSucceed SkipCi (long "skip-ci" <> help "don't enforce that a merge request requires a successful pipeline to be merged (also helpful for projects that don't have pipelines on non-default branches)")
+
+metaScopeParser :: Parser MetaScope
+metaScopeParser = argument (eitherReader scopeParser) (metavar "SCOPE" <> showDefault <> value MetaScopeGroup <> help "Scope for the list of projects. Possible values are \"group\" (which is the default and includes all the projects for the current group), or \"all\" (which includes all the projects that are visible with the provided API Token)")
+  where
+    scopeParser :: String -> Either String MetaScope
+    scopeParser "all" = Right MetaScopeAll
+    scopeParser "group" = Right MetaScopeGroup
+    scopeParser s = Left $ "\"" <> s <> "\" is not a valid scope"
 
 executionParser :: Parser Execution
 executionParser =

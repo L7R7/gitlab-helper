@@ -8,6 +8,7 @@ module Config.Types
     PartialConfig (..),
     Command (..),
     MergeRequestUpdateAction (..),
+    MetaScope (..),
     MergeCiOption (..),
     AuthorIs (..),
     SearchTerm (..),
@@ -58,8 +59,7 @@ data Command
   | ShowBranches
   | EnableSourceBranchDeletionAfterMerge Execution
   | ShowProjects
-  | ListAllProjectsMeta
-  | ListProjectsMeta
+  | ListProjectsMeta MetaScope
   | ShowSchedules
   | ShowMergeRequests MergeStatusRecheck
   | EnableAllDiscussionsMustBeResolvedForMergeRequirement Execution
@@ -70,6 +70,8 @@ data Command
   deriving stock (Show)
 
 data Execution = DryRun | Execute deriving stock (Eq, Show)
+
+data MetaScope = MetaScopeGroup | MetaScopeAll deriving stock (Eq, Show)
 
 data MergeRequestUpdateAction = List | Rebase | Merge MergeCiOption | SetToDraft | MarkAsReady deriving stock (Show)
 
