@@ -15,7 +15,7 @@ Let's say you have a bunch of projects that use Spring Boot, and there's a new v
 You could list all of them like that:
 
 ```sh
-gitlab-helper-exe update-merge-requests --user-id <user-id> --search "Spring Boot" list
+gitlab-helper update-merge-requests --user-id <user-id> --search "Spring Boot" list
 ```
 
 where `<user-id>` is the User ID of the bot user that your renovate-bot instance is using.
@@ -24,7 +24,7 @@ where `<user-id>` is the User ID of the bot user that your renovate-bot instance
 If that looks good, you can merge them:
 
 ```sh
-gitlab-helper-exe update-merge-requests --user-id <user-id> --search "Spring Boot" merge --execute
+gitlab-helper update-merge-requests --user-id <user-id> --search "Spring Boot" merge --execute
 ```
 
 The `--execute` flag actually makes the tool merge the merge requests. If you omit it, it will do a dry run (in this case, this would only list the MRs it would merge, equivalent to using `list`).
@@ -34,7 +34,7 @@ If there is no pipeline or the pipeline failed, the MR will stay open (consult t
 If there is a bunch of other MRs open on the project (maybe because there was also an update to npm), you can rebase all of them in one go:
 
 ```sh
-gitlab-helper-exe update-merge-requests --user-id <user-id> rebase --execute
+gitlab-helper update-merge-requests --user-id <user-id> rebase --execute
 ```
 
 After that, continue with the next bunch of similar MRs.
@@ -128,14 +128,14 @@ When you do that for the first time, it will take a while.
 If you use `zsh`, put this in your `.zshrc` (see [here](https://stackoverflow.com/a/61861568/5247502)):
 
 ```shell script
-gitlab-helper-exe --zsh-completion-script $(which gitlab-helper-exe) > ~/.config/zsh/completions/_gitlab-helper-exe
+gitlab-helper --zsh-completion-script $(which gitlab-helper) > ~/.config/zsh/completions/_gitlab-helper
 fpath=($HOME/.config/zsh/completions $fpath)
 ```
 
 If that doesn't work or if you use `bash`:
 
 ```shell script
-source <(gitlab-helper-exe --bash-completion-script `which gitlab-helper-exe`)
+source <(gitlab-helper --bash-completion-script `which gitlab-helper`)
 ```
 
 ### Run
@@ -143,7 +143,7 @@ source <(gitlab-helper-exe --bash-completion-script `which gitlab-helper-exe`)
 See what the tool can do for you:
 
 ```shell script
-gitlab-helper-exe -h
+gitlab-helper -h
 ```
 
 The tool will start only if all properties are set in one of the sources.

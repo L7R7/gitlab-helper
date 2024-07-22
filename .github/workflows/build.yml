@@ -65,8 +65,8 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: gitlab-helper-exe
-          path: gitlab-helper-exe
+          name: gitlab-helper
+          path: gitlab-helper
 
   markdown:
     name: Markdown lint

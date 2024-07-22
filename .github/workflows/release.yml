@@ -74,13 +74,11 @@ jobs:
       - if: matrix.os == 'windows-latest'
         name: Set binary path name on Windows
         run: |
-          mv ./bin/gitlab-helper-exe.exe ./bin/gitlab-helper.exe
           echo "BINARY_PATH=./bin/gitlab-helper.exe" >> $env:GITHUB_ENV
 
       - if: matrix.os != 'windows-latest'
         name: Set binary path name not on Windows
         run: |
-          mv ./bin/gitlab-helper-exe ./bin/gitlab-helper
           echo "BINARY_PATH=./bin/gitlab-helper" >> "$GITHUB_ENV"
 
       - if: matrix.os != 'macOS-13'
