@@ -12,7 +12,7 @@ bug-reports:    https://github.com/L7R7/gitlab-helper/issues
 author:         Leonhard Riedißer
 maintainer:     leo008180@googlemail.com
 copyright:      2024 Leonhard Riedißer
-license:        BSD3
+license:        Apache-2.0
 license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
