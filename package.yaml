@@ -66,7 +66,7 @@ library:
     - yaml
 
 executables:
-  gitlab-helper-exe:
+  gitlab-helper:
     main: Main.hs
     source-dirs: app
     ghc-options:

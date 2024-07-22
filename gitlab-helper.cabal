@@ -72,7 +72,7 @@ library
     , yaml
   default-language: Haskell2010
 
-executable gitlab-helper-exe
+executable gitlab-helper
   main-is: Main.hs
   other-modules:
       Paths_gitlab_helper
