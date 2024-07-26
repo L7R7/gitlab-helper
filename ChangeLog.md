@@ -4,7 +4,7 @@
 
 nothing so far
 
-## [1.0.0] - 2023-10-04
+## [1.0.0] - 2024-07-26
 
 Initial release.
 
