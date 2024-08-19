@@ -283,8 +283,8 @@ instance HasParser WithArchivedProjects where
   settingsParser =
     (\b -> if b then IncludeArchivedProjects else SkipArchivedProjects)
       <$> yesNoSwitch
-        False
-        [ help "Include or skip archived projects",
+        [ value False,
+          help "Include or skip archived projects",
           long "include-archived-projects"
         ]
 
@@ -294,7 +294,7 @@ instance HasParser MergeStatusRecheck where
   settingsParser =
     (\b -> if b then RecheckMergeStatus else NoRecheckMergeStatus)
       <$> yesNoSwitch
-        False
-        [ help "Trigger a recheck of the merge status of the merge requests. This is done on the Gitlab server and might have a performance impact so it's not done by default",
+        [ value False,
+          help "Trigger a recheck of the merge status of the merge requests. This is done on the Gitlab server and might have a performance impact so it's not done by default",
           long "recheck-merge-status"
         ]

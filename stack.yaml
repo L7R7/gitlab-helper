@@ -11,18 +11,18 @@ extra-deps:
       - gitlab-api-http-client-mtl
       - gitlab-api-types
   - github: NorfairKing/opt-env-conf
-    commit: aca7601a7bf2e322318acb600d91586441fc027c
+    commit: a5715ee7181b22292add9eea381b3b03641841e6
     subdirs:
       - opt-env-conf
       - opt-env-conf-test
   - github: NorfairKing/safe-coloured-text
-    commit: 26b7657428f277f819a0831cbddddb7f4c5408f9
+    commit: 046f10147a058c00c2706d98c341219e3cbc7669
     subdirs:
       - safe-coloured-text
       - safe-coloured-text-layout
       - safe-coloured-text-gen
   - github: NorfairKing/autodocodec
-    commit: f2c0551cdb3f9829b97f76b927d0c83833f9ef7f
+    commit: ac36615cb344ec43259fb65cafe3e55308ce4662
     subdirs:
       - autodocodec
       - autodocodec-yaml
