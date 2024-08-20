@@ -140,11 +140,11 @@ getAllGroups = fetchDataPaginated [uriTemplate|/api/v4/groups?all_available=true
 getProjectsForGroup :: WithArchivedProjects -> App (Either UpdateError [Project])
 getProjectsForGroup withArchivedProjects = do
   gId <- asks groupId
-  -- todo: there must be a way to do that with a single uri template
-  let template = case withArchivedProjects of
-        SkipArchivedProjects -> [uriTemplate|/api/v4/groups/{groupId}/projects?include_subgroups=true&archived=false&with_shared=false|]
-        IncludeArchivedProjects -> [uriTemplate|/api/v4/groups/{groupId}/projects?include_subgroups=true&with_shared=false|]
-  fetchDataPaginated template [("groupId", (stringValue . show) gId)]
+  let archived = case withArchivedProjects of
+        SkipArchivedProjects -> [("archived", stringValue "false")]
+        IncludeArchivedProjects -> []
+      template = [uriTemplate|/api/v4/groups/{groupId}/projects?include_subgroups=true{&archived}&with_shared=false|]
+  fetchDataPaginated template ([("groupId", (stringValue . show) gId)] <> archived)
 
 getProjectsForUser :: UserId -> App (Either UpdateError [Project])
 getProjectsForUser uId = fetchDataPaginated [uriTemplate|/api/v4/users/{userId}/projects?archived=false|] [("userId", (stringValue . show) uId)]
