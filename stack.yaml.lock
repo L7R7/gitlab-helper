@@ -7,45 +7,45 @@ packages:
 - completed:
     name: gitlab-api-http-client
     pantry-tree:
-      sha256: 266e29c3606b7396e293cde1709dd5c87fb615be548397e2bb69c82eb8165900
-      size: 187
-    sha256: 4a524cd438149a623b8fc28f8c2ff95d301f5f05f00d5b361a153f3ccf3d6b04
-    size: 21912
+      sha256: ba41d94e0da3f64b9883530667de2d8772e685776f7a9b56a08eecb3e1732c1c
+      size: 323
+    sha256: b791d986aa0517284331d591d03ffdca7be5ad9ad16d8d1870501438d1ff7c05
+    size: 23056
     subdir: gitlab-api-http-client
-    url: https://github.com/L7R7/gitlab-api/archive/db7ece328be2cbb7941270ef903c64ecc2ad23c7.tar.gz
+    url: https://github.com/L7R7/gitlab-api/archive/abff91cfa00788d28f57847aa7b28ad1d4f4a963.tar.gz
     version: 0.0.0.1
   original:
     subdir: gitlab-api-http-client
-    url: https://github.com/L7R7/gitlab-api/archive/db7ece328be2cbb7941270ef903c64ecc2ad23c7.tar.gz
+    url: https://github.com/L7R7/gitlab-api/archive/abff91cfa00788d28f57847aa7b28ad1d4f4a963.tar.gz
 - completed:
     name: gitlab-api-http-client-mtl
     pantry-tree:
       sha256: aaa8533e8c0d775331eb6adf4be515ad6ce5085ae952ecf4cc4788f3e2432653
       size: 195
-    sha256: 4a524cd438149a623b8fc28f8c2ff95d301f5f05f00d5b361a153f3ccf3d6b04
-    size: 21912
+    sha256: b791d986aa0517284331d591d03ffdca7be5ad9ad16d8d1870501438d1ff7c05
+    size: 23056
     subdir: gitlab-api-http-client-mtl
-    url: https://github.com/L7R7/gitlab-api/archive/db7ece328be2cbb7941270ef903c64ecc2ad23c7.tar.gz
+    url: https://github.com/L7R7/gitlab-api/archive/abff91cfa00788d28f57847aa7b28ad1d4f4a963.tar.gz
     version: 0.0.0.1
   original:
     subdir: gitlab-api-http-client-mtl
-    url: https://github.com/L7R7/gitlab-api/archive/db7ece328be2cbb7941270ef903c64ecc2ad23c7.tar.gz
+    url: https://github.com/L7R7/gitlab-api/archive/abff91cfa00788d28f57847aa7b28ad1d4f4a963.tar.gz
 - completed:
     name: gitlab-api-types
     pantry-tree:
-      sha256: ce374227ec4bb1d7bf08b2a292e7b04fbee8ce8fb1310dcfff9b5fddc284fb6e
+      sha256: 6cf943f17c29a9e25f786446d2d1192d469a1a7208114c40b0db39dcadc77448
       size: 725
-    sha256: 4a524cd438149a623b8fc28f8c2ff95d301f5f05f00d5b361a153f3ccf3d6b04
-    size: 21912
+    sha256: b791d986aa0517284331d591d03ffdca7be5ad9ad16d8d1870501438d1ff7c05
+    size: 23056
     subdir: gitlab-api-types
-    url: https://github.com/L7R7/gitlab-api/archive/db7ece328be2cbb7941270ef903c64ecc2ad23c7.tar.gz
+    url: https://github.com/L7R7/gitlab-api/archive/abff91cfa00788d28f57847aa7b28ad1d4f4a963.tar.gz
     version: 0.0.0.1
   original:
     subdir: gitlab-api-types
-    url: https://github.com/L7R7/gitlab-api/archive/db7ece328be2cbb7941270ef903c64ecc2ad23c7.tar.gz
+    url: https://github.com/L7R7/gitlab-api/archive/abff91cfa00788d28f57847aa7b28ad1d4f4a963.tar.gz
 snapshots:
 - completed:
-    sha256: 4be1ca5d31689b524a7f0f17a439bbe9136465213edc498e9a395899a670f2aa
-    size: 718486
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/22/22.yaml
-  original: lts-22.22
+    sha256: 098936027eaa1ef14e2b8eb39d9933a973894bb70a68684a1bbf00730249879b
+    size: 720001
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/22/33.yaml
+  original: lts-22.33
