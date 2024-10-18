@@ -9,6 +9,8 @@ extra-deps:
     subdirs:
       - gitlab-api-http-client
       - gitlab-api-http-client-mtl
+      - gitlab-api-http-client-queued
+      - gitlab-api-http-client-queued-mtl
       - gitlab-api-types
 
 system-ghc: true
