@@ -8,7 +8,6 @@
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TupleSections #-}
 
 module Branches
   ( showBranchesForGroup,
@@ -22,7 +21,7 @@ import qualified Data.Text as T (intercalate)
 import Data.Time hiding (getCurrentTime)
 import Effects
 import Gitlab.Branch
-import Gitlab.Client.MTL (UpdateError)
+import Gitlab.Client.Queue.MTL
 import Gitlab.Project
 import Relude
 
@@ -36,28 +35,31 @@ showBranchesForGroup = do
   write "  ✔ - the branch is merged"
   write "  ✗ - the branch is stale (older than 90 days)"
   write "  ⚬ - the branch is protected"
-  getProjectsForGroup SkipArchivedProjects >>= \case
+  results <- processProjectsForGroupQueued SkipArchivedProjects (fmap Right . processProject)
+  case results of
     Left err -> write $ show err
-    Right projects -> do
-      results <- traverse (getBranchesForProject >=> printResult) projects
-      writeSummary results
+    Right res -> do
+      writeSummary res
 
-getBranchesForProject :: Project -> App (Project, Either UpdateError [Branch])
-getBranchesForProject p = (p,) <$> getBranches (projectId p)
+processProject :: Project -> App (ProcessResult (Project, [Branch]))
+processProject project = do
+  getBranches (projectId project) >>= \case
+    Left err -> pure $ PrintLines $ "=== " <> show (projectName project) :| ["something went wrong: " <> show err]
+    Right branches -> do
+      maybeTxts <- printResult (project, branches)
+      pure
+        $ case maybeTxts of
+          Nothing -> Result (project, branches)
+          Just txts -> PrintLinesWithResult txts (project, branches)
 
-printResult :: (Project, Either UpdateError [Branch]) -> App (Project, Either UpdateError [Branch])
-printResult input@(project, Left err) = do
-  write $ "=== " <> show (projectName project)
-  write $ "something went wrong: " <> show err
-  pure input
-printResult input@(project, Right branches) = do
+printResult :: (Project, [Branch]) -> App (Maybe (NonEmpty Text))
+printResult (project, branches) = do
   let branchesWithoutDefaultBranch = sortOn (commitCommittedDate . branchCommit) $ filter (not . branchDefault) branches
-  unless (null branchesWithoutDefaultBranch) $ do
-    write ""
-    write $ formatWith [bold] ("=== " <> show (projectName project))
-    now <- getCurrentTime
-    traverse_ (\b -> write $ " " <> prettyPrintBranch now b) branchesWithoutDefaultBranch
-  pure input
+  now <- getCurrentTime
+  pure
+    $ if null branchesWithoutDefaultBranch
+      then Nothing
+      else Just $ "" :| (formatWith [bold] ("=== " <> show (projectName project)) : ((\b -> " " <> prettyPrintBranch now b) <$> branchesWithoutDefaultBranch))
 
 prettyPrintBranch :: UTCTime -> Branch -> Text
 prettyPrintBranch now Branch {..} =
@@ -94,13 +96,13 @@ type MergedBranchesCount = Sum Int
 
 type Summary = (ProjectCount, BranchesCount, StaleBranchesCount, MergedBranchesCount)
 
-writeSummary :: [(Project, Either UpdateError [Branch])] -> App ()
+writeSummary :: [(Project, [Branch])] -> App ()
 writeSummary results = do
   now <- getCurrentTime
   write ""
   write . showSummary $ summary now results
 
-summary :: UTCTime -> [(Project, Either UpdateError [Branch])] -> Summary
+summary :: UTCTime -> [(Project, [Branch])] -> Summary
 summary now = foldMap (count now)
 
 showSummary :: Summary -> Text
@@ -121,9 +123,8 @@ showSummary (projects, branches, stale, merged) =
     isAre (Sum 1) = "is"
     isAre _ = "are"
 
-count :: UTCTime -> (Project, Either UpdateError [Branch]) -> Summary
-count _ (_, Left _) = mempty
-count now (_, Right branches) = (hasBranches, notDefaultCount, stale, merged)
+count :: UTCTime -> (Project, [Branch]) -> Summary
+count now (_, branches) = (hasBranches, notDefaultCount, stale, merged)
   where
     notDefault = filter (not . branchDefault) branches
     hasBranches = Sum $ if notDefaultCount /= 0 then 1 else 0

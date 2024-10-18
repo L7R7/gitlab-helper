@@ -9,6 +9,8 @@ extra-deps:
     subdirs:
       - gitlab-api-http-client
       - gitlab-api-http-client-mtl
+      - gitlab-api-http-client-queued
+      - gitlab-api-http-client-queued-mtl
       - gitlab-api-types
   - github: NorfairKing/opt-env-conf
     commit: de7ac850e960c28e5182810515a87fbe1d6daede
