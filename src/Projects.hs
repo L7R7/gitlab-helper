@@ -140,7 +140,7 @@ enableSuccessfulPipelineForMergeRequirement execution =
 
 projectHasCi :: Either UpdateError Project -> App (Either UpdateError Bool)
 projectHasCi (Left err) = pure $ Left err
-projectHasCi (Right (Project pId _ _ (Just ref) _ _ _ _ _ _ _ _ _ _)) = hasCi pId ref
+projectHasCi (Right (Project pId _ _ (Just ref) _ _ _ _ _ _ _ _ _ _ _)) = hasCi pId ref
 projectHasCi (Right _) = pure $ Right False -- no default branch, no CI
 
 configureOption :: Execution -> Id Project -> Either UpdateError Bool -> App (Either UpdateError ())
