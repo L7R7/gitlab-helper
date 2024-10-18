@@ -20,6 +20,7 @@ module Effects
     getProjectsForGroup,
     getProjectsForUser,
     getProject,
+    processProjectsForGroupQueued,
     hasCi,
     setMergeMethod,
 
@@ -66,6 +67,7 @@ import Data.Time (UTCTime)
 import qualified Data.Time
 import Gitlab.Branch
 import Gitlab.Client.MTL
+import Gitlab.Client.Queue.MTL
 import Gitlab.Group hiding (groupId)
 import Gitlab.Lib (Id (..), Ref (..))
 import Gitlab.MergeRequest
@@ -136,6 +138,16 @@ getAllUsers = fetchDataPaginated @User @App [uriTemplate|/api/v4/users|] []
 
 getAllGroups :: App (Either UpdateError [Group])
 getAllGroups = fetchDataPaginated [uriTemplate|/api/v4/groups?all_available=true|] []
+
+processProjectsForGroupQueued :: WithArchivedProjects -> (Project -> App (Either UpdateError (ProcessResult a))) -> App (Either UpdateError [a])
+processProjectsForGroupQueued withArchivedProjects action = do
+  gId <- asks groupId
+  let template = case withArchivedProjects of
+        SkipArchivedProjects -> [uriTemplate|/api/v4/groups/{groupId}/projects?include_subgroups=true&archived=false&with_shared=false|]
+        IncludeArchivedProjects -> [uriTemplate|/api/v4/groups/{groupId}/projects?include_subgroups=true&with_shared=false|]
+      vars = [("groupId", (stringValue . show) gId)]
+      queueConfig = QueueConfig {parallelism = 10, bufferSize = 250} -- todo: make these configurable
+  fetchDataQueued template vars queueConfig action
 
 getProjectsForGroup :: WithArchivedProjects -> App (Either UpdateError [Project])
 getProjectsForGroup withArchivedProjects = do

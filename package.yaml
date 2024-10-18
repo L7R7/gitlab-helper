@@ -52,10 +52,12 @@ library:
     - directory
     - either
     - envparse
+    - exceptions
     - githash
     - http-conduit
     - http-types
     - gitlab-api-http-client-mtl
+    - gitlab-api-http-client-queued-mtl
     - gitlab-api-types
     - network-uri
     - optparse-applicative
@@ -63,6 +65,7 @@ library:
     - split
     - text
     - time
+    - unliftio-core
     - yaml
 
 executables:

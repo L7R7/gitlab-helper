@@ -57,8 +57,10 @@ library
     , directory
     , either
     , envparse
+    , exceptions
     , githash
     , gitlab-api-http-client-mtl
+    , gitlab-api-http-client-queued-mtl
     , gitlab-api-types
     , http-conduit
     , http-types
@@ -69,6 +71,7 @@ library
     , split
     , text
     , time
+    , unliftio-core
     , yaml
   default-language: Haskell2010
 
