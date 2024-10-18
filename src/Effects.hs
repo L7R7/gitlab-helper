@@ -27,6 +27,7 @@ module Effects
     -- * MergeRequest
     getOpenMergeRequests,
     getOpenMergeRequestsForGroup,
+    getOpenMergeRequestsForGroupQueued,
     enableSourceBranchDeletionAfterMrMerge,
     setSuccessfulPipelineRequirementForMerge,
     unsetSuccessfulPipelineRequirementForMerge,
@@ -187,6 +188,20 @@ getOpenMergeRequests project maybeAuthorIs recheckMergeStatus = do
     Just (AuthorIs i) -> do
       let template = [uriTemplate|/api/v4/projects/{projectId}/merge_requests?state=opened&author_id={authorId}&with_merge_status_recheck={recheckMergeStatus}|]
       fetchDataPaginated template [("projectId", (stringValue . show) project), ("authorId", (stringValue . show) i), ("recheckMergeStatus", recheckMergeStatusToBooleanValue recheckMergeStatus)]
+
+getOpenMergeRequestsForGroupQueued :: Maybe AuthorIs -> Maybe SearchTerm -> MergeStatusRecheck -> (MergeRequest -> App (Either UpdateError (ProcessResult a))) -> App (Either UpdateError [a])
+getOpenMergeRequestsForGroupQueued maybeAuthorIs maybeSearchTerm recheckMergeStatus action = do
+  grp <- asks groupId
+  let template = [uriTemplate|/api/v4/groups/{groupId}/merge_requests?state=opened{&author_id,search,with_merge_status_recheck}|]
+      vars =
+        mconcat
+          [ [("groupId", (stringValue . show) grp)],
+            foldMap (\(AuthorIs i) -> [("author_id", (stringValue . show) i)]) maybeAuthorIs,
+            foldMap (\(SearchTerm s) -> [("search", stringValue s)]) maybeSearchTerm,
+            [("with_merge_status_recheck", recheckMergeStatusToBooleanValue recheckMergeStatus)]
+          ]
+      queueConfig = QueueConfig {parallelism = 10, bufferSize = 250} -- todo: make these configurable
+  fetchDataQueued template vars queueConfig action
 
 getOpenMergeRequestsForGroup :: Maybe AuthorIs -> Maybe SearchTerm -> MergeStatusRecheck -> App (Either UpdateError [MergeRequest])
 getOpenMergeRequestsForGroup maybeAuthorIs maybeSearchTerm recheckMergeStatus = do
