@@ -30,7 +30,7 @@ jobs:
     name: ${{ matrix.os }}/${{ matrix.arch }}/${{ github.ref }}
     runs-on: ${{ matrix.os }}
     env:
-      GHC_VERSION: 9.6.7
+      GHC_VERSION: 9.8.4
     strategy:
       fail-fast: false
       matrix:
