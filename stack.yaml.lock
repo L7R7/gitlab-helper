@@ -45,7 +45,7 @@ packages:
     url: https://github.com/L7R7/gitlab-api/archive/5cefe4d85180c31f927014bcc1b9b4f0b106d4a4.tar.gz
 snapshots:
 - completed:
-    sha256: 238fa745b64f91184f9aa518fe04bdde6552533d169b0da5256670df83a0f1a9
-    size: 721141
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/22/44.yaml
-  original: lts-22.44
+    sha256: 400dfb2174640dd2f9f2ba7cbf9148699f2380ab64faa46f4be298a5d6205316
+    size: 684057
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/23/24.yaml
+  original: lts-23.24
