@@ -29,6 +29,8 @@ jobs:
     needs: [create_release]
     name: ${{ matrix.os }}/${{ matrix.arch }}/${{ github.ref }}
     runs-on: ${{ matrix.os }}
+    env:
+      GHC_VERSION: 9.6.7
     strategy:
       fail-fast: false
       matrix:
@@ -54,7 +56,7 @@ jobs:
       - name: Setup Haskell
         uses: haskell-actions/setup@v2.8.0
         with:
-          ghc-version: 9.6.7
+          ghc-version: ${{ env.GHC_VERSION }}
           enable-stack: true
           stack-version: 3.5.1
 
@@ -62,9 +64,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.stack
-          key: ${{ runner.os }}-9.6.7-${{ matrix.arch }}-${{ hashFiles('**/stack.yaml.lock','**/gitlab-helper.cabal') }}-v2
+          key: ${{ runner.os }}-${{ env.GHC_VERSION }}-${{ matrix.arch }}-${{ hashFiles('**/stack.yaml.lock','**/gitlab-helper.cabal') }}-v2
           restore-keys: |
-            ${{ runner.os }}-${{ matrix.arch }}-9.6.7-
+            ${{ runner.os }}-${{ matrix.arch }}-${{ env.GHC_VERSION }}-
 
       - name: Build binary
         run: |
