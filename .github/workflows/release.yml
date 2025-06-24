@@ -99,15 +99,9 @@ jobs:
         run: |
           echo "ZIP_PATH=./bin/gitlab-helper-${{ steps.tag.outputs.tag }}-${{ runner.os }}.zip" >> "$GITHUB_ENV"
 
-      - if: matrix.os != 'windows-latest'
-        name: Create zip file not on windows
+      - name: Create zip file
         run: |
-          7z a -l ${{ env.ZIP_PATH }} ${{ env.BINARY_PATH }}
-
-      - if: matrix.os == 'windows-latest'
-        name: Create zip file on windows
-        run: |
-          7z a ${{ env.ZIP_PATH }} ${{ env.BINARY_PATH }}
+          7z a "${{ env.ZIP_PATH }}" "${{ env.BINARY_PATH }}"
 
       - name: Upload Release Asset
         id: upload-release-asset
