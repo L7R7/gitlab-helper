@@ -22,7 +22,7 @@ module Config.Types
 where
 
 import Barbies
-import Gitlab.Client.MTL (ApiToken, BaseUrl)
+import Gitlab.Client.MTL (ApiToken, BaseUrl, UserAgent)
 import Gitlab.Group (Group)
 import Gitlab.Lib (Id (..))
 import Gitlab.Project (Project)
@@ -33,6 +33,7 @@ data Config = Config
   { groupId :: Id Group,
     baseUrl :: BaseUrl,
     apiToken :: ApiToken,
+    userAgent :: UserAgent,
     projectsExcludeList :: [Id Project],
     cmd :: Command
   }
@@ -42,6 +43,7 @@ data PartialConfig f = PartialConfig
   { pGroupId :: f (Id Group),
     pBaseUrl :: f BaseUrl,
     pApiToken :: f ApiToken,
+    pUserAgent :: f UserAgent,
     pProjectsExcludeList :: f [Id Project],
     pCommand :: f Command
   }
@@ -90,4 +92,4 @@ data WithArchivedProjects = IncludeArchivedProjects | SkipArchivedProjects deriv
 data MergeStatusRecheck = RecheckMergeStatus | NoRecheckMergeStatus deriving stock (Show)
 
 partialConfigToConfig :: PartialConfig Identity -> Config
-partialConfigToConfig (PartialConfig (Identity groupId) (Identity baseUrl) (Identity apiToken) (Identity projectsExcludeList) (Identity cmd)) = Config {..}
+partialConfigToConfig (PartialConfig (Identity groupId) (Identity baseUrl) (Identity apiToken) (Identity userAgent) (Identity projectsExcludeList) (Identity cmd)) = Config {..}

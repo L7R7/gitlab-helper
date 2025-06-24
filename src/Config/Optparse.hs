@@ -4,7 +4,7 @@ import Barbies (bsequence, bzipWith)
 import Config.Types
 import Data.List.Split
 import qualified Data.Semigroup as S (First (..))
-import Gitlab.Client.MTL (ApiToken (..), BaseUrl (..))
+import Gitlab.Client.MTL (ApiToken (..), BaseUrl (..), UserAgent (..))
 import Gitlab.Lib (Id (..))
 import Network.URI (URI, parseAbsoluteURI)
 import Options.Applicative
@@ -37,11 +37,13 @@ parser = bsequence $ bzipWith (\(ParserModifier x) -> Compose . x) partialFuncti
         (option (Id <$> auto) (long "group-id" <> help "set the ID of the group to look at" <> metavar "ID"))
         (option (BaseUrl <$> eitherReader f) (long "base-url" <> help "Base URL of the Gitlab instance (e.g. `https://gitlab.com/`)" <> metavar "URL"))
         (option (ApiToken <$> str) (long "api-token" <> help "API Token to use for authorizing requests against the Gitlab API. `api` scope is required." <> metavar "TOKEN"))
+        (option (UserAgent <$> str) (long "user-agent" <> help "User-Agent to use for requests against the Gitlab API." <> metavar "USER_AGENT"))
         (option (fmap Id <$> eitherReader g) (long "exclude-projects" <> help "set the list of projects to exclude as a comma-separated list of IDs" <> metavar "ID1,ID2,ID3"))
         commandParser
     partialFunctions :: PartialConfig ParserModifier
     partialFunctions =
       PartialConfig
+        (ParserModifier optionalParser)
         (ParserModifier optionalParser)
         (ParserModifier optionalParser)
         (ParserModifier optionalParser)

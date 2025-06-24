@@ -2,7 +2,8 @@ gitlab-helper - a collection of utilities for dealing with a load of projects in
 Gitlab
 
 Usage: gitlab-helper [--group-id ID] [--base-url URL] [--api-token TOKEN] 
-                     [--exclude-projects ID1,ID2,ID3] COMMAND
+                     [--user-agent USER_AGENT] [--exclude-projects ID1,ID2,ID3]
+                     COMMAND
 
   gitlab-helper
 
@@ -13,6 +14,8 @@ Available options:
                            `https://gitlab.com/`)
   --api-token TOKEN        API Token to use for authorizing requests against the
                            Gitlab API. `api` scope is required.
+  --user-agent USER_AGENT  User-Agent to use for requests against the Gitlab
+                           API.
   --exclude-projects ID1,ID2,ID3
                            set the list of projects to exclude as a
                            comma-separated list of IDs
