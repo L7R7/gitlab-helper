@@ -80,6 +80,7 @@ The available environmnent variables are:
 * `GLH_BASE_URL`: Base URL of the Gitlab instance you're working with
 * `GLH_GROUP_ID`: ID of the group you're interested in
 * `GLH_API_TOKEN`: API Token to use for authorizing requests against the Gitlab API. `api` scope is required.
+* `GLH_USER_AGENT`: User-Agent to use for requests against the Gitlab API.
 * `GLH_EXCLUDE_PROJECTS`: Lists of projects to exclude
 
 The structure of the configuration files looks like this:
@@ -88,6 +89,7 @@ The structure of the configuration files looks like this:
 config:
   baseUrl: 'https://my.gitlab.com'
   apiToken: 'apitoken'
+  userAgent: 'my-user-agent'
   groupId: 123
   excludeProjects: []
 ```

@@ -6,7 +6,7 @@
 module App (App (..)) where
 
 import Config.Types
-import Gitlab.Client.MTL (HasApiToken (..), HasBaseUrl (..))
+import Gitlab.Client.MTL (HasApiToken (..), HasBaseUrl (..), HasUserAgent (..))
 import Relude
 
 newtype App a = App {unApp :: ReaderT Config IO a}
@@ -23,3 +23,6 @@ instance HasApiToken App where
 
 instance HasBaseUrl App where
   getBaseUrl = App $ asks baseUrl
+
+instance HasUserAgent App where
+  getUserAgent = App $ asks userAgent
