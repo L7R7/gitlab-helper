@@ -37,7 +37,7 @@ jobs:
         include:
           - os: ubuntu-latest
             arch: x86_64
-          - os: macOS-13 # macOS-latest does something weird I don't understand
+          - os: macOS-latest
             arch: aarch64
           - os: windows-latest
             arch: x86_64
@@ -83,7 +83,7 @@ jobs:
         run: |
           echo "BINARY_PATH=./bin/gitlab-helper" >> "$GITHUB_ENV"
 
-      - if: matrix.os != 'macOS-13'
+      - if: matrix.os != 'macOS-latest'
         name: Compress binary
         uses: svenstaro/upx-action@2.4.1
         with:
