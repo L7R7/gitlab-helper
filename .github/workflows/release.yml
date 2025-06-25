@@ -66,7 +66,9 @@ jobs:
           path: ~/.stack
           key: ${{ runner.os }}-${{ env.GHC_VERSION }}-${{ matrix.arch }}-${{ hashFiles('**/stack.yaml.lock','**/gitlab-helper.cabal') }}-v2
           restore-keys: |
-            ${{ runner.os }}-${{ matrix.arch }}-${{ env.GHC_VERSION }}-
+            ${{ runner.os }}-${{ env.GHC_VERSION }}-${{ matrix.arch }}-
+            ${{ runner.os }}-${{ env.GHC_VERSION }}-
+            ${{ runner.os }}-
 
       - name: Build binary
         run: |
