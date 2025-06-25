@@ -157,3 +157,15 @@ gitlab-helper -h
 The tool will start only if all properties are set in one of the sources.
 
 The repository contains a config file that sets reasonable defaults, see [.gitlab-helper.yaml](.gitlab-helper.yml).
+
+## Internals
+
+## Creating a new release
+
+Whenever a tag is pushed, a new release draft is created automatically.
+The release notes will be pre-populated, and the artifacts for the release will be built and attached.
+
+```shell script
+git tag v0.0.1
+git push --atomic origin main v0.0.1
+```
