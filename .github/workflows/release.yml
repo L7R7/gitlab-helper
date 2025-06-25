@@ -118,8 +118,11 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-          # - os: macOS-13
+            arch: x86_64
+          - os: macOS-latest
+            arch: aarch64
           - os: windows-latest
+            arch: x86_64
     name: Test built binaries
     runs-on: ${{ matrix.os }}
     needs: build_artifact
