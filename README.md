@@ -111,6 +111,12 @@ There are a couple of interesting details to this option:
 There are pre-built binaries for most of the current platforms as part of the [releases](https://github.com/L7R7/gitlab-helper/releases/latest).
 The fastest way to install the tool is downloading it from there.
 
+If you're on macOS, you'll need to execute the following command after downloading the binary:
+
+```shell script
+xattr -r -d com.apple.quarantine gitlab-helper
+```
+
 ### Building from Source
 
 If you don't have a working Haskell toolchain on your machine yet, I recommend using [https://www.haskell.org/ghcup/](https://www.haskell.org/ghcup/) to install a recent version of `stack` (which solves similar problems like `sbt` does for Scala, or Maven for Java).
