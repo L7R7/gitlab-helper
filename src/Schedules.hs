@@ -17,7 +17,7 @@ where
 
 import App (App)
 import Colourista.Pure
-import Config.Types (Config (..), WithArchivedProjects (SkipArchivedProjects))
+import Config (Config (..), WithArchivedProjects (SkipArchivedProjects))
 import Effects
 import Gitlab.Client.MTL (UpdateError)
 import Gitlab.Lib (Name (..))

@@ -1,2 +1,4 @@
-roots = [ "^Main.main$", "^Program.run$", "^Paths_gitlab_helper.*", "Spec.spec$" ]
+roots = [ "^Main.main", "^Program.run", "^Paths_" ]
+root-instances = [ {class = 'IsString'}, {class = 'IsList'}  ]
 type-class-roots = true
+unused-types = true
