@@ -44,7 +44,7 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set tag name
         uses: olegtarasov/get-tag@v2.1.4
@@ -130,7 +130,7 @@ jobs:
       - # Apparently, gh requires to live in a git repo in order to work on windows
         if: matrix.os == 'windows-latest'
         name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set tag name
         uses: olegtarasov/get-tag@v2.1.4
