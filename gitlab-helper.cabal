@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.37.0.
+-- This file has been generated from package.yaml by hpack version 0.38.0.
 --
 -- see: https://github.com/sol/hpack
 
@@ -27,11 +27,7 @@ library
   exposed-modules:
       App
       Branches
-      Config.Config
-      Config.Env
-      Config.File
-      Config.Optparse
-      Config.Types
+      Config
       Effects
       MergeRequests
       Program
@@ -48,28 +44,23 @@ library
   build-depends:
       aeson
     , autodocodec
-    , barbies
     , base >=4.7 && <5
     , burrito >=2.0.1.0
     , colonnade
     , colourista
     , containers
-    , directory
-    , either
-    , envparse
-    , githash
     , gitlab-api-http-client-mtl
     , gitlab-api-types
     , http-conduit
     , http-types
     , network-uri
-    , optparse-applicative
+    , opt-env-conf
+    , path
+    , path-io
     , relude
     , scientific
-    , split
     , text
     , time
-    , yaml
   default-language: Haskell2010
 
 executable gitlab-helper
@@ -78,13 +69,10 @@ executable gitlab-helper
       Paths_gitlab_helper
   hs-source-dirs:
       app
-  default-extensions:
-      NoImplicitPrelude
   ghc-options: -fwrite-ide-info -hiedir=.hie -Wall -Wcompat -Widentities -Wincomplete-uni-patterns -Wincomplete-record-updates -Wredundant-constraints -fhide-source-paths -Wpartial-fields -Wmissing-deriving-strategies -Wunused-packages -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
     , gitlab-helper
-    , relude
   default-language: Haskell2010
 
 test-suite gitlab-helper-test
@@ -95,15 +83,12 @@ test-suite gitlab-helper-test
       Paths_gitlab_helper
   hs-source-dirs:
       test
-  default-extensions:
-      NoImplicitPrelude
   ghc-options: -fwrite-ide-info -hiedir=.hie -Wall -Wcompat -Widentities -Wincomplete-uni-patterns -Wincomplete-record-updates -Wredundant-constraints -fhide-source-paths -Wpartial-fields -Wmissing-deriving-strategies -Wunused-packages -threaded -rtsopts -with-rtsopts=-N
   build-tool-depends:
       sydtest-discover:sydtest-discover
   build-depends:
       base >=4.7 && <5
     , gitlab-helper
-    , optparse-applicative
-    , relude
+    , opt-env-conf-test
     , sydtest
   default-language: Haskell2010

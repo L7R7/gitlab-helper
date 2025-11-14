@@ -1,0 +1,224 @@
+[36mUsage: [m[33mgitlab-helper[m [36m[[m[37m--config-file[m [33mFILE_PATH[m[36m][m [37m--group-id[m [33mGROUP_ID[m [37m--base-url[m [33mURL[m [37m--api-token[m [33mTOKEN[m [36m[[m[37m--user-agent[m [33mUSER_AGENT[m[36m][m [36m[[m[37m--exclude-projects[m [33mID1,ID2,ID3[m[36m][m COMMAND
+
+[36mAll settings[m:
+  [34mShow this help text[m
+  switch: [37m-h[m[36m|[m[37m--help[m
+
+  [34mOutput version information[m
+  switch: [37m--version[m
+
+  [34mPath to the configuration file[m
+  option: [37m--config-file[m [33mFILE_PATH[m
+  env: [37mCONFIG_FILE[m [33mFILE_PATH[m
+
+  [34mID of the GitLab group to work with[m
+  option: [37m--group-id[m [33mGROUP_ID[m
+  env: [37mGLH_GROUP_ID[m [33mGROUP_ID[m
+  config:
+    [37mconfig.groupId[m: # [32mor null[m
+      [33m<integer>[m # [32m64 bit signed integer[m
+
+  [34mBase URL of your GitLab instance (e.g. `https://my.gitlab.com`)[m
+  option: [37m--base-url[m [33mURL[m
+  env: [37mGLH_BASE_URL[m [33mURL[m
+  config:
+    [37mconfig.baseUrl[m: # [32mor null[m
+      [33m<string>[m
+
+  [34mAPI Token to use for authorizing requests against the Gitlab API. `api` scope is required.[m
+  option: [37m--api-token[m [33mTOKEN[m
+  env: [37mGLH_API_TOKEN[m [33mTOKEN[m
+  config:
+    [37mconfig.apiToken[m: # [32mor null[m
+      [33m<string>[m
+
+  [34mUser agent to use for requests against the Gitlab API[m
+  option: [37m--user-agent[m [33mUSER_AGENT[m
+  env: [37mGLH_USER_AGENT[m [33mUSER_AGENT[m
+  config:
+    [37mconfig.userAgent[m: # [32mor null[m
+      [33m<string>[m
+  default: [33m"gitlab-helper"[m
+
+  [34mset the list of projects to exclude as a comma-separated list of IDs[m
+  option: [37m--exclude-projects[m [33mID1,ID2,ID3[m
+  env: [37mGLH_EXCLUDE_PROJECTS[m [33mID1,ID2,ID3[m
+  config:
+    [37mconfig.excludeProjects[m: # [32mor null[m
+      - [33m<integer>[m # [32m64 bit signed integer[m
+  default: [33m[][m
+
+[36mAll commands[m:
+  [34mShow branches[m
+  command: [35mshow-branches[m
+  
+  [34mShow projects[m
+  command: [35mshow-projects[m
+  
+  [34mList projects in (almost) meta compatible JSON format[m
+  command: [35mlist-projects-meta[m
+    [34mlist projects in the group that is configured in the config file[m
+    command: [35mgroup[m
+    
+    [34mlist all projects in all groups that are visible with the provided API token[m
+    command: [35mall[m
+    
+  
+  [34mEnable source branch deletion after merge for all projects in the group[m
+  command: [35menable-source-branch-deletion[m
+    [34mwhether to actually change the world via the API. By default, only a dry run will be performed[m
+    switch: [37m--execute[m[36m|[m[37m-x[m
+    default: [33mDryRun[m
+    
+  
+  [34mEnable the requirement that all discussions must be resolved for an MR to be merged for all projects[m
+  command: [35menable-all-discussions-must-be-resolved-for-merge-requirement[m
+    [34mwhether to actually change the world via the API. By default, only a dry run will be performed[m
+    switch: [37m--execute[m[36m|[m[37m-x[m
+    default: [33mDryRun[m
+    
+  
+  [34mEnable the requirement that there must be a successful pipeline for an MR to be merged for all projects. CAUTION: Use with care, might not do what you want in projects without pipelines[m
+  command: [35menable-successful-pipeline-for-merge-requirement[m
+    [34mwhether to actually change the world via the API. By default, only a dry run will be performed[m
+    switch: [37m--execute[m[36m|[m[37m-x[m
+    default: [33mDryRun[m
+    
+  
+  [34mShow Pipeline Schedules[m
+  command: [35mshow-schedules[m
+  
+  [34mShow projects with and without enabled merge requests, list open merge requests[m
+  command: [35mshow-merge-requests[m
+    [34mTrigger a recheck of the merge status of the merge requests. This is done on the Gitlab server and might have a performance impact so it's not done by default[m
+    switch: [37m--[no-]recheck-merge-status[m
+    
+  
+  [34mCount the number of successful deployments per project (a successful push pipeline on the default branch is counted as a deployment)[m
+  command: [35mcount-deployments[m
+    [34mSet the year[m
+    option: [37m--year[m [33mYEAR[m
+    
+    [34mInclude or skip archived projects[m
+    switch: [37m--[no-]include-archived-projects[m
+    
+  
+  [34mSet the merge method for all projects to "Fast Forward"[m
+  command: [35mset-merge-method-to-fast-forward[m
+    [34mwhether to actually change the world via the API. By default, only a dry run will be performed[m
+    switch: [37m--execute[m[36m|[m[37m-x[m
+    default: [33mDryRun[m
+    
+  
+  [34mUpdate all MRs from a given user that match a given condition with a given command[m
+  command: [35mupdate-merge-requests[m
+    [34mrebase the merge requests[m
+    command: [35mrebase[m
+    
+    [34mmerge the merge requests[m
+    command: [35mmerge[m
+      [34mdon't enforce that a merge request requires a successful pipeline to be merged (also helpful for projects that don't have pipelines on non-default branches)[m
+      switch: [37m--skip-ci[m
+      default: [33mPipelineMustSucceed[m
+      
+    
+    [34mset the merge requests to `draft`[m
+    command: [35mdraft[m
+    
+    [34mmark the merge requests as ready[m
+    command: [35mready[m
+    
+    [34mlist the merge requests[m
+    command: [35mlist[m
+    
+    [34monly MRs opened by the user with this ID are taken into account[m
+    option: [37m-u[m[36m|[m[37m--user-id[m [33mUSER_ID[m
+    
+    [34mA string that must appear in the MR title.[m
+    option: [37m--search-title[m [33mTXT[m
+  
+    [34mA string that must appear in the MR description or title.[m
+    option: [37m-s[m[36m|[m[37m--search[m [33mTXT[m
+    
+    [34mTrigger a recheck of the merge status of the merge requests. This is done on the Gitlab server and might have a performance impact so it's not done by default[m
+    switch: [37m--[no-]recheck-merge-status[m
+    
+    [34mwhether to actually change the world via the API. By default, only a dry run will be performed[m
+    switch: [37m--execute[m[36m|[m[37m-x[m
+    default: [33mDryRun[m
+    
+  
+
+[36mOptions[m:
+  [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m
+  [37m--version[m [34mOutput version information[m
+  [37m--config-file[m [34mPath to the configuration file[m
+  [37m--group-id[m [34mID of the GitLab group to work with[m
+  [37m--base-url[m [34mBase URL of your GitLab instance (e.g. `https://my.gitlab.com`)[m
+  [37m--api-token[m [34mAPI Token to use for authorizing requests against the Gitlab API. `api` scope is required.[m
+  [37m--user-agent[m [34mUser agent to use for requests against the Gitlab API[m default: [33m"gitlab-helper"[m
+  [37m--exclude-projects[m [34mset the list of projects to exclude as a comma-separated list of IDs[m default: [33m[][m
+  [35mshow-branches[m [34mShow branches[m
+  [35mshow-projects[m [34mShow projects[m
+  [35mlist-projects-meta[m [34mList projects in (almost) meta compatible JSON format[m
+      [35mgroup[m [34mlist projects in the group that is configured in the config file[m
+      [35mall[m [34mlist all projects in all groups that are visible with the provided API token[m
+  [35menable-source-branch-deletion[m [34mEnable source branch deletion after merge for all projects in the group[m
+      [37m--execute[m[36m|[m[37m-x[m [34mwhether to actually change the world via the API. By default, only a dry run will be performed[m default: [33mDryRun[m
+  [35menable-all-discussions-must-be-resolved-for-merge-requirement[m [34mEnable the requirement that all discussions must be resolved for an MR to be merged for all projects[m
+      [37m--execute[m[36m|[m[37m-x[m [34mwhether to actually change the world via the API. By default, only a dry run will be performed[m default: [33mDryRun[m
+  [35menable-successful-pipeline-for-merge-requirement[m [34mEnable the requirement that there must be a successful pipeline for an MR to be merged for all projects. CAUTION: Use with care, might not do what you want in projects without pipelines[m
+      [37m--execute[m[36m|[m[37m-x[m [34mwhether to actually change the world via the API. By default, only a dry run will be performed[m default: [33mDryRun[m
+  [35mshow-schedules[m [34mShow Pipeline Schedules[m
+  [35mshow-merge-requests[m [34mShow projects with and without enabled merge requests, list open merge requests[m
+      [37m--[no-]recheck-merge-status[m [34mTrigger a recheck of the merge status of the merge requests. This is done on the Gitlab server and might have a performance impact so it's not done by default[m
+  [35mcount-deployments[m [34mCount the number of successful deployments per project (a successful push pipeline on the default branch is counted as a deployment)[m
+      [37m--year[m                           [34mSet the year[m                     
+      [37m--[no-]include-archived-projects[m [34mInclude or skip archived projects[m
+  [35mset-merge-method-to-fast-forward[m [34mSet the merge method for all projects to "Fast Forward"[m
+      [37m--execute[m[36m|[m[37m-x[m [34mwhether to actually change the world via the API. By default, only a dry run will be performed[m default: [33mDryRun[m
+  [35mupdate-merge-requests[m [34mUpdate all MRs from a given user that match a given condition with a given command[m
+      [35mrebase[m [34mrebase the merge requests[m
+      [35mmerge[m [34mmerge the merge requests[m
+          [37m--skip-ci[m [34mdon't enforce that a merge request requires a successful pipeline to be merged (also helpful for projects that don't have pipelines on non-default branches)[m default: [33mPipelineMustSucceed[m
+      [35mdraft[m [34mset the merge requests to `draft`[m
+      [35mready[m [34mmark the merge requests as ready[m
+      [35mlist[m [34mlist the merge requests[m
+      [37m-u[m[36m|[m[37m--user-id[m [34monly MRs opened by the user with this ID are taken into account[m
+      [37m--search-title[m [34mA string that must appear in the MR title.[m               
+      [37m-s[m[36m|[m[37m--search[m    [34mA string that must appear in the MR description or title.[m
+      [37m--[no-]recheck-merge-status[m [34mTrigger a recheck of the merge status of the merge requests. This is done on the Gitlab server and might have a performance impact so it's not done by default[m
+      [37m--execute[m[36m|[m[37m-x[m [34mwhether to actually change the world via the API. By default, only a dry run will be performed[m default: [33mDryRun[m
+
+[36mEnvironment Variables[m:
+  [37mCONFIG_FILE[m [33mFILE_PATH[m              [34mPath to the configuration file[m                                                                                       
+  [37mGLH_GROUP_ID[m [33mGROUP_ID[m              [34mID of the GitLab group to work with[m                                                                                  
+  [37mGLH_BASE_URL[m [33mURL[m                   [34mBase URL of your GitLab instance (e.g. `https://my.gitlab.com`)[m                                                      
+  [37mGLH_API_TOKEN[m [33mTOKEN[m                [34mAPI Token to use for authorizing requests against the Gitlab API. `api` scope is required.[m                           
+  [37mGLH_USER_AGENT[m [33mUSER_AGENT[m          [34mUser agent to use for requests against the Gitlab API[m                                        default: [33m"gitlab-helper"[m
+  [37mGLH_EXCLUDE_PROJECTS[m [33mID1,ID2,ID3[m   [34mset the list of projects to exclude as a comma-separated list of IDs[m                         default: [33m[][m             
+
+[36mConfiguration Values[m:
+  [34mID of the GitLab group to work with[m
+  [37mconfig.groupId[m:
+    # [32mor null[m
+    [33m<integer>[m # [32m64 bit signed integer[m
+  [34mBase URL of your GitLab instance (e.g. `https://my.gitlab.com`)[m
+  [37mconfig.baseUrl[m:
+    # [32mor null[m
+    [33m<string>[m
+  [34mAPI Token to use for authorizing requests against the Gitlab API. `api` scope is required.[m
+  [37mconfig.apiToken[m:
+    # [32mor null[m
+    [33m<string>[m
+  [34mUser agent to use for requests against the Gitlab API[m
+  default: [33m"gitlab-helper"[m
+  [37mconfig.userAgent[m:
+    # [32mor null[m
+    [33m<string>[m
+  [34mset the list of projects to exclude as a comma-separated list of IDs[m
+  default: [33m[][m
+  [37mconfig.excludeProjects[m:
+    # [32mor null[m
+    - [33m<integer>[m # [32m64 bit signed integer[m
+

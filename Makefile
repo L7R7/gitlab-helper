@@ -1,5 +1,11 @@
-install:
+install: build
 	stack build --copy-bins
+	
+	gitlab-helper --render-man-page > gitlab-helper.1
+	gzip -9 -c gitlab-helper.1 > gitlab-helper.1.gz
+	sudo mv gitlab-helper.1.gz /usr/local/share/man/man1/gitlab-helper.1.gz
+	sudo mandb
+	rm gitlab-helper.1
 
 check: format lint
 
