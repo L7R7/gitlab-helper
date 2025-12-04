@@ -1,5 +1,5 @@
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections #-}
 
 module UpdateMergeRequests
   ( updateMergeRequests,
@@ -10,6 +10,7 @@ import App (App)
 import Config.Types
 import Data.Text (isInfixOf, strip, stripPrefix, toLower)
 import Effects
+import Gitlab.Client.Queue.MTL (ProcessResult (..), UpdateError)
 import Gitlab.Lib (Id)
 import Gitlab.MergeRequest
 import Gitlab.Project (Project)
@@ -27,27 +28,36 @@ updateMergeRequests _ (Merge _) _ Nothing _ Execute =
   write "I don't think you want to blindly merge all merge requests for this group. Consider adding a filter. Exiting now."
 updateMergeRequests projectExcludes action authorIs maybeSearchTerms recheckMergeStatus execute = do
   let searchTerm' = either id (\(SearchTermTitle s) -> SearchTerm s) <$> maybeSearchTerms
-  getOpenMergeRequestsForGroup authorIs searchTerm' recheckMergeStatus >>= \case
-    Left err -> write $ show err
-    Right [] -> write "no MRs to process"
-    Right allMergeRequests -> do
-      let titleFilter mr = case maybeSearchTerms of
-            Just (Right (SearchTermTitle s)) -> toLower (toText s) `isInfixOf` toLower (mergeRequestTitle mr)
-            _ -> True
-          filteredMergeRequests = filter (\mr -> titleFilter mr && mergeRequestProjectId mr `notElem` projectExcludes) allMergeRequests
-      case filteredMergeRequests of
-        [] -> write "no MRs to process after applying filters"
-        mergeRequests -> forM_ mergeRequests $ \mr -> do
-          write $ "processing MR #" <> show (mergeRequestIid mr) <> " in Project #" <> show (mergeRequestProjectId mr) <> " with state " <> show (mergeRequestDetailedMergeStatus mr) <> ": " <> mergeRequestTitle mr
-          res <- performAction mr
-          case res of
-            Left err -> write $ "failed to update merge request: " <> show err
-            Right _ -> pure ()
+  res <- getOpenMergeRequestsForGroupQueued authorIs searchTerm' recheckMergeStatus $ \mr -> do
+    if titleFilter mr && excludeFilter mr
+      then do
+        (txt, res) <- performAction mr
+        pure $ PrintLinesWithResult (mconcat (mrTextLine mr <> maybe [] (\t -> [" >> ", t]) txt) :| []) () <$ res
+      else pure $ Right Empty
+  case res of
+    Left err -> write $ "failed to update merge requests: " <> show err
+    Right [] -> write "no merge requests to process"
+    Right updates -> write $ show (length updates) <> " merge requests"
   where
+    mrTextLine mr =
+      [ "#",
+        show (mergeRequestIid mr),
+        " in Project #",
+        show (mergeRequestProjectId mr),
+        " with state ",
+        show (mergeRequestDetailedMergeStatus mr),
+        ": ",
+        mergeRequestTitle mr
+      ]
+    titleFilter mr = case maybeSearchTerms of
+      Just (Right (SearchTermTitle s)) -> toLower (toText s) `isInfixOf` toLower (mergeRequestTitle mr)
+      _ -> True
+    excludeFilter mr = mergeRequestProjectId mr `notElem` projectExcludes
+    performAction :: MergeRequest -> App (Maybe Text, Either UpdateError ())
     performAction mr =
       let pId = mergeRequestProjectId mr
        in case action of
-            List -> pure $ Right ()
+            List -> pure (Nothing, Right ())
             Rebase -> rebaseAction pId (mergeRequestIid mr)
             (Merge mergeCiOption) -> case detailedMergeStatusToDecision (mergeRequestDetailedMergeStatus mr) of
               MergeShouldWork -> mergeAction pId (mergeRequestIid mr) mergeCiOption
@@ -55,29 +65,29 @@ updateMergeRequests projectExcludes action authorIs maybeSearchTerms recheckMerg
               MergeWontWork -> mergeWontWorkAction (mergeRequestDetailedMergeStatus mr)
             SetToDraft ->
               if mergeRequestWip mr
-                then Right () <$ write "merge request is already in state \"Draft\""
+                then pure (Just "merge request is already in state \"Draft\"", Right ())
                 else setToDraftAction pId (mergeRequestIid mr) (mergeRequestTitle mr)
             MarkAsReady ->
               if mergeRequestWip mr
                 then markAsReadyAction pId (mergeRequestIid mr) (mergeRequestTitle mr)
-                else Right () <$ write "merge request is already marked as ready"
+                else pure (Just "merge request is already marked as ready", Right ())
 
     (rebaseAction, mergeAction, mergeAttemptAction, mergeWontWorkAction, setToDraftAction, markAsReadyAction) = case execute of
       Execute ->
-        ( rebaseMergeRequest,
-          mergeMergeRequest,
-          mergeMergeRequest,
-          \detailedStatus -> Right () <$ write ("The merge status is " <> show detailedStatus <> ", skipping the merge as it wouldn't succeed"),
-          \pId mrIid mrTitle -> setMergeRequestTitle pId mrIid ("Draft: " <> mrTitle),
-          \pId mrIid mrTitle -> setMergeRequestTitle pId mrIid (strip $ fromMaybe mrTitle (stripPrefix "Draft:" mrTitle))
+        ( \pId mId -> (Nothing,) <$> rebaseMergeRequest pId mId,
+          \pId mId mco -> (Nothing,) <$> mergeMergeRequest pId mId mco,
+          \pId mId mco -> (Nothing,) <$> mergeMergeRequest pId mId mco,
+          \detailedStatus -> pure (Just $ "The merge status is " <> show detailedStatus <> ", skipping the merge as it wouldn't succeed", Right ()),
+          \pId mrIid mrTitle -> (Nothing,) <$> setMergeRequestTitle pId mrIid ("Draft: " <> mrTitle),
+          \pId mrIid mrTitle -> (Nothing,) <$> setMergeRequestTitle pId mrIid (strip $ fromMaybe mrTitle (stripPrefix "Draft:" mrTitle))
         )
       DryRun ->
-        ( \_ _ -> Right () <$ write "dry run. skipping rebase",
-          \_ _ _ -> Right () <$ write "dry run. skipping merge",
-          \_ _ _ -> Right () <$ write "dry run. skipping merge attempt",
-          \detailedStatus -> Right () <$ write ("The merge status is " <> show detailedStatus <> ", skipping the merge as it wouldn't succeed"),
-          \_ _ _ -> Right () <$ write "dry run. skipping draft toggle",
-          \_ _ _ -> Right () <$ write "dry run. skipping draft toggle"
+        ( \_ _ -> pure (Just "dry run. skipping rebase", Right ()),
+          \_ _ _ -> pure (Just "dry run. skipping merge", Right ()),
+          \_ _ _ -> pure (Just "dry run. skipping merge attempt", Right ()),
+          \detailedStatus -> pure (Just $ "The merge status is " <> show detailedStatus <> ", skipping the merge as it wouldn't succeed", Right ()),
+          \_ _ _ -> pure (Just "dry run. skipping draft toggle", Right ()),
+          \_ _ _ -> pure (Just "dry run. skipping draft toggle", Right ())
         )
 
 -- | Depending on the merge status of a merge request, trying a merge may or may not make sense.
