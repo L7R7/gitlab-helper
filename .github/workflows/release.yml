@@ -61,7 +61,7 @@ jobs:
           stack-version: 3.5.1
 
       - name: Cache ~/.stack
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.stack
           key: ${{ runner.os }}-${{ env.GHC_VERSION }}-${{ matrix.arch }}-${{ hashFiles('**/stack.yaml.lock','**/gitlab-helper.cabal') }}-v2
