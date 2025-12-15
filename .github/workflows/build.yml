@@ -64,7 +64,7 @@ jobs:
         run: |
           stack test --system-ghc --coverage --copy-bins --local-bin-path .
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: gitlab-helper
           path: gitlab-helper
