@@ -17,7 +17,7 @@ where
 
 import App
 import Colourista.Pure
-import Config.Types (Config (..), WithArchivedProjects (SkipArchivedProjects))
+import Config (Config (..), WithArchivedProjects (SkipArchivedProjects))
 import qualified Data.Text as T (intercalate)
 import Data.Time hiding (getCurrentTime)
 import Effects
