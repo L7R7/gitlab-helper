@@ -19,7 +19,7 @@ import App (App)
 import Colourista.Pure
 import Config.Types (Config (..), WithArchivedProjects (SkipArchivedProjects))
 import Effects
-import Gitlab.Client.MTL (UpdateError)
+import Gitlab.Client.Queue.MTL
 import Gitlab.Lib (Name (..))
 import Gitlab.Project
 import Relude
@@ -29,12 +29,11 @@ showSchedulesForGroup = do
   gId <- asks groupId
   write "=================================================="
   write $ "Listing the projects' schedules for Group " <> show gId
-  getProjectsForGroup SkipArchivedProjects >>= \case
+  processProjectsForGroupQueued SkipArchivedProjects (fmap (Right . Result) . getSchedulesForProject) >>= \case
     Left err -> write $ show err
-    Right projects -> do
-      results <- traverse getSchedulesForProject (sortOn (getName . projectName) projects)
-      traverse_ printResults results
-      writeSummary results
+    Right res -> do
+      traverse_ printResults (sortOn (getName . projectName . fst) res)
+      writeSummary res
 
 getSchedulesForProject :: Project -> App (Project, Either UpdateError [Schedule])
 getSchedulesForProject p = (p,) <$> getSchedules (projectId p)

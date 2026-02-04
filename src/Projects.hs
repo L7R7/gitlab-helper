@@ -26,7 +26,7 @@ import Data.Aeson (encode)
 import qualified Data.Map as M
 import Data.Text (toLower)
 import Effects
-import Gitlab.Client.MTL (UpdateError)
+import Gitlab.Client.Queue.MTL
 import Gitlab.Group (Group)
 import Gitlab.Lib (EnabledDisabled (..), Id (..), Name (..), Ref (..))
 import Gitlab.Project
@@ -191,13 +191,13 @@ runProcessor (OptionSetter withArchivedProjects title skipIf action) = do
   gId <- asks groupId
   write "=================================================="
   write $ title gId
-  getProjectsForGroup withArchivedProjects >>= \case
+  res <- processProjectsForGroupQueued withArchivedProjects (fmap Right . process skipIf action)
+  case res of
     Left err -> write $ show err
-    Right projects -> do
-      res <- traverse (process skipIf action) projects
+    Right res' -> do
       write ""
       write "done: "
-      let summary = foldl' (\m r -> M.insertWith (<>) r (Sum (1 :: Int)) m) (M.fromList $ (,mempty) <$> universe) res
+      let summary = foldl' (\m r -> M.insertWith (<>) r (Sum (1 :: Int)) m) (M.fromList $ (,mempty) <$> universe) res'
       let summaryPrint = M.foldlWithKey' (\acc k (Sum c) -> (show k <> ": " <> show c) : acc) mempty summary
       traverse_ write summaryPrint
 runProcessor (Counter withArchivedProjects title skipIf action) = do
@@ -205,37 +205,35 @@ runProcessor (Counter withArchivedProjects title skipIf action) = do
   write "=================================================="
   write $ title gId
   write ""
-  getProjectsForGroup withArchivedProjects >>= \case
+  res <- processProjectsForGroupQueued withArchivedProjects (fmap Right . countSingle skipIf action)
+  case res of
     Left err -> write $ show err
-    Right projects -> do
-      res <- traverse (countSingle skipIf action) projects
+    Right res' -> do
       write ""
-      write $ "done. Total: " <> show (getSum $ fold res) <> " deployments"
+      write $ "done. Total: " <> show (getSum $ fold res') <> " deployments"
 
-process :: (Project -> Bool) -> (Id Project -> App (Either UpdateError ())) -> Project -> App Result
+process :: (Project -> Bool) -> (Id Project -> App (Either UpdateError ())) -> Project -> App (ProcessResult Result)
 process skipIf action project = do
-  write ""
-  write $ formatWith [bold] ("=== " <> show (projectName project))
+  let headings = "" :| [formatWith [bold] ("=== " <> show (projectName project))]
   if skipIf project
-    then write "option is already enabled. Not doing anything" $> AlreadySet
+    then pure $ PrintLinesWithResult (headings <> ("option is already enabled. Not doing anything" :| [])) AlreadySet
     else do
-      write "setting option"
       res <- action (projectId project)
-      case res of
-        Left err -> write ("something went wrong. " <> show err) $> Error
-        Right _ -> write "done" $> Set
+      pure $ case res of
+        Left err -> PrintLinesWithResult ("something went wrong. " <> show err :| []) Error
+        Right _ -> PrintLinesWithResult ("option set" :| []) Set
 
-countSingle :: (Project -> Bool) -> (Project -> App (Either UpdateError (Sum Int))) -> Project -> App (Sum Int)
-countSingle skipIf action project = count >>= \(output, result) -> write (title <> output) $> result
+countSingle :: (Project -> Bool) -> (Project -> App (Either UpdateError (Sum Int))) -> Project -> App (ProcessResult (Sum Int))
+countSingle skipIf action project = (\(output, result) -> PrintLinesWithResult (title <> output :| []) result) <$> count
   where
     count =
       if skipIf project
         then pure ("skipped", mempty)
         else do
           res <- action project
-          case res of
-            Left err -> pure (formatWith [red] "something went wrong: " <> show err, mempty)
-            Right s -> pure (show (getSum s) <> " deployments", s)
+          pure $ case res of
+            Left err -> (formatWith [red] "something went wrong: " <> show err, mempty)
+            Right s -> (show (getSum s) <> " deployments", s)
     title = formatWith [bold] (show (projectName project) <> " (#" <> show (projectId project) <> "): ")
 
 data Result = AlreadySet | Set | Error deriving stock (Bounded, Enum, Eq, Ord, Show)
