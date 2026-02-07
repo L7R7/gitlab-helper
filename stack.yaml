@@ -1,11 +1,11 @@
-resolver: lts-23.24
+resolver: lts-24.29
 
 packages:
   - .
 
 extra-deps:
   - github: L7R7/gitlab-api
-    commit: 44c8a21ebe7607cfcf1bd74c2610e47f5df783fd
+    commit: 35333a984ff66f451f61f0b83a072244c703dc33
     subdirs:
       - gitlab-api-http-client
       - gitlab-api-http-client-mtl
