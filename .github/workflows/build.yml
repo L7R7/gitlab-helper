@@ -50,7 +50,7 @@ jobs:
         with:
           ghc-version: "9.10.3"
           enable-stack: true
-          stack-version: "3.5.1"
+          stack-version: "3.7.1"
 
       - name: Build dependencies
         run: |
