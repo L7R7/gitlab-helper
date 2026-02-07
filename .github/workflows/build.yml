@@ -48,7 +48,7 @@ jobs:
             ${{ runner.os }}-
       - uses: haskell-actions/setup@v2.10.3
         with:
-          ghc-version: "9.8.4"
+          ghc-version: "9.10.3"
           enable-stack: true
           stack-version: "3.5.1"
 
