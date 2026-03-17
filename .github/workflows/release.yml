@@ -87,7 +87,7 @@ jobs:
 
       - if: matrix.os != 'macOS-latest'
         name: Compress binary
-        uses: svenstaro/upx-action@2.4.1
+        uses: svenstaro/upx-action@3.0.0
         with:
           files: ${{ env.BINARY_PATH }}
 
