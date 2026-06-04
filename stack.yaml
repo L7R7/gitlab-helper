@@ -11,7 +11,7 @@ extra-deps:
       - gitlab-api-http-client-mtl
       - gitlab-api-types
   - github: NorfairKing/opt-env-conf
-    commit: 765d221a8cce565bf35e6b6707d371f1e53347b2
+    commit: de7ac850e960c28e5182810515a87fbe1d6daede
     subdirs:
       - opt-env-conf
       - opt-env-conf-test
