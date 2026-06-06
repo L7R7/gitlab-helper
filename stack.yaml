@@ -1,4 +1,4 @@
-resolver: lts-24.43
+resolver: lts-24.44
 
 packages:
   - .
@@ -16,13 +16,13 @@ extra-deps:
       - opt-env-conf
       - opt-env-conf-test
   - github: NorfairKing/safe-coloured-text
-    commit: 67d285394231ab6ec0c6dce5551f546edf8719fc
+    commit: 5d1187b7873a8a1e397245c7c0c6d9ab88765d67
     subdirs:
       - safe-coloured-text
       - safe-coloured-text-layout
       - safe-coloured-text-gen
   - github: NorfairKing/autodocodec
-    commit: 3dbe8d515c9fc0fe6313dfe92e9db1f4af4c50a3
+    commit: 29b57dc2d425d732ce75143ecf3fc6411df0347b
     subdirs:
       - autodocodec
       - autodocodec-yaml
