@@ -72,97 +72,97 @@ packages:
 - completed:
     name: safe-coloured-text
     pantry-tree:
-      sha256: d7bbf3dbbc8b69a423d3d3d8c111dc4efd343b4bdcf2962266695819a3cdd4a9
-      size: 530
-    sha256: d709c7bf6f62e947248af470f3a22310a45726fb0bf6624f66a0bf02c1bcaca0
-    size: 39203
+      sha256: 488e4a428d7774dd8452b59e5577431404fcc10deb9be496fcbf50d6987e548f
+      size: 532
+    sha256: 1520a2b38733dadb50a328a81e610538fbcafd0120b6ddc0eac3494f623e81a6
+    size: 54740
     subdir: safe-coloured-text
-    url: https://github.com/NorfairKing/safe-coloured-text/archive/67d285394231ab6ec0c6dce5551f546edf8719fc.tar.gz
-    version: 0.3.0.2
+    url: https://github.com/NorfairKing/safe-coloured-text/archive/5d1187b7873a8a1e397245c7c0c6d9ab88765d67.tar.gz
+    version: 0.6.0.0
   original:
     subdir: safe-coloured-text
-    url: https://github.com/NorfairKing/safe-coloured-text/archive/67d285394231ab6ec0c6dce5551f546edf8719fc.tar.gz
+    url: https://github.com/NorfairKing/safe-coloured-text/archive/5d1187b7873a8a1e397245c7c0c6d9ab88765d67.tar.gz
 - completed:
     name: safe-coloured-text-layout
     pantry-tree:
-      sha256: d5b9b48716bb7ca96eae52d91aa64265eeb4aa0659d0838ffbb353947972465e
+      sha256: 176ff11f2a18fa7fe0f00abd14b3ef1d2c79518d11753ccb2b5022a5e89532f5
       size: 344
-    sha256: d709c7bf6f62e947248af470f3a22310a45726fb0bf6624f66a0bf02c1bcaca0
-    size: 39203
+    sha256: 1520a2b38733dadb50a328a81e610538fbcafd0120b6ddc0eac3494f623e81a6
+    size: 54740
     subdir: safe-coloured-text-layout
-    url: https://github.com/NorfairKing/safe-coloured-text/archive/67d285394231ab6ec0c6dce5551f546edf8719fc.tar.gz
+    url: https://github.com/NorfairKing/safe-coloured-text/archive/5d1187b7873a8a1e397245c7c0c6d9ab88765d67.tar.gz
     version: 0.2.0.1
   original:
     subdir: safe-coloured-text-layout
-    url: https://github.com/NorfairKing/safe-coloured-text/archive/67d285394231ab6ec0c6dce5551f546edf8719fc.tar.gz
+    url: https://github.com/NorfairKing/safe-coloured-text/archive/5d1187b7873a8a1e397245c7c0c6d9ab88765d67.tar.gz
 - completed:
     name: safe-coloured-text-gen
     pantry-tree:
-      sha256: 54781907c6bc14e5eda07b4b0f8a7037c982cbc65fb33b6adcba02fdf413e7d4
-      size: 8960
-    sha256: d709c7bf6f62e947248af470f3a22310a45726fb0bf6624f66a0bf02c1bcaca0
-    size: 39203
+      sha256: e866cc73622c9f27b2db0c3287baa6d321e1b0f086c768543206f25877b9253f
+      size: 9948
+    sha256: 1520a2b38733dadb50a328a81e610538fbcafd0120b6ddc0eac3494f623e81a6
+    size: 54740
     subdir: safe-coloured-text-gen
-    url: https://github.com/NorfairKing/safe-coloured-text/archive/67d285394231ab6ec0c6dce5551f546edf8719fc.tar.gz
-    version: 0.0.0.3
+    url: https://github.com/NorfairKing/safe-coloured-text/archive/5d1187b7873a8a1e397245c7c0c6d9ab88765d67.tar.gz
+    version: 0.0.0.5
   original:
     subdir: safe-coloured-text-gen
-    url: https://github.com/NorfairKing/safe-coloured-text/archive/67d285394231ab6ec0c6dce5551f546edf8719fc.tar.gz
+    url: https://github.com/NorfairKing/safe-coloured-text/archive/5d1187b7873a8a1e397245c7c0c6d9ab88765d67.tar.gz
 - completed:
     name: autodocodec
     pantry-tree:
-      sha256: ffa0a58cfe46ff16b833bddb814837e86e6b1e409a718d48c9a496d72abac39d
+      sha256: b73f06986e6febcbb39871d4a493ff1aee0ccb8c0c503abcd28206252dd028ab
       size: 914
-    sha256: 33cb89b1f1ccf69c33c124cd6a6546db177e4cdddb9d8d818e7dae005788d35f
-    size: 109528
+    sha256: 32cd1c13781bb482ff8556c593f44d0d5ab83af06d87ecf5a96cf8d8839600d6
+    size: 116372
     subdir: autodocodec
-    url: https://github.com/NorfairKing/autodocodec/archive/3dbe8d515c9fc0fe6313dfe92e9db1f4af4c50a3.tar.gz
+    url: https://github.com/NorfairKing/autodocodec/archive/29b57dc2d425d732ce75143ecf3fc6411df0347b.tar.gz
     version: 0.5.0.0
   original:
     subdir: autodocodec
-    url: https://github.com/NorfairKing/autodocodec/archive/3dbe8d515c9fc0fe6313dfe92e9db1f4af4c50a3.tar.gz
+    url: https://github.com/NorfairKing/autodocodec/archive/29b57dc2d425d732ce75143ecf3fc6411df0347b.tar.gz
 - completed:
     name: autodocodec-yaml
     pantry-tree:
-      sha256: af90e7449671702d46cb4cb5633e58bdebff9ae957be6f9a23fd2905fe0d5fea
+      sha256: fa1c0ddf8489bb130f618e54dfddf4c1ff4a5d1bace32a16092e0ecb67e48591
       size: 592
-    sha256: 33cb89b1f1ccf69c33c124cd6a6546db177e4cdddb9d8d818e7dae005788d35f
-    size: 109528
+    sha256: 32cd1c13781bb482ff8556c593f44d0d5ab83af06d87ecf5a96cf8d8839600d6
+    size: 116372
     subdir: autodocodec-yaml
-    url: https://github.com/NorfairKing/autodocodec/archive/3dbe8d515c9fc0fe6313dfe92e9db1f4af4c50a3.tar.gz
+    url: https://github.com/NorfairKing/autodocodec/archive/29b57dc2d425d732ce75143ecf3fc6411df0347b.tar.gz
     version: 0.4.0.2
   original:
     subdir: autodocodec-yaml
-    url: https://github.com/NorfairKing/autodocodec/archive/3dbe8d515c9fc0fe6313dfe92e9db1f4af4c50a3.tar.gz
+    url: https://github.com/NorfairKing/autodocodec/archive/29b57dc2d425d732ce75143ecf3fc6411df0347b.tar.gz
 - completed:
     name: autodocodec-nix
     pantry-tree:
-      sha256: 06749946c1e3396c0a55034b3543e8dd63ae1c78a852b1820a7e4c2bcb3c1e59
-      size: 595
-    sha256: 33cb89b1f1ccf69c33c124cd6a6546db177e4cdddb9d8d818e7dae005788d35f
-    size: 109528
+      sha256: 1df29743c27895e42797e21815dd4470b2c22f0ab6034dc4ce195acb345e2151
+      size: 596
+    sha256: 32cd1c13781bb482ff8556c593f44d0d5ab83af06d87ecf5a96cf8d8839600d6
+    size: 116372
     subdir: autodocodec-nix
-    url: https://github.com/NorfairKing/autodocodec/archive/3dbe8d515c9fc0fe6313dfe92e9db1f4af4c50a3.tar.gz
-    version: 0.1.0.0
+    url: https://github.com/NorfairKing/autodocodec/archive/29b57dc2d425d732ce75143ecf3fc6411df0347b.tar.gz
+    version: 0.1.0.1
   original:
     subdir: autodocodec-nix
-    url: https://github.com/NorfairKing/autodocodec/archive/3dbe8d515c9fc0fe6313dfe92e9db1f4af4c50a3.tar.gz
+    url: https://github.com/NorfairKing/autodocodec/archive/29b57dc2d425d732ce75143ecf3fc6411df0347b.tar.gz
 - completed:
     name: autodocodec-schema
     pantry-tree:
-      sha256: 15a412b470f3dfc446ddf067da7e537acb337e3aadd22a588389ba1ec28e8cea
+      sha256: a608c6410213265068b7284900a53f5cc01de42efa9548e766882368e6d42d50
       size: 387
-    sha256: 33cb89b1f1ccf69c33c124cd6a6546db177e4cdddb9d8d818e7dae005788d35f
-    size: 109528
+    sha256: 32cd1c13781bb482ff8556c593f44d0d5ab83af06d87ecf5a96cf8d8839600d6
+    size: 116372
     subdir: autodocodec-schema
-    url: https://github.com/NorfairKing/autodocodec/archive/3dbe8d515c9fc0fe6313dfe92e9db1f4af4c50a3.tar.gz
+    url: https://github.com/NorfairKing/autodocodec/archive/29b57dc2d425d732ce75143ecf3fc6411df0347b.tar.gz
     version: 0.2.0.1
   original:
     subdir: autodocodec-schema
-    url: https://github.com/NorfairKing/autodocodec/archive/3dbe8d515c9fc0fe6313dfe92e9db1f4af4c50a3.tar.gz
+    url: https://github.com/NorfairKing/autodocodec/archive/29b57dc2d425d732ce75143ecf3fc6411df0347b.tar.gz
 snapshots:
 - completed:
-    sha256: 3c412a7c13dba6d3d808455a458e0776c58b6cf99b8a7961a2f5e55589d6f1d6
-    size: 729011
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/24/43.yaml
-  original: lts-24.43
+    sha256: 78ce76b519082c406415e5070114ad338d8635534c67e85e381abb6676839065
+    size: 728811
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/24/44.yaml
+  original: lts-24.44
