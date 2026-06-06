@@ -23,7 +23,7 @@ import Gitlab.Client.MTL (ApiToken (..), BaseUrl (..), UserAgent (..))
 import Gitlab.Group (Group)
 import Gitlab.Lib (Id (..))
 import Gitlab.Project (Project)
-import Network.URI (parseURI)
+import Network.URI (parseAbsoluteURI)
 import OptEnvConf hiding (Command)
 import Path
 import Path.IO
@@ -63,7 +63,7 @@ instance HasParser Config where
         ]
       <*> setting
         [ help "Base URL of your GitLab instance (e.g. `https://my.gitlab.com`)",
-          reader (BaseUrl <$> maybeReader parseURI),
+          reader (BaseUrl <$> maybeReader parseAbsoluteURI),
           long "base-url",
           option,
           env "BASE_URL",
@@ -102,7 +102,7 @@ instance HasParser Config where
       <*> settingsParser
 
 instance HasCodec BaseUrl where
-  codec = BaseUrl <$> bimapCodec (maybeToRight "can't parse URI" . parseURI) show stringCodec
+  codec = BaseUrl <$> bimapCodec (maybeToRight "can't parse base URL (must be an absolute URI)" . parseAbsoluteURI) show stringCodec
 
 instance HasCodec ApiToken where
   codec = dimapCodec ApiToken (\(ApiToken txt) -> txt) textCodec
