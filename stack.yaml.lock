@@ -31,6 +31,32 @@ packages:
     subdir: gitlab-api-http-client-mtl
     url: https://github.com/L7R7/gitlab-api/archive/93b751da90c6141f960e61ce3bc2f31da43e564a.tar.gz
 - completed:
+    name: gitlab-api-http-client-queued
+    pantry-tree:
+      sha256: 19878699f2dc1ad379e30923adba5a8a0bc61e32e1bb2a94c2ebf90faf76a466
+      size: 200
+    sha256: 3650c0d7fff8a08330a56387925416e62429601ed7519b0ddfebc7f2bbf06ba3
+    size: 23974
+    subdir: gitlab-api-http-client-queued
+    url: https://github.com/L7R7/gitlab-api/archive/93b751da90c6141f960e61ce3bc2f31da43e564a.tar.gz
+    version: 0.0.0.1
+  original:
+    subdir: gitlab-api-http-client-queued
+    url: https://github.com/L7R7/gitlab-api/archive/93b751da90c6141f960e61ce3bc2f31da43e564a.tar.gz
+- completed:
+    name: gitlab-api-http-client-queued-mtl
+    pantry-tree:
+      sha256: 4a9a6a245b4f9fb64ae3974a9056d205675f4f71ce4b8c0256305bc65f1a89f9
+      size: 208
+    sha256: 3650c0d7fff8a08330a56387925416e62429601ed7519b0ddfebc7f2bbf06ba3
+    size: 23974
+    subdir: gitlab-api-http-client-queued-mtl
+    url: https://github.com/L7R7/gitlab-api/archive/93b751da90c6141f960e61ce3bc2f31da43e564a.tar.gz
+    version: 0.0.0.1
+  original:
+    subdir: gitlab-api-http-client-queued-mtl
+    url: https://github.com/L7R7/gitlab-api/archive/93b751da90c6141f960e61ce3bc2f31da43e564a.tar.gz
+- completed:
     name: gitlab-api-types
     pantry-tree:
       sha256: e18fb21d7a62f7752d5f0b0f8ad790bcc057b26aa5b50bb994cc707855fc9bbd
