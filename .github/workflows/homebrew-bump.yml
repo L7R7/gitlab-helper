@@ -1,0 +1,84 @@
+name: Bump Homebrew formula
+
+on:
+  release:
+    types: [released]
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine version
+        id: v
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Download release assets and compute SHAs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          V: ${{ steps.v.outputs.version }}
+        run: |
+          set -euo pipefail
+          for asset in \
+            gitlab-helper-$V-macOS-aarch64.zip \
+            gitlab-helper-$V-macOS-x86_64.zip  \
+            gitlab-helper-$V-Linux-x86_64.zip; do
+            gh release download "v$V" --repo "$GITHUB_REPOSITORY" --pattern "$asset"
+          done
+          {
+            echo "SHA_MAC_ARM=$(shasum -a 256 gitlab-helper-$V-macOS-aarch64.zip | cut -d' ' -f1)"
+            echo "SHA_MAC_X86=$(shasum -a 256 gitlab-helper-$V-macOS-x86_64.zip  | cut -d' ' -f1)"
+            echo "SHA_LINUX=$(shasum   -a 256 gitlab-helper-$V-Linux-x86_64.zip   | cut -d' ' -f1)"
+          } >> "$GITHUB_ENV"
+
+      - name: Render formula and push to tap
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          V: ${{ steps.v.outputs.version }}
+        run: |
+          set -euo pipefail
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/L7R7/homebrew-tap" tap
+          cd tap
+          mkdir -p Formula
+          cat > Formula/gitlab-helper.rb <<EOF
+          class GitlabHelper < Formula
+            desc "Utilities for working with GitLab"
+            homepage "https://github.com/L7R7/gitlab-helper"
+            version "$V"
+            license "Apache-2.0"
+
+            on_macos do
+              on_arm do
+                url "https://github.com/L7R7/gitlab-helper/releases/download/v$V/gitlab-helper-$V-macOS-aarch64.zip"
+                sha256 "$SHA_MAC_ARM"
+              end
+              on_intel do
+                url "https://github.com/L7R7/gitlab-helper/releases/download/v$V/gitlab-helper-$V-macOS-x86_64.zip"
+                sha256 "$SHA_MAC_X86"
+              end
+            end
+
+            on_linux do
+              on_intel do
+                url "https://github.com/L7R7/gitlab-helper/releases/download/v$V/gitlab-helper-$V-Linux-x86_64.zip"
+                sha256 "$SHA_LINUX"
+              end
+            end
+
+            def install
+              bin.install "gitlab-helper"
+              # Generate the man page from the binary itself (mirrors the Makefile flow)
+              (man1/"gitlab-helper.1").write Utils.safe_popen_read(bin/"gitlab-helper", "--render-man-page")
+            end
+
+            test do
+              assert_match version.to_s, shell_output("#{bin}/gitlab-helper --version")
+            end
+          end
+          EOF
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              add Formula/gitlab-helper.rb
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -m "gitlab-helper $V"
+          git push
