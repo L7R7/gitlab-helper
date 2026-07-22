@@ -39,6 +39,8 @@ jobs:
             arch: x86_64
           - os: macOS-latest
             arch: aarch64
+          - os: macos-15-intel
+            arch: x86_64
           - os: windows-latest
             arch: x86_64
 
@@ -58,7 +60,7 @@ jobs:
         with:
           ghc-version: ${{ env.GHC_VERSION }}
           enable-stack: true
-          stack-version: 3.7.1
+          stack-version: 3.9.3
 
       - name: Cache ~/.stack
         uses: actions/cache@v6
@@ -85,7 +87,7 @@ jobs:
         run: |
           echo "BINARY_PATH=./bin/gitlab-helper" >> "$GITHUB_ENV"
 
-      - if: matrix.os != 'macOS-latest'
+      - if: runner.os != 'macOS'
         name: Compress binary
         uses: svenstaro/upx-action@3.0.0
         with:
@@ -94,12 +96,12 @@ jobs:
       - if: matrix.os == 'windows-latest'
         name: Set zip file path name on Windows
         run: |
-          echo "ZIP_PATH=./bin/gitlab-helper-${{ steps.tag.outputs.tag }}-${{ runner.os }}.zip" >> $env:GITHUB_ENV
+          echo "ZIP_PATH=./bin/gitlab-helper-${{ steps.tag.outputs.tag }}-${{ runner.os }}-${{ matrix.arch }}.zip" >> $env:GITHUB_ENV
 
       - if: matrix.os != 'windows-latest'
         name: Set zip file path name not on Windows
         run: |
-          echo "ZIP_PATH=./bin/gitlab-helper-${{ steps.tag.outputs.tag }}-${{ runner.os }}.zip" >> "$GITHUB_ENV"
+          echo "ZIP_PATH=./bin/gitlab-helper-${{ steps.tag.outputs.tag }}-${{ runner.os }}-${{ matrix.arch }}.zip" >> "$GITHUB_ENV"
 
       - name: Create zip file
         run: |
@@ -110,7 +112,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${{ github.ref_name }}" "${{ env.ZIP_PATH }}#${{ runner.os }}.zip" --repo="$GITHUB_REPOSITORY"
+          gh release upload "${{ github.ref_name }}" "${{ env.ZIP_PATH }}#gitlab-helper-${{ steps.tag.outputs.tag }}-${{ runner.os }}-${{ matrix.arch }}.zip" --repo="$GITHUB_REPOSITORY"
 
   test:
     strategy:
@@ -121,6 +123,8 @@ jobs:
             arch: x86_64
           - os: macOS-latest
             arch: aarch64
+          - os: macos-15-intel
+            arch: x86_64
           - os: windows-latest
             arch: x86_64
     name: Test built binaries
@@ -143,9 +147,22 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release download "${{ github.ref_name }}" --pattern '*${{ runner.os }}.zip' --repo="$GITHUB_REPOSITORY" --output artifact.zip
+          gh release download "${{ github.ref_name }}" --pattern '*${{ runner.os }}-${{ matrix.arch }}.zip' --repo="$GITHUB_REPOSITORY" --output artifact.zip
           7z e artifact.zip
 
-      - name: smoke test
+      - if: runner.os != 'Linux'
+        name: smoke test
         run: |
-          ./gitlab-helper --api-token "dummy" --group-id 123 --base-url "https://gitlab.example.com" version
+          ./gitlab-helper --version
+
+      - if: runner.os == 'macOS'
+        name: Check macOS dylib dependencies are system-only
+        run: |
+          otool -L ./gitlab-helper | tail -n +2 | awk '{print $1}' | \
+            grep -vE '^(/usr/lib/|/System/)' && { echo "non-system dylib"; exit 1; } || true
+
+      - if: runner.os == 'Linux'
+        name: Standalone test (Linux, minimal container)
+        run: |
+          docker run --rm -v "$PWD:/work" -w /work ubuntu:24.04 \
+            ./gitlab-helper --version
