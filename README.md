@@ -107,6 +107,23 @@ There are a couple of interesting details to this option:
 
 ## Running
 
+### Using Homebrew (recommended)
+
+Via the [tap](https://github.com/L7R7/homebrew-tap) (macOS aarch64, macOS x86_64, Linux x86_64):
+
+```shell script
+brew install L7R7/tap/gitlab-helper
+```
+
+To upgrade after a new release is published:
+
+```shell script
+brew update
+brew upgrade gitlab-helper
+```
+
+`brew update` is required because Homebrew doesn't auto-refresh third-party taps on `upgrade`.
+
 ### Using pre-built binaries
 
 There are pre-built binaries for most of the current platforms as part of the [releases](https://github.com/L7R7/gitlab-helper/releases/latest).
