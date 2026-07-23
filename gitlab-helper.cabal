@@ -5,7 +5,7 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           gitlab-helper
-version:        1.0.1
+version:        1.1.0
 description:    Please see the README on GitHub at <https://github.com/L7R7/gitlab-helper#readme>
 homepage:       https://github.com/L7R7/gitlab-helper#readme
 bug-reports:    https://github.com/L7R7/gitlab-helper/issues
