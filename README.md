@@ -178,12 +178,16 @@ The repository contains a config file that sets reasonable defaults, see [.gitla
 
 ## Internals
 
-## Creating a new release
+### Creating a new release
 
-Whenever a tag is pushed, a new release draft is created automatically.
-The release notes will be pre-populated, and the artifacts for the release will be built and attached.
+Pushing a `v*` tag builds the binaries for all platforms, runs a standalone check on each, and creates a **draft** GitHub release with the artifacts attached and release notes pre-populated.
+The actual publishing of the release has to be done manually.
+Publishing the release will trigger [`homebrew-bump.yml`](.github/workflows/homebrew-bump.yml) automatically to publish it to [the tap](https://github.com/L7R7/homebrew-tap).
+
+The tag has to match the `version` in `package.yaml`, otherwise the Homebrew formula's test fails.
 
 ```shell script
-git tag v0.0.1
-git push --atomic origin main v0.0.1
+# set version: 1.2.3 in package.yaml, commit, then:
+git tag v1.2.3
+git push --atomic origin main v1.2.3
 ```
