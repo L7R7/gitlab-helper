@@ -48,9 +48,11 @@ library:
     - colonnade
     - colourista
     - containers
+    - exceptions
     - http-conduit
     - http-types
     - gitlab-api-http-client-mtl
+    - gitlab-api-http-client-queued-mtl
     - gitlab-api-types
     - network-uri
     - opt-env-conf
@@ -60,6 +62,7 @@ library:
     - scientific
     - text
     - time
+    - unliftio-core
 
 executables:
   gitlab-helper:

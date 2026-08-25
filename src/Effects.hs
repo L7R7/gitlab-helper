@@ -20,12 +20,14 @@ module Effects
     getProjectsForGroup,
     getProjectsForUser,
     getProject,
+    processProjectsForGroupQueued,
     hasCi,
     setMergeMethod,
 
     -- * MergeRequest
     getOpenMergeRequests,
     getOpenMergeRequestsForGroup,
+    getOpenMergeRequestsForGroupQueued,
     enableSourceBranchDeletionAfterMrMerge,
     setSuccessfulPipelineRequirementForMerge,
     unsetSuccessfulPipelineRequirementForMerge,
@@ -66,6 +68,7 @@ import Data.Time (UTCTime)
 import qualified Data.Time
 import Gitlab.Branch
 import Gitlab.Client.MTL
+import Gitlab.Client.Queue.MTL
 import Gitlab.Group hiding (groupId)
 import Gitlab.Lib (Id (..), Ref (..))
 import Gitlab.MergeRequest
@@ -137,6 +140,16 @@ getAllUsers = fetchDataPaginated @User @App [uriTemplate|/api/v4/users|] []
 getAllGroups :: App (Either UpdateError [Group])
 getAllGroups = fetchDataPaginated [uriTemplate|/api/v4/groups?all_available=true|] []
 
+processProjectsForGroupQueued :: WithArchivedProjects -> (Project -> App (Either UpdateError (ProcessResult a))) -> App (Either UpdateError [a])
+processProjectsForGroupQueued withArchivedProjects action = do
+  gId <- asks groupId
+  let template = case withArchivedProjects of
+        SkipArchivedProjects -> [uriTemplate|/api/v4/groups/{groupId}/projects?include_subgroups=true&archived=false&with_shared=false|]
+        IncludeArchivedProjects -> [uriTemplate|/api/v4/groups/{groupId}/projects?include_subgroups=true&with_shared=false|]
+      vars = [("groupId", (stringValue . show) gId)]
+      queueConfig = QueueConfig {parallelism = 10, bufferSize = 250} -- todo: make these configurable
+  fetchDataQueued template vars queueConfig action
+
 getProjectsForGroup :: WithArchivedProjects -> App (Either UpdateError [Project])
 getProjectsForGroup withArchivedProjects = do
   gId <- asks groupId
@@ -175,6 +188,20 @@ getOpenMergeRequests project maybeAuthorIs recheckMergeStatus = do
     Just (AuthorIs i) -> do
       let template = [uriTemplate|/api/v4/projects/{projectId}/merge_requests?state=opened&author_id={authorId}&with_merge_status_recheck={recheckMergeStatus}|]
       fetchDataPaginated template [("projectId", (stringValue . show) project), ("authorId", (stringValue . show) i), ("recheckMergeStatus", recheckMergeStatusToBooleanValue recheckMergeStatus)]
+
+getOpenMergeRequestsForGroupQueued :: Maybe AuthorIs -> Maybe SearchTerm -> MergeStatusRecheck -> (MergeRequest -> App (Either UpdateError (ProcessResult a))) -> App (Either UpdateError [a])
+getOpenMergeRequestsForGroupQueued maybeAuthorIs maybeSearchTerm recheckMergeStatus action = do
+  grp <- asks groupId
+  let template = [uriTemplate|/api/v4/groups/{groupId}/merge_requests?state=opened{&author_id,search,with_merge_status_recheck}|]
+      vars =
+        mconcat
+          [ [("groupId", (stringValue . show) grp)],
+            foldMap (\(AuthorIs i) -> [("author_id", (stringValue . show) i)]) maybeAuthorIs,
+            foldMap (\(SearchTerm s) -> [("search", stringValue s)]) maybeSearchTerm,
+            [("with_merge_status_recheck", recheckMergeStatusToBooleanValue recheckMergeStatus)]
+          ]
+      queueConfig = QueueConfig {parallelism = 10, bufferSize = 250} -- todo: make these configurable
+  fetchDataQueued template vars queueConfig action
 
 getOpenMergeRequestsForGroup :: Maybe AuthorIs -> Maybe SearchTerm -> MergeStatusRecheck -> App (Either UpdateError [MergeRequest])
 getOpenMergeRequestsForGroup maybeAuthorIs maybeSearchTerm recheckMergeStatus = do
