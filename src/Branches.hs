@@ -105,8 +105,8 @@ summary now = foldMap (count now)
 
 showSummary :: Summary -> Text
 showSummary (projects, branches, stale, merged) =
-  formatWith [bold]
-    $ unwords
+  formatWith [bold] $
+    unwords
       [ " ▶",
         show . getSum $ branches,
         "branches in",

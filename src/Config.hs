@@ -52,54 +52,54 @@ instance HasParser Config where
       $ subConfig "config"
       $ subEnv_ "GLH"
       $ Config
-      <$> setting
-        [ help "ID of the GitLab group to work with",
-          reader (Id <$> positiveIntReader),
-          long "group-id",
-          option,
-          env "GROUP_ID",
-          conf "groupId",
-          metavar "GROUP_ID"
-        ]
-      <*> setting
-        [ help "Base URL of your GitLab instance (e.g. `https://my.gitlab.com`)",
-          reader (BaseUrl <$> maybeReader parseAbsoluteURI),
-          long "base-url",
-          option,
-          env "BASE_URL",
-          conf "baseUrl",
-          metavar "URL"
-        ]
-      <*> setting
-        [ help "API Token to use for authorizing requests against the Gitlab API. `api` scope is required.",
-          reader (ApiToken <$> auto),
-          long "api-token",
-          option,
-          env "API_TOKEN",
-          conf "apiToken",
-          metavar "TOKEN"
-        ]
-      <*> setting
-        [ help "User agent to use for requests against the Gitlab API",
-          reader (UserAgent <$> auto),
-          long "user-agent",
-          option,
-          env "USER_AGENT",
-          conf "userAgent",
-          metavar "USER_AGENT",
-          value (UserAgent "gitlab-helper")
-        ]
-      <*> setting
-        [ help "set the list of projects to exclude as a comma-separated list of IDs",
-          reader (commaSeparatedList (Id <$> positiveIntReader)),
-          long "exclude-projects",
-          option,
-          conf "excludeProjects",
-          env "EXCLUDE_PROJECTS",
-          metavar "ID1,ID2,ID3",
-          value []
-        ]
-      <*> settingsParser
+        <$> setting
+          [ help "ID of the GitLab group to work with",
+            reader (Id <$> positiveIntReader),
+            long "group-id",
+            option,
+            env "GROUP_ID",
+            conf "groupId",
+            metavar "GROUP_ID"
+          ]
+        <*> setting
+          [ help "Base URL of your GitLab instance (e.g. `https://my.gitlab.com`)",
+            reader (BaseUrl <$> maybeReader parseAbsoluteURI),
+            long "base-url",
+            option,
+            env "BASE_URL",
+            conf "baseUrl",
+            metavar "URL"
+          ]
+        <*> setting
+          [ help "API Token to use for authorizing requests against the Gitlab API. `api` scope is required.",
+            reader (ApiToken <$> auto),
+            long "api-token",
+            option,
+            env "API_TOKEN",
+            conf "apiToken",
+            metavar "TOKEN"
+          ]
+        <*> setting
+          [ help "User agent to use for requests against the Gitlab API",
+            reader (UserAgent <$> auto),
+            long "user-agent",
+            option,
+            env "USER_AGENT",
+            conf "userAgent",
+            metavar "USER_AGENT",
+            value (UserAgent "gitlab-helper")
+          ]
+        <*> setting
+          [ help "set the list of projects to exclude as a comma-separated list of IDs",
+            reader (commaSeparatedList (Id <$> positiveIntReader)),
+            long "exclude-projects",
+            option,
+            conf "excludeProjects",
+            env "EXCLUDE_PROJECTS",
+            metavar "ID1,ID2,ID3",
+            value []
+          ]
+        <*> settingsParser
 
 instance HasCodec BaseUrl where
   codec = BaseUrl <$> bimapCodec (maybeToRight "can't parse base URL (must be an absolute URI)" . parseAbsoluteURI) show stringCodec

@@ -40,10 +40,10 @@ listAllProjectsMeta :: App ()
 listAllProjectsMeta = fetch >>= bitraverse_ (write . show) writeMetaFormat
   where
     fetch =
-      runExceptT
-        $ (<>)
-        <$> (getAllGroups' >>= fmap join . traverse getProjectsForGroup')
-        <*> (getAllUsers' >>= fmap join . traverse (getProjectsForUser' . userId))
+      runExceptT $
+        (<>)
+          <$> (getAllGroups' >>= fmap join . traverse getProjectsForGroup')
+          <*> (getAllUsers' >>= fmap join . traverse (getProjectsForUser' . userId))
 
     getAllGroups' = ExceptT getAllGroups
     getProjectsForGroup' = ExceptT . const (getProjectsForGroup SkipArchivedProjects)
@@ -63,8 +63,8 @@ showProjectsForGroup = do
 
 tableReport :: (Foldable f) => f Project -> String
 tableReport =
-  asciiCapped
-    $ mconcat
+  asciiCapped $
+    mconcat
       [ cap
           ""
           (headed "ID" (show . projectId) <> headed "Name" (show . projectName) <> headed "default branch" (maybe "-" (\(Ref r) -> toString r) . projectDefaultBranch)),
@@ -105,8 +105,8 @@ countDeployments year@(Year y) withArchivedProjects = do
   let archivedProjectsTitle = case withArchivedProjects of
         IncludeArchivedProjects -> "including"
         SkipArchivedProjects -> "excluding"
-  runProcessor
-    $ Counter
+  runProcessor $
+    Counter
       withArchivedProjects
       (\gi -> "Listing the number of successful deployments in " <> show y <> " for all projects in group " <> show gi <> " " <> archivedProjectsTitle <> " archived projects")
       (\p -> projectId p `elem` excludes)
@@ -119,8 +119,8 @@ countDeployments year@(Year y) withArchivedProjects = do
 
 enableSourceBranchDeletionAfterMerge :: Execution -> App ()
 enableSourceBranchDeletionAfterMerge execution =
-  runProcessor
-    $ OptionSetter
+  runProcessor $
+    OptionSetter
       SkipArchivedProjects
       (\gi -> "Enabling automatic branch deletion after MR merge for Group " <> show gi)
       (\p -> Just True == projectRemoveSourceBranchAfterMerge p)
@@ -131,8 +131,8 @@ enableSourceBranchDeletionAfterMerge execution =
 
 enableSuccessfulPipelineForMergeRequirement :: Execution -> App ()
 enableSuccessfulPipelineForMergeRequirement execution =
-  runProcessor
-    $ OptionSetter
+  runProcessor $
+    OptionSetter
       SkipArchivedProjects
       (\gi -> "Enabling the requirement that a successful pipeline is required for a MR to be merged for Group " <> show gi)
       (or . projectOnlyAllowMergeIfPipelineSucceeds)
@@ -155,8 +155,8 @@ logUnset = write "Project doesn't have CI. Deactivated the option." $> Right ()
 
 enableAllDiscussionsResolvedForMergeRequirement :: Execution -> App ()
 enableAllDiscussionsResolvedForMergeRequirement execution =
-  runProcessor
-    $ OptionSetter
+  runProcessor $
+    OptionSetter
       SkipArchivedProjects
       (\gi -> "Enabling the requirement that all discussions must be resolved for a MR to be merged for Group " <> show gi)
       (or . projectOnlyAllowMergeIfAllDiscussionsAreResolved)
@@ -167,8 +167,8 @@ enableAllDiscussionsResolvedForMergeRequirement execution =
 
 setMergeMethodToFastForward :: Execution -> App ()
 setMergeMethodToFastForward execution =
-  runProcessor
-    $ OptionSetter
+  runProcessor $
+    OptionSetter
       SkipArchivedProjects
       (\gi -> "Setting the merge method to \"Fast Forward\" for all projects in group " <> show gi)
       (\p -> projectMergeMethod p == FastForward)
